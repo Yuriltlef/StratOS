@@ -1,0 +1,9 @@
+build/
+.idea/
+.vscode/
+.vs/
+cmake-build-debug
+.cache/
+arm_gcc_includes_absolute.txt
+.clang-tidy
+.clangd
