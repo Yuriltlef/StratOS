@@ -1,28 +1,29 @@
 /**
-  ******************************************************************************
-  * @file    main.cpp
-  * @author  Yurilt
-  * @version V1.0.0
-  * @date    30-October-2025
-  * @brief   C++主程序入口
-  * @note    包含C++程序的main函数和对象初始化
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 Yurilt.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    main.cpp
+ * @author  Yurilt
+ * @version V1.0.0
+ * @date    31-October-2025
+ * @brief   C++主程序入口
+ * @note    包含C++程序的main函数和对象初始化
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 Yurilt.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 
 #include "myDelay.h"
 #include "st7786_spi.h"
 #include "stm32f10x_gpio.h"
 #include "test_1.h"
+
 void gpioConfig(void) {
     GPIO_InitTypeDef GPIO_Config;
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
@@ -37,6 +38,7 @@ void gpioConfig(void) {
     GPIO_Config.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOC, &GPIO_Config);
 }
+
 typedef enum {
     Nothing,
     KEY1_SHORT_DOWN,
@@ -44,11 +46,13 @@ typedef enum {
     KEY1_LONG_DOWN,
     KEY2_LONG_DOWN
 } KeyState;
+
 typedef struct {
     KeyState state;
     uint32_t dowmTime1;
     uint32_t dowmTime2;
 } NowState;
+
 void update_state(NowState* keyState) {
     if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1)) {
         myDelay(10);
@@ -87,7 +91,9 @@ void update_state(NowState* keyState) {
         }
     }
 }
+
 static NowState nowState = {Nothing, 0, 0};
+
 int main(void) {
     myDelayInit();
     St7786Spi4Color18 red = {63, 30, 10};

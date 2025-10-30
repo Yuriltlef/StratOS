@@ -3,7 +3,7 @@
 # * @file    os_util.cmake
 # * @author  Yurilt
 # * @version V1.0.0
-# * @date    30-October-2025
+# * @date    31-October-2025
 # * @brief   CMake构建脚本
 # * @note    此文件包含CMake构建系统的配置指令
 # ******************************************************************************

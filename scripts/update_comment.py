@@ -5,7 +5,6 @@
 """
 
 import os
-import re
 import json
 import datetime
 from pathlib import Path
@@ -15,26 +14,16 @@ class FileCommentUpdater:
         self.root_dir = Path(root_dir)
         self.config = self.load_config(config_file)
         
-        # 模板映射
-        self.template_map = {
-            "c_template": self._c_comment_template,
-            "python_template": self._python_comment_template,
-            "script_template": self._script_comment_template
+        # 注释符号定义
+        self.comment_symbols = {
+            '.c': ('/*', '*/'),
+            '.h': ('/*', '*/'),
+            '.cpp': ('/*', '*/'),
+            '.hpp': ('/*', '*/'),
+            '.py': ('"""', '"""'),
+            '.cmake': ('#', '#'),
+            '.md': ('#', '#')
         }
-        
-        # 正则表达式模式
-        self.placeholder_pattern = re.compile(
-            r'/\*\*[\s\*]*\*{5,}.*?\*{5,}.*?\*/', 
-            re.DOTALL
-        )
-        self.python_placeholder_pattern = re.compile(
-            r'\"\"\"\s*\*{5,}.*?\*{5,}.*?\"\"\"', 
-            re.DOTALL
-        )
-        self.script_placeholder_pattern = re.compile(
-            r'#\s*\*{5,}.*?\*{5,}.*?(?=\n[^#]|\Z)', 
-            re.DOTALL
-        )
 
     def load_config(self, config_file):
         """加载配置文件"""
@@ -70,7 +59,7 @@ class FileCommentUpdater:
                 },
                 ".cpp": {
                     "default": {
-                        "description": "C++源文件",
+                        "description": "C++源文件", 
                         "note": "此文件包含C++类的实现代码"
                     },
                     "specific": {}
@@ -98,100 +87,13 @@ class FileCommentUpdater:
                 },
                 ".md": {
                     "default": {
-                        "description": "项目文档文件",
+                        "description": "项目文档文件", 
                         "note": "此文件包含项目使用说明和开发文档"
                     },
                     "specific": {}
                 }
-            },
-            "template_types": {
-                "c_template": [".c", ".h", ".cpp", ".hpp"],
-                "python_template": [".py"],
-                "script_template": [".cmake", ".md"]
             }
         }
-
-    def _c_comment_template(self, filename, description, note):
-        """C/C++ 文件注释模板"""
-        current_date = datetime.datetime.now().strftime("%d-%B-%Y")
-        note_section = f"  * @note    {note}\n" if note else ""
-        
-        return f"""/**
-  ******************************************************************************
-  * @file    {filename}
-  * @author  Yurilt
-  * @version V1.0.0
-  * @date    {current_date}
-  * @brief   {description}
-{note_section}  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) {datetime.datetime.now().year} Yurilt.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-
-"""
-
-    def _python_comment_template(self, filename, description, note):
-        """Python 文件注释模板"""
-        current_date = datetime.datetime.now().strftime("%d-%B-%Y")
-        note_section = f"* @note    {note}\n" if note else ""
-        
-        return f'''#!/usr/bin/env python3
-"""
-******************************************************************************
-* @file    {filename}
-* @author  Yurilt
-* @version V1.0.0
-* @date    {current_date}
-* @brief   {description}
-{note_section}******************************************************************************
-* @attention
-*
-* Copyright (c) {datetime.datetime.now().year} Yurilt.
-* All rights reserved.
-*
-* This software is licensed under terms that can be found in the LICENSE file
-* in the root directory of this software component.
-* If no LICENSE file comes with this software, it is provided AS-IS.
-*
-******************************************************************************
-"""
-
-'''
-
-    def _script_comment_template(self, filename, description, note):
-        """脚本文件注释模板"""
-        current_date = datetime.datetime.now().strftime("%d-%B-%Y")
-        note_section = f"# * @note    {note}\n" if note else ""
-        
-        return f'''#
-# ******************************************************************************
-# * @file    {filename}
-# * @author  Yurilt
-# * @version V1.0.0
-# * @date    {current_date}
-# * @brief   {description}
-{note_section}# ******************************************************************************
-# * @attention
-# *
-# * Copyright (c) {datetime.datetime.now().year} Yurilt.
-# * All rights reserved.
-# *
-# * This software is licensed under terms that can be found in the LICENSE file
-# * in the root directory of this software component.
-# * If no LICENSE file comes with this software, it is provided AS-IS.
-# *
-# ******************************************************************************
-#
-
-'''
 
     def get_file_info(self, file_path):
         """获取文件的描述和note信息"""
@@ -212,15 +114,199 @@ class FileCommentUpdater:
         
         return "项目文件", ""
 
-    def get_file_template(self, file_path):
-        """获取文件的模板函数"""
-        suffix = file_path.suffix.lower()
+    def generate_comment(self, filename, file_ext, description, note):
+        """生成注释内容"""
+        current_date = datetime.datetime.now().strftime("%d-%B-%Y")
+        year = datetime.datetime.now().year
         
-        for template_type, extensions in self.config["template_types"].items():
-            if suffix in extensions:
-                return self.template_map.get(template_type, self._c_comment_template)
+        # 添加note字段（如果存在）
+        note_section = ""
+        if note:
+            if file_ext in ['.c', '.h', '.cpp', '.hpp']:
+                note_section = f" * @note    {note}\n"
+            elif file_ext == '.py':
+                note_section = f"* @note    {note}\n"
+            elif file_ext in ['.cmake', '.md']:
+                note_section = f"# * @note    {note}\n"
         
-        return self._c_comment_template
+        if file_ext in ['.c', '.h', '.cpp', '.hpp']:
+            return f"""/**
+ ******************************************************************************
+ * @file    {filename}
+ * @author  Yurilt
+ * @version V1.0.0
+ * @date    {current_date}
+ * @brief   {description}
+{note_section} ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) {year} Yurilt.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
+"""
+        elif file_ext == '.py':
+            return f'''#!/usr/bin/env python3
+"""
+******************************************************************************
+* @file    {filename}
+* @author  Yurilt
+* @version V1.0.0
+* @date    {current_date}
+* @brief   {description}
+{note_section}******************************************************************************
+* @attention
+*
+* Copyright (c) {year} Yurilt.
+* All rights reserved.
+*
+* This software is licensed under terms that can be found in the LICENSE file
+* in the root directory of this software component.
+* If no LICENSE file comes with this software, it is provided AS-IS.
+*
+******************************************************************************
+"""
+'''
+        elif file_ext in ['.cmake', '.md']:
+            return f'''#
+# ******************************************************************************
+# * @file    {filename}
+# * @author  Yurilt
+# * @version V1.0.0
+# * @date    {current_date}
+# * @brief   {description}
+{note_section}# ******************************************************************************
+# * @attention
+# *
+# * Copyright (c) {year} Yurilt.
+# * All rights reserved.
+# *
+# * This software is licensed under terms that can be found in the LICENSE file
+# * in the root directory of this software component.
+# * If no LICENSE file comes with this software, it is provided AS-IS.
+# *
+# ******************************************************************************
+#
+'''
+
+    def match_line(self, line, s_sym, e_sym, stack):
+        """处理单行的栈操作"""
+        i = 0
+        line_len = len(line)
+        
+        while i < line_len:
+            if s_sym == e_sym:
+                # 对于起始和结束符号相同的情况（如Python的三引号）
+                if i + len(s_sym) <= line_len and line[i:i+len(s_sym)] == s_sym:
+                    if not stack:  # 栈为空，压入
+                        stack.append(s_sym)
+                        i += len(s_sym)
+                    else:  # 栈不为空，弹出
+                        stack.pop()
+                        i += len(s_sym)
+                else:
+                    i += 1
+            else:
+                # 对于起始和结束符号不同的情况（如C的/*和*/）
+                if i + len(s_sym) <= line_len and line[i:i+len(s_sym)] == s_sym:
+                    stack.append(s_sym)
+                    i += len(s_sym)
+                elif i + len(e_sym) <= line_len and line[i:i+len(e_sym)] == e_sym:
+                    if not stack:
+                        raise Exception("意外的结束符号")
+                    stack.pop()
+                    i += len(e_sym)
+                else:
+                    i += 1
+        
+        return stack
+
+    def interval(self, content, file_ext):
+        """找到注释块的起始和结束位置，匹配错误时抛出异常"""
+        if file_ext not in self.comment_symbols:
+            return 0, 0
+
+        s_sym, e_sym = self.comment_symbols[file_ext]
+        lines = content.split('\n')
+
+        if not lines:
+            return 0, 0
+
+        # 检查第一行是否有起始符号
+        first_line = lines[0].strip()
+
+        # 对于脚本文件（#注释），我们检查是否以注释开始
+        if file_ext in ['.cmake', '.md']:
+            if first_line.startswith(s_sym):
+                # 找到连续的注释行
+                end_line = 0
+                for i, line in enumerate(lines):
+                    if not line.strip().startswith(s_sym):
+                        end_line = i
+                        break
+                else:
+                    end_line = len(lines)
+                return 0, end_line
+            return 0, 0
+
+        # 对于C和Python文件，使用栈匹配
+        stack = []
+
+        # 检查第一行
+        stack = self.match_line(lines[0], s_sym, e_sym, stack)
+
+        if not stack:
+            # 栈为空，说明第一行就完成了匹配（单行注释）
+            # 检查第一行结束符号后是否有非空白字符
+            if file_ext in ['.c', '.h', '.cpp', '.hpp']:
+                end_pos = lines[0].find(e_sym)
+                if end_pos != -1:
+                    after_comment = lines[0][end_pos + len(e_sym):]
+                    if after_comment.strip():  # 有非空白字符
+                        raise Exception("注释结束符号后存在非空白字符")
+            elif file_ext == '.py':
+                end_pos = lines[0].find(e_sym)
+                if end_pos != -1:
+                    after_comment = lines[0][end_pos + len(e_sym):]
+                    if after_comment.strip():  # 有非空白字符
+                        raise Exception("注释结束符号后存在非空白字符")
+
+            return 0, 1
+
+        # 继续处理后续行
+        e = 0
+        for i in range(1, len(lines)):
+            e = i
+            stack = self.match_line(lines[i], s_sym, e_sym, stack)
+
+            if not stack:
+                # 栈为空，匹配完成
+                # 检查结束行结束符号后是否有非空白字符
+                if file_ext in ['.c', '.h', '.cpp', '.hpp']:
+                    end_pos = lines[i].find(e_sym)
+                    if end_pos != -1:
+                        after_comment = lines[i][end_pos + len(e_sym):]
+                        if after_comment.strip():  # 有非空白字符
+                            raise Exception("注释结束符号后存在非空白字符")
+                elif file_ext == '.py':
+                    end_pos = lines[i].find(e_sym)
+                    if end_pos != -1:
+                        after_comment = lines[i][end_pos + len(e_sym):]
+                        if after_comment.strip():  # 有非空白字符
+                            raise Exception("注释结束符号后存在非空白字符")
+
+                return 0, e + 1
+
+        # 如果处理完所有行栈还不为空，说明注释不完整
+        if stack:
+            raise Exception("注释块不完整，缺少结束符号")
+
+        return 0, e + 1
 
     def should_process_file(self, file_path):
         """判断是否应该处理该文件"""
@@ -247,75 +333,44 @@ class FileCommentUpdater:
         
         return files_to_process
 
-    def has_comment_placeholder(self, content, file_suffix):
-        """检查文件内容是否包含注释占位符"""
-        if file_suffix in ['.c', '.h', '.cpp', '.hpp']:
-            return self.placeholder_pattern.search(content) is not None
-        elif file_suffix == '.py':
-            return self.python_placeholder_pattern.search(content) is not None
-        elif file_suffix in ['.cmake', '.md']:
-            return self.script_placeholder_pattern.search(content) is not None
-        return False
-
-    def remove_existing_placeholder(self, content, file_suffix):
-        """完全删除现有的注释占位符"""
-        if file_suffix in ['.c', '.h', '.cpp', '.hpp']:
-            # 删除C风格注释
-            new_content = self.placeholder_pattern.sub('', content)
-            # 删除可能的多余空行
-            new_content = re.sub(r'^\s*\n', '', new_content, flags=re.MULTILINE)
-            return new_content
-        elif file_suffix == '.py':
-            # 删除Python多行注释
-            new_content = self.python_placeholder_pattern.sub('', content)
-            # 如果删除后文件以空行开头，删除开头的空行
-            new_content = re.sub(r'^\s*\n', '', new_content, flags=re.MULTILINE)
-            return new_content
-        elif file_suffix in ['.cmake', '.md']:
-            # 删除脚本注释
-            new_content = self.script_placeholder_pattern.sub('', content)
-            new_content = re.sub(r'^\s*\n', '', new_content, flags=re.MULTILINE)
-            return new_content
-        return content
-
     def update_file_comments(self, file_path):
         """更新或插入文件注释"""
         try:
-            # 读取文件内容（使用UTF-8编码）
+            # 读取文件内容
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 获取文件后缀
-            suffix = file_path.suffix.lower()
-            
-            # 获取文件描述和note信息
+            # 获取文件后缀和描述
+            file_ext = file_path.suffix.lower()
             description, note = self.get_file_info(file_path)
-            template_func = self.get_file_template(file_path)
             
-            # 生成新的注释
-            new_comment = template_func(file_path.name, description, note)
+            # 生成新注释
+            new_comment = self.generate_comment(file_path.name, file_ext, description, note)
             
-            # 检查是否有注释占位符
-            if self.has_comment_placeholder(content, suffix):
-                # 完全删除现有的注释占位符
-                content_without_placeholder = self.remove_existing_placeholder(content, suffix)
+            # 找到注释区间
+            s, e = self.interval(content, file_ext)
+            
+            if e > 0:
+                # 替换现有注释
+                lines = content.split('\n')
+                remaining_content = '\n'.join(lines[e:])
                 
-                # 在文件开头插入新注释
-                new_content = new_comment + content_without_placeholder
-                
-                print(f"  └── 替换注释占位符")
-            else:
-                # 检查是否已经有类似的注释（避免重复添加）
-                if not self._has_similar_comment(content, file_path.name):
-                    # 在文件开头插入新注释
-                    new_content = new_comment + content
-                    note_info = f" [Note: {note}]" if note else ""
-                    print(f"  └── 添加新注释 [{description}]{note_info}")
+                # 确保注释和内容之间有适当的空行
+                if remaining_content and not remaining_content.startswith('\n'):
+                    new_content = new_comment + '\n' + remaining_content
                 else:
-                    print(f"  └── 已有类似注释，跳过")
-                    return True
+                    new_content = new_comment + remaining_content
+                    
+                print(f"  └── 替换注释 (第1-{e}行)")
+            else:
+                # 插入新注释
+                if content and not content.startswith('\n'):
+                    new_content = new_comment + '\n' + content
+                else:
+                    new_content = new_comment + content
+                print(f"  └── 添加新注释")
             
-            # 使用UTF-8编码写入文件
+            # 写入文件
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             
@@ -324,20 +379,6 @@ class FileCommentUpdater:
         except Exception as e:
             print(f"处理文件 {file_path} 时出错: {e}")
             return False
-
-    def _has_similar_comment(self, content, filename):
-        """检查是否已经有类似的注释（避免重复添加）"""
-        # 检查常见的注释标识
-        patterns = [
-            r'@file\s+' + re.escape(filename),
-            r'@author\s+Yurilt',
-            r'Copyright\s+\(c\)\s+\d{4}\s+Yurilt',
-        ]
-        
-        for pattern in patterns:
-            if re.search(pattern, content, re.IGNORECASE):
-                return True
-        return False
 
     def process_all_files(self):
         """处理所有文件"""
@@ -353,8 +394,6 @@ class FileCommentUpdater:
             
             if self.update_file_comments(file_path):
                 success_count += 1
-            else:
-                print(f"  └── 失败")
         
         print(f"\n处理完成! 成功更新 {success_count}/{len(files_to_process)} 个文件")
 
