@@ -8,3 +8,7 @@ arm_gcc_includes_absolute.txt
 .clang-tidy
 .clangd
 cmake/private.cmake
+bin/StratOS_test.bin
+bin/StratOS_test.elf
+bin/StratOS_test.hex
+./bin
