@@ -7,3 +7,4 @@ cmake-build-debug
 arm_gcc_includes_absolute.txt
 .clang-tidy
 .clangd
+cmake/private.cmake

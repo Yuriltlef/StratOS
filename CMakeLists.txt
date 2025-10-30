@@ -9,6 +9,7 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/os_file_path.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/os_confing.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/os_util.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/path.cmake)
 
 # 配置基础设置
 set(LIYSTD_LICENSE "LGPL-3.0" CACHE STRING "Library license type")
@@ -58,6 +59,9 @@ message("[${CMAKE_PROJECT_NAME}][info] C standard of " ${PROJECT_NAME} " is " ${
 message("[${CMAKE_PROJECT_NAME}][info] Color output is enabled")
 
 configure_mutual_marco(${OS_STM_LIB_TYPE_FLAG} ${OS_STM_MODEL} ${OS_CONFING})
+
+# 配置clangd
+generate_clang_config(TOOLCHAIN_PATH ${ARM_TOOLCHAIN_PATH})
 
 # 配置StratOS构建测试
 add_executable(${OS_ELF_TARGET}
