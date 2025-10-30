@@ -1,0 +1,23 @@
+# 诊断设置
+Diagnostics:
+  ClangTidy:
+    Checks: >
+      bugprone-*,
+      performance-*,
+      readability-*,
+      portability-*,
+      modernize-*,
+      -readability-magic-numbers,
+      -bugprone-branch-clone,
+      -modernize-use-trailing-return-type,
+      -readability-identifier-length
+    CheckOptions:
+      readability-identifier-naming.StructCase: {STRUCT_CASE}
+      readability-identifier-naming.ClassCase: {CLASS_CASE}
+      readability-identifier-naming.FunctionCase: {FUNCTION_CASE}
+      readability-identifier-naming.VariableCase: {VARIABLE_CASE}
+      readability-identifier-naming.MemberCase: {MEMBER_CASE}
+      readability-identifier-naming.ConstantCase: {CONSTANT_CASE}
+    # 只抑制真正影响嵌入式开发的警告
+Suppress:
+{SUPPRESS_LIST_TIDY}

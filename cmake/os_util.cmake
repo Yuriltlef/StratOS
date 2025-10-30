@@ -1,3 +1,10 @@
+#
+#
+#
+#
+#
+#
+
 string(LENGTH "[${OS_PROJECT_NAME}][info] " log_head_len)
 string(REPEAT " " ${log_head_len} log_head_padding)
 
@@ -469,4 +476,81 @@ function(configure_user_target_include target_name)
     target_add_user_includes(${target_name} ${other_paths})
 
     message("[${CMAKE_PROJECT_NAME}][Tcfg] Success: ${target_name} fully configured with OS environment")
+endfunction()
+
+# 生成 clang 配置文件的函数
+function(generate_clang_config)
+    if(ENABLE_AUTO_CFG_CLANG)
+        set(OPTIONS)
+        set(ONE_VALUE_ARGS TOOLCHAIN_PATH)
+        set(MULTI_VALUE_ARGS)
+
+        cmake_parse_arguments(CLANG_CONFIG 
+            "${OPTIONS}" 
+            "${ONE_VALUE_ARGS}" 
+            "${MULTI_VALUE_ARGS}" 
+            ${ARGN}
+        )
+
+        set(CLANG_CONFIG_TARGET_MCU "${OS_MCU}")
+
+        # 查找 Python 解释器
+        find_package(Python3 COMPONENTS Interpreter QUIET)
+        if(NOT Python3_FOUND)
+            message("[${CMAKE_PROJECT_NAME}][error] can not find Python3 - skip clang configure")
+            message(WARNING "skip clangd configure.")
+            return()
+        endif()
+
+        # 检查脚本是否存在
+        if(NOT EXISTS "${CLANG_CFG_PY_SCRIPT}")
+            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config script: ${CLANG_CFG_PY_SCRIPT}")
+            message(FATAL_ERROR "can not find clang config script: ${CLANG_CFG_PY_SCRIPT}")
+        endif()
+
+        if(NOT EXISTS "${TIDY_TEMPLATE}")
+            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config template: ${TIDY_TEMPLATE}")
+            message(FATAL_ERROR "can not find clang config template ${TIDY_TEMPLATE}")
+        endif()
+
+        if(NOT EXISTS "${CLANGD_TEMPLATE}")
+            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config template: ${CLANGD_TEMPLATE}")
+            message(FATAL_ERROR "can not find clang config template ${CLANGD_TEMPLATE}")
+        endif()
+
+        message("[${CMAKE_PROJECT_NAME}][info] auto generate clang config files...")
+        message("[${CMAKE_PROJECT_NAME}][info]   - project toolchain: ${CLANG_CONFIG_TOOLCHAIN_PATH}")
+        message("[${CMAKE_PROJECT_NAME}][info]   - target MCU: ${CLANG_CONFIG_TARGET_MCU}")
+
+        # 执行 Python 脚本
+        execute_process(
+            COMMAND 
+                ${Python3_EXECUTABLE} 
+                "${CLANG_CFG_PY_SCRIPT}"
+                "${CLANG_CONFIG_TOOLCHAIN_PATH}"
+                "${CLANG_CONFIG_TARGET_MCU}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            RESULT_VARIABLE result_code
+            OUTPUT_VARIABLE output_text
+            ERROR_VARIABLE error_text
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_STRIP_TRAILING_WHITESPACE
+        )
+
+        # 处理结果
+        if(result_code EQUAL 0)
+            message("[${CMAKE_PROJECT_NAME}][info] generate clang config files success")
+            if(output_text)
+                message(VERBOSE "输出: ${output_text}")
+            endif()
+        else()
+            message("[${CMAKE_PROJECT_NAME}][error] ❌ generate clang config files failed")
+            if(error_text)
+                message(FATAL_ERROR "${error_text}")
+            endif()
+            if(output_text)
+                message(FATAL_ERROR "${output_text}")
+            endif()
+        endif()
+    endif()
 endfunction()

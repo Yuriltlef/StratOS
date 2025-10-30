@@ -1,0 +1,23 @@
+# .clangd 配置文件 - 根目录
+CompileFlags:
+  CompilationDatabase: {COMPILATION_DATABASE}
+  
+  Add: 
+{COMPILE_FLAGS}
+    
+  Remove: 
+{REMOVE_FLAGS}
+    
+# 诊断设置
+Diagnostics:
+  # 引用外部的 .clang-tidy 文件
+  Suppress:
+{SUPPRESS_LIST_CLANGD}
+
+# 索引设置
+Index:
+  Background: {INDEX_BACKGROUND}
+
+# 嵌入式特定设置
+Hover:
+  ShowAKA: {SHOW_AKA}
