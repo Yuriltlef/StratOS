@@ -1,12 +1,14 @@
 # .clangd 配置文件 - 根目录
 CompileFlags:
   CompilationDatabase: {COMPILATION_DATABASE}
+  Compiler: "{COMPILER_PATH}"
   
   Add: 
 {COMPILE_FLAGS}
     
   Remove: 
 {REMOVE_FLAGS}
+
     
 # 诊断设置
 Diagnostics:
