@@ -1,10 +1,11 @@
 /**
   ******************************************************************************
-  * @file    st7789_spi.c
+  * @file    st7786_spi.c
   * @author  Yurilt
   * @version V1.0.0
-  * @date    4-March-2025
-  * @brief   这是st7786 spi for stm32c8驱动
+  * @date    30-October-2025
+  * @brief   STM32标准库驱动源文件
+  * @note    此文件包含STM32标准库的外设驱动实现
   ******************************************************************************
   * @attention
   *
@@ -18,7 +19,6 @@
   ******************************************************************************
   */
 
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_spi.h"
@@ -29,8 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-
 /**
  * @brief  用户通过更改此变量实现自定义配置
  */
@@ -45,20 +43,16 @@ St7789InitStruct St7789Init = {
     ST_SPI_CS,
     60
 };
-
 /**
  * @brief  stm32通过spi发送单字节给st7789的函数
  * @note   注意在使用前初始化spi并连接好针脚
  * @param  bt  要传输的单个字节
  */
 void st7789SpiSendByte(uint8_t bt){
-
     /* 切换MOSI为输出模式 */
     SPI_BiDirectionalLineConfig(St7789Init.SPIx, SPI_Direction_Tx);
-
     /* SPI通讯超时检测，默认尝试FFFFh次 */
     uint16_t SPITimeOut = 0xFFFF;
-
     /* 检测缓冲区状态，如果一直非空则终止发送 */
     while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_TXE) == RESET) {
         if (SPITimeOut-- == 0) {
@@ -73,7 +67,6 @@ void st7789SpiSendByte(uint8_t bt){
     GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
     /* SPI发送数据 */
     SPI_I2S_SendData(St7789Init.SPIx, bt);
-
     /* 刷新计时器 */
     SPITimeOut = 0xFFFF;
     /* 检测SPI状态，如果一直忙终止发送 */
@@ -95,8 +88,6 @@ void st7789SpiSendByte(uint8_t bt){
     //dbgPrint("数据发送成功\n");
 #endif
 }
-
-
 /**
  * @brief  stm32通过spi(soft)发送字节块给st7789的函数
  * @note  可以考虑DMA发送减少cpu负担
@@ -106,7 +97,6 @@ void st7789SpiSendByte(uint8_t bt){
 void st7789SpiSendBytes(uint8_t* bts, uint32_t size) {
     /* 切换MOSI为输出模式 */
     SPI_BiDirectionalLineConfig(St7789Init.SPIx, SPI_Direction_Tx);
-
     uint16_t SPITimeOut = 0xFFFF;
     /* 片选 */
     GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
@@ -114,7 +104,6 @@ void st7789SpiSendBytes(uint8_t* bts, uint32_t size) {
     for (uint32_t i = 0; i < size; i++) {
     /* 检测缓冲区状态，如果一直非空则终止发送 */
         while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_TXE) == RESET) {  
-
             /* SPI通讯超时检测，默认尝试FFFFh次 */
             SPITimeOut = 0xFFFF;
             if (SPITimeOut-- == 0) {
@@ -149,8 +138,6 @@ void st7789SpiSendBytes(uint8_t* bts, uint32_t size) {
     //dbgPrint("数据发送成功\n");
 #endif
 }
-
-
 /**
  * @brief  stm32通过spi发送1byte数据给st7789的函数
  * @param  dat  数据
@@ -161,11 +148,8 @@ void st7789SpiSendData(uint8_t dat) {
     /* 发送 */
     st7789SpiSendByte(dat);
 }
-
-
 /* 标志位：DMA_busy */
 volatile static uint8_t DMA_busy = 0;
-
 /**
  * @brief  stm32通过spi dma发送字节块给st7789的函数
  * @param  bts  数据数组
@@ -206,8 +190,6 @@ void st7789SpiDMASendDatas(uint8_t* bts, uint32_t size) {
     /* 阻塞一下 */
     while (DMA_busy == 1);
 }
-
-
 /**
  * @brief  DMA发送中断服务函数
  */
@@ -230,8 +212,6 @@ void DMA1_Channel3_IRQHandler(void) {
 #endif 
     }
 }
-
-
 /**
  * @brief  stm32通过spi发送字节块给st7789的函数
  * @note  大块可以考虑DMA发送减少cpu负担
@@ -244,8 +224,6 @@ void st7789SpiSendDatas(uint8_t* dats, uint32_t size) {
     /* 发送 */
     st7789SpiSendBytes(dats, size);
 }
-
-
 /**
  * @brief  stm32通过spi 发送命令给st7789的函数
  * @param  cmd  命令
@@ -256,20 +234,15 @@ void st7789SpiSendCmd(St7786SpiCmd cmd) {
     /* 发送 */
     st7789SpiSendByte(cmd);
 }
-
-
 /**
  * @brief  stm32通过spi接受st7789数据的函数
  * @param  ptr  数据写入的地址
  */
 void st7789SpiRecvByte(uint32_t* ptr) {
-
     /* 切换MOSI为输入模式 */
     SPI_BiDirectionalLineConfig(St7789Init.SPIx, SPI_Direction_Rx);
-
     /* SPI通讯超时检测，默认尝试0xFFFFh次 */
     uint16_t SPITimeOut = 0xFFFF;
-
     /* 检测接收缓冲区状态 */
     while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_RXNE) == RESET) {
         if (SPITimeOut-- == 0){
@@ -288,8 +261,6 @@ void st7789SpiRecvByte(uint32_t* ptr) {
     dbgPrintf("写入成功\n");
 #endif
 }
-
-
 /**
  * @brief  stm32初始化SPI
  * @param  stInitStruct  初始化spi和针脚的结构
@@ -314,13 +285,10 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     NVIC_InitTypeDef NVIC_InitStr;
     /* 初始化GPIO变量 */
     GPIO_TypeDef* SPI_GPIOx;
-
     /* 初始化RCC */
     uint32_t SPI_RCC;
-
     /* 初始化SCK(SCL) MOSI(SDA) */
     uint16_t cousSCKPin, cousMOSIPin;
-
     /* 参数检测 */
     if (stInitStruct->SPIx != SPI1 && stInitStruct->SPI_REMAP != 0) {
 #if DEBUG_FLAG
@@ -390,7 +358,6 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     //     /* 绑定到PB15 */
     //     cousMOSIPin = GPIO_Pin_15;
     // }
-
     /* 使能SPI时钟 */
     RCC_APB2PeriphClockCmd(SPI_RCC, ENABLE);
     /* 使能GPIOx时钟 */
@@ -398,12 +365,10 @@ void st7789Init(St7789InitStruct* stInitStruct) {
                             | stInitStruct->ST_GPIOx_RCC, ENABLE);
     /* 开启DMA时钟 */
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
-                            
     /* 配置SPI的 CS引脚，普通IO即可 */
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_CS_Pin;
     GPIO_InitStr.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStr.GPIO_Mode = GPIO_Mode_Out_PP;
-
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
     /* 停止SPI */
     GPIO_SetBits(stInitStruct->ST_CL_GPIOx, stInitStruct->ST_CS_Pin);
@@ -418,7 +383,6 @@ void st7789Init(St7789InitStruct* stInitStruct) {
         cousMOSIPin
     );
 #endif
-    
     /* 配置LCD的 DC引脚*/
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_DC_Pin;
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr); 
@@ -428,16 +392,13 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     /* 配置LCD的 BLK引脚*/
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_BLK_Pin;
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
-
     /* 配置SPI的 SCK引脚*/
     GPIO_InitStr.GPIO_Pin = cousSCKPin;
     GPIO_InitStr.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_Init(SPI_GPIOx, &GPIO_InitStr);
-    
     /* 配置SPI的 MOSI引脚*/
     GPIO_InitStr.GPIO_Pin = cousMOSIPin;
     GPIO_Init(SPI_GPIOx, &GPIO_InitStr);
-
     /* 源数据地址(临时) */
     DMA_InitStru.DMA_MemoryBaseAddr = (uint32_t)0;
     /* 外设地址:SPI1 DR */
@@ -460,12 +421,10 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     DMA_InitStru.DMA_Priority = DMA_Priority_Medium;
     /* DMA M2M禁用 */
     DMA_InitStru.DMA_M2M = DMA_M2M_Disable;
-
     /* 配置DMA通道 */
     DMA_Init(ST_SPI_DMA, &DMA_InitStru);
     /* 失能DMA通道 */
     DMA_Cmd(ST_SPI_DMA, DISABLE);
-    
     /* 设置中断源 */
     NVIC_InitStr.NVIC_IRQChannel = DMA1_Channel3_IRQn;
     /* 设置抢占优先级 */
@@ -478,7 +437,6 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     NVIC_Init(&NVIC_InitStr);
     /* 配置DMA1启用传输完成中断 */
     DMA_ITConfig(ST_SPI_DMA, DMA_IT_TC, ENABLE);
-
     /* 方向为单线发送 */
     SPI_InitStr.SPI_Direction = SPI_Direction_1Line_Tx;
     /* 主机模式 */
@@ -497,14 +455,12 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     SPI_InitStr.SPI_FirstBit = SPI_FirstBit_MSB;
     /* CRC校验无效 */
     SPI_InitStr.SPI_CRCPolynomial = 7;
-
     /* 初始化SPIx */
     SPI_Init(stInitStruct->SPIx, &SPI_InitStr);
     /* 失能SPI DMA发送 */
     SPI_I2S_DMACmd(St7789Init.SPIx, SPI_I2S_DMAReq_Tx, DISABLE);
     /* 使能SPI */
     SPI_Cmd(stInitStruct->SPIx, ENABLE);
-    
     /* 硬件重置SPI */
     st7789HardReset();
     /* 解除睡眠 */
@@ -539,8 +495,6 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     st7789SpiSendCmd(DISPON);
     myDelay(10);
 }
-
-
 /**
  * @brief  LCD显示点阵字体
  * @note  坐标为相对屏幕左上角，行间距和字间距由显示坐标控制
@@ -564,15 +518,12 @@ void st7789SpiShowChar(
     uint8_t brgb[3];
     st7789ColorMap(frgb, fg);
     st7789ColorMap(brgb, bg);
-    
     /*    宽： (uint8_t)((siz >> 8) & 0xFF)
           高： (uint8_t)(siz & 0xFF) */
     /* buffer 大小 */
     uint32_t size =  (uint8_t)((siz >> 8) & 0xFF) * (uint8_t)(siz & 0xFF) * 3;
-    
     /* 初始化缓冲区 */
     uint8_t buffer[size];
-
     /* 选择点阵字体 */
     switch (siz) {
 //     case MINI:
@@ -603,7 +554,7 @@ void st7789SpiShowChar(
     case MID:
 #if DEBUG_FLAG
         /* only using in debug */
-        dbgPrintf("choose 32x32 %c\n", ch);
+        dbgPrintf("choose 24x32 %c\n", ch);
 #endif
         /* 遍历点阵算出rgb */
         /* (size / 3) / 8 为每个字符位图占用的字节 */
@@ -612,7 +563,7 @@ void st7789SpiShowChar(
             /* 双循环遍历位 */
             for (int j = 7; j >= 0; j--) {
                 /* 按位检测,从高位开始 */
-                if (((StAsciiFont32[ch - 32][i]) >> j) & 1 != 0) {
+                if ((((StAsciiFont32[ch - 32][i]) >> j) & 1) != 0) {
                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
@@ -659,8 +610,6 @@ void st7789SpiShowChar(
     st7789SpiSendCmd(RAMWR);
     st7789SpiDMASendDatas(buffer, size);
 }
-
-
 /**
  * @brief  LCD显示点阵字符串
  * @param  str  字符串
@@ -688,8 +637,6 @@ void st7789SpiShowStr(
         wx += ((uint8_t)(siz & 0xFF) + columnSpace);
     }
 }
-
-
 /**
  * @brief  设置屏幕显示的windows
  * @note  等价于设置行列指针，记得每次绘图都要设置，x[0:240] y[0:280]
@@ -721,8 +668,6 @@ void st7789SetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
     x0, y0-ST_R_OFFSET, x1, y1-ST_R_OFFSET);
 #endif
 }
-
-
 /**
  * @brief  设置屏幕显示的windows
  * @note  等价于设置行列指针，记得每次绘图都要设置，x[0:240] y[0:280]
@@ -735,24 +680,18 @@ void st7789SetWinRec(St7786Rect* rct) {
         rct->xs + rct->wide - 1,
         rct->ys + rct->height - 1);
 }
-
-
 /**
  * @brief   关闭背光
  */
 void st7789OffBg(void) {
 	GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
 }
-
-
 /**
  * @brief   开启背光
  */
 void st7789OnBg(void) {
 	GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
 }
-
-
 /**
  * @brief  用一种颜色填充某一块矩形区域
  * @param  rct  指向自定义矩形的指针
@@ -777,7 +716,6 @@ void st7789FillRect(St7786Rect* rct, St7786Spi4Color18* fg) {
     /* 开始写入 */
     uint8_t rgb[3];
     st7789ColorMap(rgb, fg);
-
     st7789SpiSendCmd(RAMWR);
     for (uint32_t i = 0; i < rct->height * rct->wide; i++) {
         st7789SpiSendData(rgb[0]);
@@ -785,8 +723,6 @@ void st7789FillRect(St7786Rect* rct, St7786Spi4Color18* fg) {
         st7789SpiSendData(rgb[2]);
     }
 }
-
-
 /**
  * @brief  用一种颜色填充某一块矩形区域
  * @param  rct  指向自定义矩形的指针
@@ -881,8 +817,6 @@ void st7789DMAFillRect(St7786Rect* rct, St7786Spi4Color18* fg) {
     free(buffer);
     }
 }
-
-
 /**
  * @brief  将用户自定义颜色转化成可发送的像素数据
  * @note  输入颜色色深为6bit[0,63]
@@ -894,8 +828,6 @@ void st7789ColorMap(uint8_t* buffer, St7786Spi4Color18* color) {
     buffer[1] = (63 - color->green) << 2;
     buffer[2] = (63 - color->blue) << 2;
 }
-
-
 /**
  * @brief  重新设置矩形
  * @param  rct  指向矩形指针
@@ -910,8 +842,6 @@ void st7789RectSet(St7786Rect* rct, uint32_t xs, uint32_t ys, uint32_t wide, uin
     rct->wide = wide;
     rct->height = height;
 }
-
-
 /**
  * @brief  重新设置颜色
  * @param  color  指向目标颜色
@@ -924,8 +854,6 @@ void st7789ColorSet(St7786Spi4Color18* color, uint8_t R, uint8_t G, uint8_t B) {
     color->green = G;
     color->blue = B;
 }
-
-
 /**
  * @brief  设置窗口内的前景
  * @note  不影响背景色（黑色）
@@ -938,10 +866,7 @@ void st7789SetRectFg(
     St7786Spi4Color18*  fg, 
     St7786Spi4Color18*  bg
 ) {
-
 }
-
-
 /**
  * @brief  设置窗口内的背景
  * @note  不影响前景（已显示的内容）
@@ -954,10 +879,7 @@ void st7789SetRectBg(
     St7786Spi4Color18* fg, 
     St7786Spi4Color18* bg
 ) {
-
 }
-
-
 /**
  * @brief  st7789硬件重置
  */
@@ -973,8 +895,6 @@ void st7789HardReset(void) {
         dbgPrintf("HardReset...\n");
 #endif
 }
-
-
 /**
  * @brief  st7789软件重置
  */
@@ -986,8 +906,6 @@ void st7789SoftReset(void) {
     st7789SpiSendCmd(SWREST);
     myDelay(20);
 }
-
-
 /**
  * @brief  LCD清屏
  */
@@ -1002,8 +920,6 @@ void st7789Clear(void) {
       };
     st7789DMAFillRect(&screen, &black);
 }
-
-
 /**
  * @brief  设置LCD的亮度
  * @param  lv  0:最暗 255:最亮
@@ -1013,8 +929,6 @@ void st7789SetLightLv(uint8_t lv) {
     st7789SpiSendCmd(WRDISBV);
     st7789SpiSendData(lv);
 }
-
-
 /**
  * @brief  LCD画线函数
  * @note  暂未启用，开销太大
@@ -1023,10 +937,7 @@ void st7789SetLightLv(uint8_t lv) {
  * @param  fg  前景色
  */
 void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg) {
-
 }
-
-
 /**
  * @brief  LCD画框框函数
  * @note  注意检查绘图缓冲区域
@@ -1035,10 +946,7 @@ void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg) 
  * @param  fg  前景色
  */
 void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg) {
-
 }
-
-
 /**
  * @brief  LCD画点函数
  * @note  暂未启用，开销太大
@@ -1047,10 +955,7 @@ void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg) {
  * @param  fg  前景色
  */
 void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* fg) {
-
 }
-
-
 /**
  * @brief  LCD画椭圆函数
  * @note  暂未启用，开销太大
@@ -1059,5 +964,4 @@ void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* f
  * @param  fg  前景色
  */
 void st7789DrawOval(St7786Oval* oval, uint8_t thickness, St7786Spi4Color18* fg) {
-
 }
