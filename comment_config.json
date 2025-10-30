@@ -1,0 +1,103 @@
+{
+  "exclude_dirs": [
+    ".cache", ".vscode", "build", "bin", "boost",
+    "docs", "examples", "LICENSES", "link", "scripts",
+    "tools", "stm32SL_temp", "user/libraries"
+  ],
+  "exclude_files": [
+    "README.MD", "README", "readme.md", "readme.txt",
+    "LICENSE", "CMakeLists.txt"
+  ],
+  "file_descriptions": {
+    ".c": {
+      "default": {
+        "description": "STM32标准库驱动源文件",
+        "note": "此文件包含STM32标准库的外设驱动实现"
+      },
+      "specific": {
+        "st7789Fonts.c": {
+          "description": "ST7789显示屏字体文件",
+          "note": "包含ST7789显示屏使用的ASCII字符和汉字字模数据"
+        },
+        "st7789.c": {
+          "description": "ST7789显示屏驱动",
+          "note": "实现ST7789 TFT液晶显示屏的初始化、清屏、绘制等基本功能"
+        },
+        "main.c": {
+          "description": "主程序入口文件",
+          "note": "包含main函数和系统初始化代码，程序从此处开始执行"
+        }
+      }
+    },
+    ".h": {
+      "default": {
+        "description": "STM32标准库头文件",
+        "note": "此文件包含STM32标准库的函数声明和宏定义"
+      },
+      "specific": {
+        "st7789Fonts.h": {
+          "description": "ST7789显示屏字体定义",
+          "note": "定义ST7789显示屏使用的字体结构和字模数据"
+        },
+        "st7789.h": {
+          "description": "ST7789显示屏驱动头文件",
+          "note": "声明ST7789显示屏驱动的函数接口和参数"
+        },
+        "main.h": {
+          "description": "主程序头文件",
+          "note": "包含主程序使用的全局变量声明和函数原型"
+        }
+      }
+    },
+    ".cpp": {
+      "default": {
+        "description": "C++源文件",
+        "note": "此文件包含C++类的实现代码"
+      },
+      "specific": {
+        "main.cpp": {
+          "description": "C++主程序入口",
+          "note": "包含C++程序的main函数和对象初始化"
+        }
+      }
+    },
+    ".hpp": {
+      "default": {
+        "description": "C++头文件",
+        "note": "此文件包含C++类的声明和模板定义"
+      },
+      "specific": {}
+    },
+    ".py": {
+      "default": {
+        "description": "Python脚本文件",
+        "note": "此文件包含Python脚本代码"
+      },
+      "specific": {
+        "update_comments.py": {
+          "description": "文件注释自动更新脚本",
+          "note": "自动为项目文件添加和更新标准注释头"
+        }
+      }
+    },
+    ".cmake": {
+      "default": {
+        "description": "CMake构建脚本",
+        "note": "此文件包含CMake构建系统的配置指令"
+      },
+      "specific": {}
+    },
+    ".md": {
+      "default": {
+        "description": "项目文档文件",
+        "note": "此文件包含项目使用说明和开发文档"
+      },
+      "specific": {}
+    }
+  },
+  "template_types": {
+    "c_template": [".c", ".h", ".cpp", ".hpp"],
+    "python_template": [".py"],
+    "script_template": [".cmake", ".md"]
+  }
+}

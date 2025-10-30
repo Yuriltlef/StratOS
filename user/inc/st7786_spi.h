@@ -1,19 +1,11 @@
 /**
   ******************************************************************************
-  * @file    st7789_spi.h
+  * @file    st7786_spi.h
   * @author  Yurilt
   * @version V1.0.0
-  * @date    4-March-2025
-  * @brief   这是st7786 spi for stm32c8驱动头文件。
-  * @attention
-  * 
-  * 该开发板使用的为spi三通道，传输单字节。默认颜色深度为RGB666，大小240x280
-  * spi通讯模式：CPOL = 0, CPHA = 1 (空闲时低电平，奇数边上升沿采样)
-  * 针脚定义 ____________________________________________
-  *         |SCL(DCX)   SDA(SDA)    CS(CSX)     DC(WRX) |
-  *         |RES(RESX)  BLK                             |
-  * 
-  * 由于限制，采用单线半双工，用户只能选择SPI1 SPI2
+  * @date    30-October-2025
+  * @brief   STM32标准库头文件
+  * @note    此文件包含STM32标准库的函数声明和宏定义
   ******************************************************************************
   * @attention
   *
@@ -29,13 +21,9 @@
 
 #ifndef __ST7786_SPI__
 #define __ST7786_SPI__
-
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_spi.h"
-
-
 /* 链接器配置 */
 #if defined(__GNUC__)
     #define LD_CONST_INTO_FLASH __attribute__((section(".rodata")))
@@ -44,9 +32,7 @@
 #else
     #define LD_CONST_INTO_FLASH
 #endif
-
 /* 默认的配置：SPI1 通过宏定义，用户可以通过修改St7789Init变量来自定义配置 */
-
 /* 主要控制驱动芯片的针脚口 */
 #define     ST_MAIN_GPIOx               GPIOA 
 /* spi的时钟信号 */      
@@ -61,12 +47,10 @@
 #define     ST_SPI_CS                   GPIO_Pin_4  
 /* DMA 选择 */
 #define     ST_SPI_DMA                  DMA1_Channel3
-
 /* 控制背光的针脚口 */
 #define     ST_BLK_GPIOx                GPIOA
 /* 显示屏背光开关，高电平使能 */
 #define     ST_BLK                      GPIO_Pin_13 
-
 /* 屏幕宽度 */
 #define     ST_WIDE                     (uint8_t)240
 /* 屏幕高度 */
@@ -75,13 +59,10 @@
 #define     ST_R_OFFSET                 (uint8_t)20
 /* LCD颜色格式 */
 #define     COLOR_BITS                  "18bits"
-
 /* 最大缓冲区大小,默认的大小为12K.注意不要让内存溢出 */
 #define     ST_MAX_BUFFER_SIZE          (uint32_t)0x3000
-
 /* 由缓冲区域计算出的最大矩形面积 */
 #define     ST_MAX_RECT_SIZE            (uint32_t)(ST_MAX_BUFFER_SIZE / 3)
-
 /* 常用颜色 */
 #define     ST_RED(name)                St7786Spi4Color18 name = {63, 0, 0}
 #define     ST_GREEN(name)              St7786Spi4Color18 name = {0, 63, 0}
@@ -91,8 +72,6 @@
 #define     ST_YELLO(name)              St7786Spi4Color18 name = {63, 63, 0}
 #define     ST_CYAN(name)               St7786Spi4Color18 name = {0, 63, 63}
 #define     ST_MAGENTA(name)            St7786Spi4Color18 name = {63, 0, 63}
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -213,23 +192,15 @@ typedef enum {
     PROMEN          = 0xFA,
     NVMSET          = 0xFC,
     PROMACT         = 0xFE
-
 }St7786SpiCmd;
-
-
 /* st7789 4wide spi 18bits color */
 typedef struct {
-
     uint8_t red;
     uint8_t green;
     uint8_t blue;
-
 }St7786Spi4Color18;
-
-
 /* st7789 lcd初始化 */
 typedef struct {
-    
     SPI_TypeDef*        SPIx;           /* SPI选择 */
     uint8_t             SPI_REMAP;      /* SPI针脚是否复用 0:未复用 */
     GPIO_TypeDef*       ST_CL_GPIOx;    /* LCD控制端口 */
@@ -239,86 +210,57 @@ typedef struct {
     uint16_t            ST_RES_Pin;     /* RES针脚 */
     uint16_t            ST_CS_Pin;      /* 软件片选 */
     uint8_t             frq;            /* 刷新率 */
-
 }St7789InitStruct;
 #ifdef __cplusplus
 }
 #endif
 /* 用户必须提供一个实例去初始化屏幕 */
 extern St7789InitStruct St7789Init;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 /* st7789 font size byte/char，高8位表示高度，低8位表示宽度 */
 typedef enum {
-
     MINI    = (uint16_t)(16 << 8 | 10),   /* 10x16 */
     MID     = (uint16_t)(32 << 8 | 24),   /* 24x32 */
     BIG     = (uint16_t)(64 << 8 | 48)    /* 48x64 */
-
 }St7786SpiFontSize;
-
-
 /* st7789 draw forms */
 typedef enum {
-
     Rect,
     Line,
     Point,
     Oval
-
 }St7786SpiForms;
-
-
 /* st7789 draw forms */
 typedef struct {
-
     uint16_t xs;        /* 左上角 */
     uint16_t ys;        /* 左上角 */
     uint16_t wide;
     uint16_t height;
-
 }St7786Rect;
-
 typedef struct {
-
     uint16_t xs;
     uint16_t ys;    
     uint16_t xe;
     uint16_t ye;
-
 }St7786Line;
-
 typedef struct {
-
     uint16_t x;
     uint16_t y;
-
 }St7786Point;
-
 typedef struct {
-
     uint16_t x;
     uint16_t y;
     uint16_t a;
     uint16_t b;
-
 }St7786Oval;
-
- 
-
 // /* 48x64的点阵,过大 */
 // extern const uint8_t StAsciiFont64[95][512] LD_CONST_INTO_FLASH;
 /* 24x32的点阵 */
 extern const uint8_t StAsciiFont32[95][96] LD_CONST_INTO_FLASH;
 // /* 10x16的点阵 */
 // extern const uint8_t StAsciiFont16[95][32];
-
-
-/** ********************************************************************************************************************************
-  * @defgroup ST7789 fuctions
-  */
 void st7789SpiSendByte(uint8_t bt);
 void st7789SpiSendBytes(uint8_t* bts, uint32_t size);
 void st7789SpiDMASendDatas(uint8_t* bts, uint32_t size);
@@ -348,7 +290,6 @@ void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg);
 void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg);
 void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* fg);
 void st7789DrawOval(St7786Oval* oval, uint8_t thickness, St7786Spi4Color18* fg);
-
 #ifdef __cplusplus
 }
 #endif

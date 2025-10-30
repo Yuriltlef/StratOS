@@ -3,9 +3,9 @@
   * @file    myDelay.h
   * @author  Yurilt
   * @version V1.0.0
-  * @date    4-March-2025
-  * @brief   这是自定义delay头文件。
-  * @attention  使用前初始化
+  * @date    30-October-2025
+  * @brief   STM32标准库头文件
+  * @note    此文件包含STM32标准库的函数声明和宏定义
   ******************************************************************************
   * @attention
   *
@@ -19,19 +19,13 @@
   ******************************************************************************
   */
 
-
 #ifndef __MY_DELAY__
 #define __MY_DELAY__
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_tim.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-/** ********************************************************************************************************************************
-  * @defgroup myDelay fuctions
-  */
 void myDelayInit(void);
 void myDelay(uint32_t ms);
 #ifdef __cplusplus

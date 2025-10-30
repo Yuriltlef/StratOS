@@ -1,4 +1,25 @@
-# ====================== 项目号 ======================
+#
+# ******************************************************************************
+# * @file    os_confing.cmake
+# * @author  Yurilt
+# * @version V1.0.0
+# * @date    30-October-2025
+# * @brief   CMake构建脚本
+# * @note    此文件包含CMake构建系统的配置指令
+# ******************************************************************************
+# * @attention
+# *
+# * Copyright (c) 2025 Yurilt.
+# * All rights reserved.
+# *
+# * This software is licensed under terms that can be found in the LICENSE file
+# * in the root directory of this software component.
+# * If no LICENSE file comes with this software, it is provided AS-IS.
+# *
+# ******************************************************************************
+#
+
+#
 set(OS_VERSION
     0.0.1
 )
@@ -49,7 +70,6 @@ set(OS_MUTUAL_FLAGS
     -specs=nano.specs
     -specs=nosys.specs
 )
-
 # ==================== C 编译选项 ======================
 set(OS_C_FLAGS
     -fno-strict-aliasing
@@ -85,7 +105,6 @@ set(OS_C_RELWITHDEBINFO_FLAGS
     -flto
     -DNDEBUG
 )
-
 # ==================== CPP 编译选项 ======================
 set(OS_CPP_FLAGS
     -fno-exceptions
@@ -128,14 +147,12 @@ set(OS_CPP_RELWITHDEBINFO_FLAGS
     -flto
     -DNDEBUG
 )
-
 # ==================== asm 编译选项 ======================
 set(OS_ASM_FLAGS
     ${OS_CPU_FLAGS}
     -x assembler-with-cpp
     -Wa,--warn
 )
-
 # ==================== ld 选项 ======================
 set(OS_LD_BASE_FLAGS
     -T ${OS_LD_SCRIPT}
@@ -155,19 +172,15 @@ set(OS_LD_DEBUG_FLAGS
     -Wl,--warn-common
     -Wl,--warn-once
 )
-
 set(OS_LD_RELEASE_FLAGS
     -Wl,--strip-debug
 )
-
 set(OS_LD_MINSIZEREL_FLAGS
     -Wl,--strip-debug
 )
-
 set(OS_LD_RELWITHDEBINFO_FLAGS
     -Wl,--warn-common
 )
-
 # ==================== CPP 特定链接脚本 ======================
 set(OS_CPP_LD_FLAGS
     -lstdc++ 
@@ -176,28 +189,22 @@ set(OS_CPP_LD_FLAGS
     -lc 
     -lgcc
 )
-
 # ==================== 构建输出设置 ======================
 # 输出完整编译命令
 option(ENABLE_FULL_COMPILE_OPTIONS BOOL)
 set(ENABLE_FULL_COMPILE_OPTIONS ON)
-
 # 输出完整链接命令
 option(ENABLE_FULL_LD_OPTIONS BOOL)
 set(ENABLE_FULL_LD_OPTIONS ON)
-
 # 测试语言生成表达式LGE
 option(ENABLE_LGE_CHECK BOOL)
 set(ENABLE_LGE_CHECK ON)
-
 # 输出用户自定义INC目录
 option(ENABLE_USER_INC_OUTPUT BOOL)
 set(ENABLE_USER_INC_OUTPUT ON)
-
 # 输出用户自定义bin output目录
 option(ENABLE_USER_BIN_OUTPUT BOOL)
 set(ENABLE_USER_BIN_OUTPUT ON)
-
 # 自动配置clangd
 option(ENABLE_AUTO_CFG_CLANG BOOL)
 set(ENABLE_AUTO_CFG_CLANG ON)
