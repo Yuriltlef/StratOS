@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-文件注释自动添加/更新脚本
-功能：扫描项目目录，为源代码文件添加或更新标准注释头
+File Comment Auto-Update Script
+Function: Scan project directory, add or update standard comment headers for source code files
 """
 
 import os
 import json
 import datetime
+import sys
 from pathlib import Path
 
 class FileCommentUpdater:
@@ -14,7 +15,7 @@ class FileCommentUpdater:
         self.root_dir = Path(root_dir)
         self.config = self.load_config(config_file)
         
-        # 注释符号定义
+        # Comment symbols definition
         self.comment_symbols = {
             '.c': ('/*', '*/'),
             '.h': ('/*', '*/'),
@@ -26,69 +27,69 @@ class FileCommentUpdater:
         }
 
     def load_config(self, config_file):
-        """加载配置文件"""
+        """Load configuration file"""
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
-            print(f"警告: 配置文件 {config_file} 未找到，使用默认配置")
+            print(f"WARNING: Configuration file {config_file} not found, using default configuration")
             return self.get_default_config()
         except json.JSONDecodeError as e:
-            print(f"错误: 配置文件格式错误 - {e}")
+            print(f"ERROR: Configuration file format error - {e}")
             return self.get_default_config()
 
     def get_default_config(self):
-        """获取默认配置"""
+        """Get default configuration"""
         return {
             "exclude_dirs": [".cache", ".vscode", "build", "bin"],
             "exclude_files": ["README.md", "README"],
             "file_descriptions": {
                 ".c": {
                     "default": {
-                        "description": "STM32标准库驱动源文件",
-                        "note": "此文件包含STM32标准库的外设驱动实现"
+                        "description": "STM32 Standard Library Driver Source File",
+                        "note": "This file contains STM32 standard library peripheral driver implementation"
                     },
                     "specific": {}
                 },
                 ".h": {
                     "default": {
-                        "description": "STM32标准库头文件",
-                        "note": "此文件包含STM32标准库的函数声明和宏定义"
+                        "description": "STM32 Standard Library Header File",
+                        "note": "This file contains STM32 standard library function declarations and macro definitions"
                     },
                     "specific": {}
                 },
                 ".cpp": {
                     "default": {
-                        "description": "C++源文件", 
-                        "note": "此文件包含C++类的实现代码"
+                        "description": "C++ Source File", 
+                        "note": "This file contains C++ class implementation code"
                     },
                     "specific": {}
                 },
                 ".hpp": {
                     "default": {
-                        "description": "C++头文件",
-                        "note": "此文件包含C++类的声明和模板定义"
+                        "description": "C++ Header File",
+                        "note": "This file contains C++ class declarations and template definitions"
                     },
                     "specific": {}
                 },
                 ".py": {
                     "default": {
-                        "description": "Python脚本文件",
-                        "note": "此文件包含Python脚本代码"
+                        "description": "Python Script File",
+                        "note": "This file contains Python script code"
                     },
                     "specific": {}
                 },
                 ".cmake": {
                     "default": {
-                        "description": "CMake构建脚本",
-                        "note": "此文件包含CMake构建系统的配置指令"
+                        "description": "CMake Build Script",
+                        "note": "This file contains CMake build system configuration instructions"
                     },
                     "specific": {}
                 },
                 ".md": {
                     "default": {
-                        "description": "项目文档文件", 
-                        "note": "此文件包含项目使用说明和开发文档"
+                        "description": "Project Documentation File", 
+                        "note": "This file contains project usage instructions and development documentation"
                     },
                     "specific": {}
                 }
@@ -96,15 +97,15 @@ class FileCommentUpdater:
         }
 
     def get_file_info(self, file_path):
-        """获取文件的描述和note信息"""
+        """Get file description and note information"""
         suffix = file_path.suffix.lower()
         filename = file_path.name
         
-        # 检查文件类型是否在配置中
+        # Check if file type is in configuration
         if suffix in self.config["file_descriptions"]:
             file_config = self.config["file_descriptions"][suffix]
             
-            # 优先使用特定文件配置，否则使用默认配置
+            # Prefer specific file configuration, otherwise use default
             if filename in file_config["specific"]:
                 specific_config = file_config["specific"][filename]
                 return specific_config.get("description", ""), specific_config.get("note", "")
@@ -112,14 +113,14 @@ class FileCommentUpdater:
                 default_config = file_config["default"]
                 return default_config.get("description", ""), default_config.get("note", "")
         
-        return "项目文件", ""
+        return "Project File", ""
 
     def generate_comment(self, filename, file_ext, description, note):
-        """生成注释内容"""
+        """Generate comment content"""
         current_date = datetime.datetime.now().strftime("%d-%B-%Y")
         year = datetime.datetime.now().year
         
-        # 添加note字段（如果存在）
+        # Add note field (if exists)
         note_section = ""
         if note:
             if file_ext in ['.c', '.h', '.cpp', '.hpp']:
@@ -195,30 +196,30 @@ class FileCommentUpdater:
 '''
 
     def match_line(self, line, s_sym, e_sym, stack):
-        """处理单行的栈操作"""
+        """Process stack operations for a single line"""
         i = 0
         line_len = len(line)
         
         while i < line_len:
             if s_sym == e_sym:
-                # 对于起始和结束符号相同的情况（如Python的三引号）
+                # For cases where start and end symbols are the same (like Python triple quotes)
                 if i + len(s_sym) <= line_len and line[i:i+len(s_sym)] == s_sym:
-                    if not stack:  # 栈为空，压入
+                    if not stack:  # Stack is empty, push
                         stack.append(s_sym)
                         i += len(s_sym)
-                    else:  # 栈不为空，弹出
+                    else:  # Stack is not empty, pop
                         stack.pop()
                         i += len(s_sym)
                 else:
                     i += 1
             else:
-                # 对于起始和结束符号不同的情况（如C的/*和*/）
+                # For cases where start and end symbols are different (like C /* and */)
                 if i + len(s_sym) <= line_len and line[i:i+len(s_sym)] == s_sym:
                     stack.append(s_sym)
                     i += len(s_sym)
                 elif i + len(e_sym) <= line_len and line[i:i+len(e_sym)] == e_sym:
                     if not stack:
-                        raise Exception("意外的结束符号")
+                        raise Exception("Unexpected end symbol")
                     stack.pop()
                     i += len(e_sym)
                 else:
@@ -227,7 +228,7 @@ class FileCommentUpdater:
         return stack
 
     def interval(self, content, file_ext):
-        """找到注释块的起始和结束位置，匹配错误时抛出异常"""
+        """Find the start and end positions of comment block, throw exception on matching error"""
         if file_ext not in self.comment_symbols:
             return 0, 0
 
@@ -237,13 +238,13 @@ class FileCommentUpdater:
         if not lines:
             return 0, 0
 
-        # 检查第一行是否有起始符号
+        # Check if first line has start symbol
         first_line = lines[0].strip()
 
-        # 对于脚本文件（#注释），我们检查是否以注释开始
+        # For script files (# comments), check if they start with comments
         if file_ext in ['.cmake', '.md']:
             if first_line.startswith(s_sym):
-                # 找到连续的注释行
+                # Find consecutive comment lines
                 end_line = 0
                 for i, line in enumerate(lines):
                     if not line.strip().startswith(s_sym):
@@ -254,77 +255,77 @@ class FileCommentUpdater:
                 return 0, end_line
             return 0, 0
 
-        # 对于C和Python文件，使用栈匹配
+        # For C and Python files, use stack matching
         stack = []
 
-        # 检查第一行
+        # Check first line
         stack = self.match_line(lines[0], s_sym, e_sym, stack)
 
         if not stack:
-            # 栈为空，说明第一行就完成了匹配（单行注释）
-            # 检查第一行结束符号后是否有非空白字符
+            # Stack is empty, matching completed in first line (single line comment)
+            # Check if there are non-whitespace characters after end symbol in first line
             if file_ext in ['.c', '.h', '.cpp', '.hpp']:
                 end_pos = lines[0].find(e_sym)
                 if end_pos != -1:
                     after_comment = lines[0][end_pos + len(e_sym):]
-                    if after_comment.strip():  # 有非空白字符
-                        raise Exception("注释结束符号后存在非空白字符")
+                    if after_comment.strip():  # Has non-whitespace characters
+                        raise Exception("Non-whitespace characters found after comment end symbol")
             elif file_ext == '.py':
                 end_pos = lines[0].find(e_sym)
                 if end_pos != -1:
                     after_comment = lines[0][end_pos + len(e_sym):]
-                    if after_comment.strip():  # 有非空白字符
-                        raise Exception("注释结束符号后存在非空白字符")
+                    if after_comment.strip():  # Has non-whitespace characters
+                        raise Exception("Non-whitespace characters found after comment end symbol")
 
             return 0, 1
 
-        # 继续处理后续行
+        # Continue processing subsequent lines
         e = 0
         for i in range(1, len(lines)):
             e = i
             stack = self.match_line(lines[i], s_sym, e_sym, stack)
 
             if not stack:
-                # 栈为空，匹配完成
-                # 检查结束行结束符号后是否有非空白字符
+                # Stack is empty, matching completed
+                # Check if there are non-whitespace characters after end symbol in end line
                 if file_ext in ['.c', '.h', '.cpp', '.hpp']:
                     end_pos = lines[i].find(e_sym)
                     if end_pos != -1:
                         after_comment = lines[i][end_pos + len(e_sym):]
-                        if after_comment.strip():  # 有非空白字符
-                            raise Exception("注释结束符号后存在非空白字符")
+                        if after_comment.strip():  # Has non-whitespace characters
+                            raise Exception("Non-whitespace characters found after comment end symbol")
                 elif file_ext == '.py':
                     end_pos = lines[i].find(e_sym)
                     if end_pos != -1:
                         after_comment = lines[i][end_pos + len(e_sym):]
-                        if after_comment.strip():  # 有非空白字符
-                            raise Exception("注释结束符号后存在非空白字符")
+                        if after_comment.strip():  # Has non-whitespace characters
+                            raise Exception("Non-whitespace characters found after comment end symbol")
 
                 return 0, e + 1
 
-        # 如果处理完所有行栈还不为空，说明注释不完整
+        # If stack is not empty after processing all lines, comment is incomplete
         if stack:
-            raise Exception("注释块不完整，缺少结束符号")
+            raise Exception("Incomplete comment block, missing end symbol")
 
         return 0, e + 1
 
     def should_process_file(self, file_path):
-        """判断是否应该处理该文件"""
-        # 检查是否在排除目录中
+        """Determine if the file should be processed"""
+        # Check if in excluded directories
         for part in file_path.parts:
             if part in self.config["exclude_dirs"]:
                 return False
         
-        # 检查是否是排除文件
+        # Check if excluded file
         if file_path.name in self.config["exclude_files"]:
             return False
         
-        # 检查文件后缀是否在配置中
+        # Check if file extension is in configuration
         suffix = file_path.suffix.lower()
         return suffix in self.config["file_descriptions"]
 
     def find_files_to_process(self):
-        """查找所有需要处理的文件"""
+        """Find all files to process"""
         files_to_process = []
         
         for file_path in self.root_dir.rglob('*'):
@@ -333,81 +334,96 @@ class FileCommentUpdater:
         
         return files_to_process
 
+    def print_error(self, message):
+        """Print error message with emphasis"""
+        print(f"\033[91mERROR: {message}\033[0m", file=sys.stderr)
+
+    def print_warning(self, message):
+        """Print warning message"""
+        print(f"\033[93mWARNING: {message}\033[0m", file=sys.stderr)
+
+    def print_success(self, message):
+        """Print success message"""
+        print(f"\033[92mSUCCESS: {message}\033[0m")
+
     def update_file_comments(self, file_path):
-        """更新或插入文件注释"""
+        """Update or insert file comments"""
         try:
-            # 读取文件内容
+            # Read file content
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 获取文件后缀和描述
+            # Get file extension and description
             file_ext = file_path.suffix.lower()
             description, note = self.get_file_info(file_path)
             
-            # 生成新注释
+            # Generate new comment
             new_comment = self.generate_comment(file_path.name, file_ext, description, note)
             
-            # 找到注释区间
+            # Find comment interval
             s, e = self.interval(content, file_ext)
             
             if e > 0:
-                # 替换现有注释
+                # Replace existing comment
                 lines = content.split('\n')
                 remaining_content = '\n'.join(lines[e:])
                 
-                # 确保注释和内容之间有适当的空行
+                # Ensure proper spacing between comment and content
                 if remaining_content and not remaining_content.startswith('\n'):
                     new_content = new_comment + '\n' + remaining_content
                 else:
                     new_content = new_comment + remaining_content
                     
-                print(f"  └── 替换注释 (第1-{e}行)")
+                print(f"  └── Replaced comment (lines 1-{e})")
             else:
-                # 插入新注释
+                # Insert new comment
                 if content and not content.startswith('\n'):
                     new_content = new_comment + '\n' + content
                 else:
                     new_content = new_comment + content
-                print(f"  └── 添加新注释")
+                print(f"  └── Added new comment")
             
-            # 写入文件
+            # Write to file
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             
             return True
             
         except Exception as e:
-            print(f"处理文件 {file_path} 时出错: {e}")
+            self.print_error(f"Failed to process file {file_path}: {e}")
             return False
 
     def process_all_files(self):
-        """处理所有文件"""
-        print("开始扫描项目文件...")
+        """Process all files"""
+        print("Scanning project files...")
         files_to_process = self.find_files_to_process()
         
-        print(f"找到 {len(files_to_process)} 个需要处理的文件")
+        print(f"Found {len(files_to_process)} files to process")
         
         success_count = 0
         for file_path in files_to_process:
             relative_path = file_path.relative_to(self.root_dir)
-            print(f"处理: {relative_path}")
+            print(f"Processing: {relative_path}")
             
             if self.update_file_comments(file_path):
                 success_count += 1
         
-        print(f"\n处理完成! 成功更新 {success_count}/{len(files_to_process)} 个文件")
+        if success_count == len(files_to_process):
+            self.print_success(f"Processing completed! Successfully updated {success_count}/{len(files_to_process)} files")
+        else:
+            self.print_warning(f"Processing completed with issues. Updated {success_count}/{len(files_to_process)} files")
 
 def main():
-    # 设置项目根目录（当前目录）
+    # Set project root directory (current directory)
     project_root = os.getcwd()
     
-    # 配置文件路径
+    # Configuration file path
     config_file = "comment_config.json"
     
-    # 创建更新器实例
+    # Create updater instance
     updater = FileCommentUpdater(project_root, config_file)
     
-    # 执行处理
+    # Execute processing
     updater.process_all_files()
 
 if __name__ == "__main__":
