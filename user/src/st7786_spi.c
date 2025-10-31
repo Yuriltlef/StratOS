@@ -496,7 +496,7 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     st7789SpiSendData(0x01);
     st7789SpiSendData(0x2C);
     /* 正常模式下的帧率：75 */
-    st7789SpiSendCmd(0xC6);
+    st7789SpiSendCmd(FRCTRL2);
     st7789SpiSendData(0x09);
     /* 清屏 */
     st7789Clear();

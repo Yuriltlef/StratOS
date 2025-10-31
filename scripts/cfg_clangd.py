@@ -100,6 +100,9 @@ class ClangConfigGenerator:
             "-fno-threadsafe-statics",
             "-fno-sized-deallocation",
 
+            # C++ header
+            "-xc++",
+
             # Optimization and linking options
             "-fdata-sections",
             "-ffunction-sections",
@@ -111,6 +114,7 @@ class ClangConfigGenerator:
             "-DOS_STM_RAM_SIZE=0x5000",
             "-D__CORTEX_M3",
             "-D__CPLUSPLUS",
+            "-D__cplusplus=201709L",
             "-DNO_EXCEPTIONS",
             "-DNO_RTTI",
 
