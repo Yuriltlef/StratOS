@@ -61,6 +61,7 @@ void USART_Config(void) {
     // 使能串口
     USART_Cmd(DEBUG_USARTx, ENABLE);
 }
+
 void Usart_SendByte(USART_TypeDef* pUSARTx, uint8_t ch) {
     /* 发送一个字节数据到USART */
     USART_SendData(pUSARTx, ch);
@@ -68,6 +69,7 @@ void Usart_SendByte(USART_TypeDef* pUSARTx, uint8_t ch) {
     while (USART_GetFlagStatus(pUSARTx, USART_FLAG_TXE) == RESET)
         ;
 }
+
 void Usart_SendString(USART_TypeDef* pUSARTx, const char* str) {
     unsigned int k = 0;
     do {
@@ -78,6 +80,7 @@ void Usart_SendString(USART_TypeDef* pUSARTx, const char* str) {
     /* 等待发送完成 */
     while (USART_GetFlagStatus(pUSARTx, USART_FLAG_TC) == RESET) {}
 }
+
 /**
  * @brief  stm32通过串口发送单字节给上位机的函数
  * @param  str  要传输的字符串
@@ -86,6 +89,7 @@ void __dprint(const char* str) {
     USART_Config();
     Usart_SendString(DEBUG_USARTx, str);
 }
+
 /**
  * @brief  stm32格式化输出
  */
@@ -97,6 +101,7 @@ void dbgPrintf(const char* format, ...) {
     va_end(args);
     __dprint(buffer);
 }
+
 uint8_t dscanf() {
     USART_Config();
     return USART_ReceiveData(DEBUG_USARTx);
