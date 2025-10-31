@@ -22,6 +22,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "myDelay.h"
 #include "stm32f10x_rcc.h"
+#include "stm32f10x_tim.h"
 
 /**
  * @brief  初始化延时函数

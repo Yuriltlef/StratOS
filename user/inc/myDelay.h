@@ -22,7 +22,11 @@
 #ifndef __MY_DELAY__
 #define __MY_DELAY__
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f10x_tim.h"
+#include "stm32f10x.h"
+
+#ifndef __STM32F10x_H
+static_assert(0, "can not find stm32 common definitions.");
+#endif
 
 #ifdef __cplusplus
 extern "C" {
