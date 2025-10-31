@@ -8,7 +8,7 @@ date: 2025-9-24
 
 # StratOS - a RTOS for ARM Cortex-M3 using Template-based Policy Design and GNU Toolchain<br>基于静态模板策略模式和GNU工具链的ARM Cortex-M3实时操作系统 
 
-[![License: LGPL v2.0](https://img.shields.io/badge/License-LGPL_v2.0-blue.svg)](https://www.gnu.org/licenses/lgpl-2.0)
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL_v3.0-blue.svg)](https://www.gnu.org/licenses/lgpl-2.0)
 [![GitHub release](https://img.shields.io/github/release/username/repository.svg)](https://github.com/username/repository/releases)
 
 </div>
