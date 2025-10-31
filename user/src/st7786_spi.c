@@ -28,7 +28,6 @@
 #include "debug.h"
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 /**
  * @brief  用户通过更改此变量实现自定义配置

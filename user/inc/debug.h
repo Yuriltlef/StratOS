@@ -21,13 +21,15 @@
 
 #ifndef __DUBG__
 #define __DUBG__
+
+#define DEBUG_FLAG 0
+
+#if DEBUG_FLAG
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
 
-#define DEBUG_FLAG 0
-#if DEBUG_FLAG
 
 #ifdef __cplusplus
 extern "C" {
