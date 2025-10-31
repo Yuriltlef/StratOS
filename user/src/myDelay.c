@@ -44,7 +44,7 @@ void myDelayInit(void) {
 void myDelay(uint32_t ms) {
     for (uint32_t i = 0; i < ms; i++) {
         while (!TIM_GetFlagStatus(TIM2, TIM_FLAG_Update))
-            ;
+
         TIM_ClearFlag(TIM2, TIM_FLAG_Update);
     }
 }

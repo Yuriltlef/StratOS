@@ -95,6 +95,7 @@ void update_state(NowState* keyState) {
 static NowState nowState = {Nothing, 0, 0};
 
 int main(void) {
+    constexpr int A {0};
     myDelayInit();
     St7786Spi4Color18 red = {63, 30, 10};
     st7789Init(&St7789Init);
