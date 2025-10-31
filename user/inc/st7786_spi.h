@@ -23,7 +23,6 @@
 #define __ST7786_SPI__
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_gpio.h"
-#include "stm32f10x_spi.h"
 
 /* 链接器配置 */
 #if defined(__GNUC__)
