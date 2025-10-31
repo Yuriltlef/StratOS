@@ -21,11 +21,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "debug.h"
-#include <stdarg.h>
-#include <stdio.h>
-
 
 #if DEBUG_FLAG
+
+#include <stdarg.h>
+#include <stdio.h>
 
 void USART_Config(void) {
     GPIO_InitTypeDef GPIO_InitStructure;
