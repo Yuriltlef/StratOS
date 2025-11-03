@@ -3,7 +3,7 @@
  * @file    main.cpp
  * @author  Yurilt
  * @version V1.0.0
- * @date    31-October-2025
+ * @date    03-November-2025
  * @brief   C++主程序入口
  * @note    包含C++程序的main函数和对象初始化
  ******************************************************************************
@@ -23,6 +23,7 @@
 #include "st7786_spi.h"
 #include "stm32f10x_gpio.h"
 #include "test_1.h"
+#include <cstdint>
 
 void gpioConfig(void) {
     GPIO_InitTypeDef GPIO_Config;
@@ -88,14 +89,30 @@ void update_state(NowState* keyState) {
                 keyState->state = KEY2_LONG_DOWN;
             }
             keyState->dowmTime2 = 0;
+            int* aaa = new int {0};
         }
     }
 }
 
 static NowState nowState = {Nothing, 0, 0};
 
-int main(void) {
+namespace Testt_constants {
+    constexpr int bs = 0;
+}
+
+struct Testt {
+    static constexpr int a() { return 0; }
+    static constexpr int b() { return 0; }
+    static constexpr int c() { return a() + b(); }
+    static constexpr int data() { return c();}
+};
+
+int main() {
     constexpr int A {0};
+    constexpr int delay_time {30};
+    uint32_t a23 {0};
+    a23 += A;
+    int testt = Testt::data();
     myDelayInit();
     St7786Spi4Color18 red = {63, 30, 10};
     st7789Init(&St7789Init);
