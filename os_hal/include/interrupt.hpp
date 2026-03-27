@@ -143,6 +143,65 @@ struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
 template <typename T>
 inline constexpr bool is_valid_interrupt_controller_v = is_valid_interrupt_controller<T>::value;
 
+/**
+ * @brief 检测类型 T 是否提供静态方法 in_isr()
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_in_isr_method : std::false_type {};
+template <typename T>
+struct has_in_isr_method<T, std::void_t<decltype(T::in_isr())>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_in_isr_method_v = has_in_isr_method<T>::value;
+
+/**
+ * @brief 检测类型 T 是否提供静态方法 get_current_irq()
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_get_current_irq_method : std::false_type {};
+template <typename T>
+struct has_get_current_irq_method<T, std::void_t<decltype(T::get_current_irq())>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_get_current_irq_method_v = has_get_current_irq_method<T>::value;
+
+/**
+ * @brief 检测类型 T 是否提供静态方法 set_priority_grouping(uint32_t)
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_set_priority_grouping_method : std::false_type {};
+template <typename T>
+struct has_set_priority_grouping_method<T,
+                                        std::void_t<decltype(T::set_priority_grouping(std::declval<std::uint32_t>()))>>
+    : std::true_type {};
+template <typename T>
+inline constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
+/**
+ * @brief 检测类型 T 是否提供静态方法 in_isr()
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_get_priority_grouping_method : std::false_type {};
+template <typename T>
+struct has_get_priority_grouping_method<T, std::void_t<decltype(T::get_priority_grouping())>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_get_priority_grouping_method_v = has_get_priority_grouping_method<T>::value;
+
+/**
+ * @brief 组合检测：判断类型 T 是否为增强的中断控制器策略
+ * @tparam T 待检测的类型
+ *
+ * 要求 T 必须提供上述所有增强静态方法（in_isr、get_current_irq、set_priority_grouping、get_priority_grouping）。
+ */
+template <typename T>
+struct is_enhanced_interrupt_controller : std::conjunction<has_in_isr_method<T>,
+                                                           has_get_current_irq_method<T>,
+                                                           has_set_priority_grouping_method<T>,
+                                                           has_get_priority_grouping_method<T>> {};
+template <typename T>
+inline constexpr bool is_enhanced_interrupt_controller_v = is_enhanced_interrupt_controller<T>::value;
+
 } // namespace strat_os::hal::traits
 
 namespace strat_os::hal
@@ -179,6 +238,8 @@ struct InterruptController {
 
     /// 中断号类型，取自策略类
     using IRQn_Type = typename Policy::IRQn_Type;
+    /// 是否支持增强功能（编译期常量）
+    static constexpr bool enhanced_controller = traits::is_enhanced_interrupt_controller_v<Policy>;
 
     /**
      * @brief 使能指定中断
@@ -243,8 +304,8 @@ struct InterruptController {
      * @return true 在中断中，false 在任务中
      * @note 仅当策略类提供 in_isr() 方法时可用，否则调用会导致编译错误
      */
-    template <typename P = Policy>
-    [[nodiscard]] static auto in_isr() noexcept -> decltype(P::in_isr()) {
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_in_isr_method_v<P>>>
+    [[nodiscard]] static bool in_isr() noexcept {
         return P::in_isr();
     }
 
@@ -253,7 +314,7 @@ struct InterruptController {
      * @return 中断号，若不在中断中则返回特定值（如 -1）
      * @note 仅当策略类提供 get_current_irq() 方法时可用
      */
-    template <typename P = Policy>
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_get_current_irq_method_v<P>>>
     [[nodiscard]] static auto get_current_irq() noexcept -> decltype(P::get_current_irq()) {
         return P::get_current_irq();
     }
@@ -263,7 +324,7 @@ struct InterruptController {
      * @param group 优先级分组值
      * @note 仅当策略类提供 set_priority_grouping() 方法时可用
      */
-    template <typename P = Policy>
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_set_priority_grouping_method_v<P>>>
     static void set_priority_grouping(std::uint32_t group) noexcept {
         P::set_priority_grouping(group);
     }
@@ -273,7 +334,7 @@ struct InterruptController {
      * @return 优先级分组值
      * @note 仅当策略类提供 get_priority_grouping() 方法时可用
      */
-    template <typename P = Policy>
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_get_priority_grouping_method_v<P>>>
     [[nodiscard]] static auto get_priority_grouping() noexcept -> decltype(P::get_priority_grouping()) {
         return P::get_priority_grouping();
     }
