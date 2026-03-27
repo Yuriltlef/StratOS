@@ -22,11 +22,13 @@
 #include "mu_sstl/containers/static_array.hpp"
 #include <cstdint>
 
-
-static mu_sstl::StaticArray<mu_sstl::StaticAllocPolicy<std::uint32_t, std::uint32_t, 100>> arr;
+constexpr static mu_sstl::StaticArray<mu_sstl::StaticAllocPolicy<std::uint32_t, std::uint32_t, 1000>> arr{};
 
 int main() {
-    arr.fill(42); // 使用 StaticArray 的 fill 方法初始化数组
-    while (1) {
+    auto i = arr.max_size();
+    while (true) {
+        for (auto i_ : arr) {
+            i = i_;
+        }
     }
 }

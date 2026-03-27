@@ -20,36 +20,28 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
+#include "st7786_spi.h"
+#include "debug.h"
+#include "myDelay.h"
+#include "stm32f10x_dma.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_spi.h"
-#include "stm32f10x_dma.h"
-#include "st7786_spi.h"
-#include "myDelay.h"
-#include "debug.h"
 #include <stdlib.h>
 #include <string.h>
+
 
 /**
  * @brief  用户通过更改此变量实现自定义配置
  */
-St7789InitStruct St7789Init = {
-    SPI1,
-    0,
-    GPIOA,
-    RCC_APB2Periph_GPIOA,
-    ST_SPI_DC,
-    GPIO_Pin_12,
-    ST_RES,
-    ST_SPI_CS,
-    60
-};
+St7789InitStruct St7789Init =
+    {.SPIx = SPI1, .SPI_REMAP = 0, GPIOA, RCC_APB2Periph_GPIOA, ST_SPI_DC, GPIO_Pin_12, ST_RES, ST_SPI_CS, 60};
 
 /**
  * @brief  stm32通过spi发送单字节给st7789的函数
  * @note   注意在使用前初始化spi并连接好针脚
  * @param  bt  要传输的单个字节
  */
-void st7789SpiSendByte(uint8_t bt){
+void st7789SpiSendByte(uint8_t bt) {
     /* 切换MOSI为输出模式 */
     SPI_BiDirectionalLineConfig(St7789Init.SPIx, SPI_Direction_Tx);
     /* SPI通讯超时检测，默认尝试FFFFh次 */
@@ -86,7 +78,7 @@ void st7789SpiSendByte(uint8_t bt){
     GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
 #if DEBUG_FLAG
     /* only using in debug */
-    //dbgPrint("数据发送成功\n");
+    // dbgPrint("数据发送成功\n");
 #endif
 }
 
@@ -104,8 +96,8 @@ void st7789SpiSendBytes(uint8_t* bts, uint32_t size) {
     GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
     /* SPI发送数据 */
     for (uint32_t i = 0; i < size; i++) {
-    /* 检测缓冲区状态，如果一直非空则终止发送 */
-        while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_TXE) == RESET) {  
+        /* 检测缓冲区状态，如果一直非空则终止发送 */
+        while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_TXE) == RESET) {
             /* SPI通讯超时检测，默认尝试FFFFh次 */
             SPITimeOut = 0xFFFF;
             if (SPITimeOut-- == 0) {
@@ -137,7 +129,7 @@ void st7789SpiSendBytes(uint8_t* bts, uint32_t size) {
     GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
 #if DEBUG_FLAG
     /* only using in debug */
-    //dbgPrint("数据发送成功\n");
+    // dbgPrint("数据发送成功\n");
 #endif
 }
 
@@ -170,20 +162,20 @@ void st7789SpiDMASendDatas(uint8_t* bts, uint32_t size) {
 #if DEBUG_FLAG
             /* only using in debug */
             dbgPrintf("dma bsy timeout. Try again.\n");
-#endif      
+#endif
             return;
-        } 
+        }
     }
-    //while (DMA_busy == 1)
+    // while (DMA_busy == 1)
     /* 设置标志位 */
     DMA_busy = 1;
 #if DEBUG_FLAG
     /* only using in debug */
     dbgPrintf("DMA size: %X\nDMA ME from: %X\n", size, (uint32_t)bts);
-#endif 
+#endif
     /* 初始化ram buffer地址和size */
     ST_SPI_DMA->CNDTR = size;
-    ST_SPI_DMA->CMAR = (uint32_t)bts;
+    ST_SPI_DMA->CMAR  = (uint32_t)bts;
     /* 片选 */
     GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_CS_Pin);
     /* 拉高SDA */
@@ -193,7 +185,8 @@ void st7789SpiDMASendDatas(uint8_t* bts, uint32_t size) {
     /* 使能DMA通道 */
     DMA_Cmd(ST_SPI_DMA, ENABLE);
     /* 阻塞一下 */
-    while (DMA_busy == 1);
+    while (DMA_busy == 1)
+        ;
 }
 
 /**
@@ -213,9 +206,9 @@ void DMA1_Channel3_IRQHandler(void) {
         /* 复位DMA_busy */
         DMA_busy = 0;
 #if DEBUG_FLAG
-            /* only using in debug */
+        /* only using in debug */
         dbgPrintf("DMA transfer done.\n");
-#endif 
+#endif
     }
 }
 
@@ -254,14 +247,14 @@ void st7789SpiRecvByte(uint32_t* ptr) {
     uint16_t SPITimeOut = 0xFFFF;
     /* 检测接收缓冲区状态 */
     while (SPI_I2S_GetFlagStatus(St7789Init.SPIx, SPI_I2S_FLAG_RXNE) == RESET) {
-        if (SPITimeOut-- == 0){
+        if (SPITimeOut-- == 0) {
 #if DEBUG_FLAG
             /* only using in debug */
             dbgPrintf("spi is busy. Try again.");
 #endif
             /* 超时退出 */
             return;
-                    }
+        }
     }
     /* 将数据写入目标地址 */
     *ptr = SPI_I2S_ReceiveData(St7789Init.SPIx);
@@ -277,7 +270,7 @@ void st7789SpiRecvByte(uint32_t* ptr) {
  * @note  只能选择SPI1,2 参数SPI_REMAP为针脚选择。默认为st文档默认
           SPI1_REMAP=0的配置(SPI2只能为0！)
           SPI1________________________________________________
-           |0: 没有重映像(NSS/PA4, SCK/PA5, MISO/PA6, MOSI/PA7)| 
+           |0: 没有重映像(NSS/PA4, SCK/PA5, MISO/PA6, MOSI/PA7)|
            |1: 重映像(NSS/PA15, SCK/PB3, MISO/PB3, MOSI/PB5)   |
  */
 void st7789Init(St7789InitStruct* stInitStruct) {
@@ -302,8 +295,8 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     /* 参数检测 */
     if (stInitStruct->SPIx != SPI1 && stInitStruct->SPI_REMAP != 0) {
 #if DEBUG_FLAG
-    /* only using in debug */
-    dbgPrintf("valid SPIx and SPI_REMAP\n");
+        /* only using in debug */
+        dbgPrintf("valid SPIx and SPI_REMAP\n");
 #endif
         return;
     }
@@ -324,8 +317,7 @@ void st7789Init(St7789InitStruct* stInitStruct) {
             dbgPrintf("choose SPI1 and remap...\n");
             dbgPrintf("choose GPIOB to SPI1, GPIOA to cs...\n");
 #endif
-        }
-        else {
+        } else {
             /* 绑定到GPIOA */
             SPI_GPIOx = GPIOA;
             /* 绑定到PA5 */
@@ -348,7 +340,7 @@ void st7789Init(St7789InitStruct* stInitStruct) {
         /* 绑定到PB13 */
         cousSCKPin = GPIO_Pin_13;
         /* 绑定到PB15 */
-        cousMOSIPin = GPIO_Pin_15;            
+        cousMOSIPin = GPIO_Pin_15;
         /* 绑定到SPI2RCC */
         SPI_RCC = RCC_APB1Periph_SPI2;
 #if DEBUG_FLAG
@@ -371,31 +363,29 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     /* 使能SPI时钟 */
     RCC_APB2PeriphClockCmd(SPI_RCC, ENABLE);
     /* 使能GPIOx时钟 */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB
-                            | stInitStruct->ST_GPIOx_RCC, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | stInitStruct->ST_GPIOx_RCC, ENABLE);
     /* 开启DMA时钟 */
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
     /* 配置SPI的 CS引脚，普通IO即可 */
-    GPIO_InitStr.GPIO_Pin = stInitStruct->ST_CS_Pin;
+    GPIO_InitStr.GPIO_Pin   = stInitStruct->ST_CS_Pin;
     GPIO_InitStr.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStr.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStr.GPIO_Mode  = GPIO_Mode_Out_PP;
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
     /* 停止SPI */
     GPIO_SetBits(stInitStruct->ST_CL_GPIOx, stInitStruct->ST_CS_Pin);
 #if DEBUG_FLAG
     /* only using in debug */
-    dbgPrintf("init GPIO_pinx... \n spi -> %X\n cl -> %X\n",SPI_GPIOx, stInitStruct->ST_CL_GPIOx);
-    dbgPrintf("The DC pin is %X\n RES pin is %X\n BLK pin is %X\n CS pin is %X\n SDA pin is %X\n", 
-        stInitStruct->ST_DC_Pin,
-        stInitStruct->ST_RES_Pin,
-        stInitStruct->ST_BLK_Pin,
-        stInitStruct->ST_CS_Pin,
-        cousMOSIPin
-    );
+    dbgPrintf("init GPIO_pinx... \n spi -> %X\n cl -> %X\n", SPI_GPIOx, stInitStruct->ST_CL_GPIOx);
+    dbgPrintf("The DC pin is %X\n RES pin is %X\n BLK pin is %X\n CS pin is %X\n SDA pin is %X\n",
+              stInitStruct->ST_DC_Pin,
+              stInitStruct->ST_RES_Pin,
+              stInitStruct->ST_BLK_Pin,
+              stInitStruct->ST_CS_Pin,
+              cousMOSIPin);
 #endif
     /* 配置LCD的 DC引脚*/
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_DC_Pin;
-    GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr); 
+    GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
     /* 配置LCD的 RES引脚*/
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_RES_Pin;
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
@@ -403,7 +393,7 @@ void st7789Init(St7789InitStruct* stInitStruct) {
     GPIO_InitStr.GPIO_Pin = stInitStruct->ST_BLK_Pin;
     GPIO_Init(stInitStruct->ST_CL_GPIOx, &GPIO_InitStr);
     /* 配置SPI的 SCK引脚*/
-    GPIO_InitStr.GPIO_Pin = cousSCKPin;
+    GPIO_InitStr.GPIO_Pin  = cousSCKPin;
     GPIO_InitStr.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_Init(SPI_GPIOx, &GPIO_InitStr);
     /* 配置SPI的 MOSI引脚*/
@@ -516,14 +506,12 @@ void st7789Init(St7789InitStruct* stInitStruct) {
  * @param  bg  背景色
  * @param  wide  字体大小, 每个方形字符分辨率宽
  */
-void st7789SpiShowChar(
-    const unsigned char     ch, 
-    uint16_t                wx,
-    uint16_t                hy, 
-    St7786Spi4Color18*      fg,
-    St7786Spi4Color18*      bg,
-    St7786SpiFontSize       siz
-) {
+void st7789SpiShowChar(const unsigned char ch,
+                       uint16_t wx,
+                       uint16_t hy,
+                       St7786Spi4Color18* fg,
+                       St7786Spi4Color18* bg,
+                       St7786SpiFontSize siz) {
     /* 重映射颜色 */
     uint8_t frgb[3];
     uint8_t brgb[3];
@@ -532,36 +520,36 @@ void st7789SpiShowChar(
     /*    宽： (uint8_t)((siz >> 8) & 0xFF)
           高： (uint8_t)(siz & 0xFF) */
     /* buffer 大小 */
-    uint32_t size =  (uint8_t)((siz >> 8) & 0xFF) * (uint8_t)(siz & 0xFF) * 3;
+    uint32_t size = (uint8_t)((siz >> 8) & 0xFF) * (uint8_t)(siz & 0xFF) * 3;
     /* 初始化缓冲区 */
     uint8_t buffer[size];
     /* 选择点阵字体 */
     switch (siz) {
-//     case MINI:
-// #if DEBUG_FLAG
-//         /* only using in debug */
-//         dbgPrintf("choose 16x16 %s\n", ch);
-// #endif
-//         /* 遍历点阵算出rgb */
-//         /* (size / 3) / 8 为每个字符位图占用的字节 */
-//         for (uint32_t i = 0; i < (size / 3) / 8 ; i++) {
-//             /* ascii偏移量：32 */
-//             /* 双循环遍历位 */
-//             for (uint8_t j = 7; j >= 0; j--) {
-//                 /* 按位检测,从高位开始 */
-//                 if ((StAsciiFont16[ch - 32][i] >> j) & 1) {
-//                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
-//                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
-//                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
-//                 }
-//                 else {
-//                     buffer[((i + 1) * 24 - 3 * j) - 3] = brgb[0];
-//                     buffer[((i + 1) * 24 - 3 * j) - 2] = brgb[1];
-//                     buffer[((i + 1) * 24 - 3 * j) - 1] = brgb[2];
-//                 }
-//             }
-//         }
-//         break;
+        //     case MINI:
+        // #if DEBUG_FLAG
+        //         /* only using in debug */
+        //         dbgPrintf("choose 16x16 %s\n", ch);
+        // #endif
+        //         /* 遍历点阵算出rgb */
+        //         /* (size / 3) / 8 为每个字符位图占用的字节 */
+        //         for (uint32_t i = 0; i < (size / 3) / 8 ; i++) {
+        //             /* ascii偏移量：32 */
+        //             /* 双循环遍历位 */
+        //             for (uint8_t j = 7; j >= 0; j--) {
+        //                 /* 按位检测,从高位开始 */
+        //                 if ((StAsciiFont16[ch - 32][i] >> j) & 1) {
+        //                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
+        //                 }
+        //                 else {
+        //                     buffer[((i + 1) * 24 - 3 * j) - 3] = brgb[0];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 2] = brgb[1];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 1] = brgb[2];
+        //                 }
+        //             }
+        //         }
+        //         break;
     case MID:
 #if DEBUG_FLAG
         /* only using in debug */
@@ -578,8 +566,7 @@ void st7789SpiShowChar(
                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
-                }
-                else {
+                } else {
                     buffer[((i + 1) * 24 - 3 * j) - 3] = brgb[0];
                     buffer[((i + 1) * 24 - 3 * j) - 2] = brgb[1];
                     buffer[((i + 1) * 24 - 3 * j) - 1] = brgb[2];
@@ -587,31 +574,31 @@ void st7789SpiShowChar(
             }
         }
         break;
-//     case BIG:
-// #if DEBUG_FLAG
-//         /* only using in debug */
-//         dbgPrintf("choose 64x64 %s\n", ch);
-// #endif
-//         /* 遍历点阵算出rgb */
-//         /* (size / 3) / 8 为每个字符位图占用的字节 */
-//         for (uint32_t i = 0; i < (size / 3) / 8; i++) {
-//             /* ascii偏移量：32 */
-//             /* 双循环遍历位 */
-//             for (uint8_t j = 7; j >= 0; j--) {
-//                 /* 按位检测,从高位开始 */
-//                 if ((StAsciiFont64[ch - 32][i] >> j) & 1) {
-//                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
-//                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
-//                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
-//                 }
-//                 else {
-//                     buffer[((i + 1) * 24 - 3 * j) - 3] = brgb[0];
-//                     buffer[((i + 1) * 24 - 3 * j) - 2] = brgb[1];
-//                     buffer[((i + 1) * 24 - 3 * j) - 1] = brgb[2];
-//                 }
-//             }
-//         }
-//         break;
+        //     case BIG:
+        // #if DEBUG_FLAG
+        //         /* only using in debug */
+        //         dbgPrintf("choose 64x64 %s\n", ch);
+        // #endif
+        //         /* 遍历点阵算出rgb */
+        //         /* (size / 3) / 8 为每个字符位图占用的字节 */
+        //         for (uint32_t i = 0; i < (size / 3) / 8; i++) {
+        //             /* ascii偏移量：32 */
+        //             /* 双循环遍历位 */
+        //             for (uint8_t j = 7; j >= 0; j--) {
+        //                 /* 按位检测,从高位开始 */
+        //                 if ((StAsciiFont64[ch - 32][i] >> j) & 1) {
+        //                     buffer[((i + 1) * 24 - 3 * j) - 3] = frgb[0];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 2] = frgb[1];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 1] = frgb[2];
+        //                 }
+        //                 else {
+        //                     buffer[((i + 1) * 24 - 3 * j) - 3] = brgb[0];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 2] = brgb[1];
+        //                     buffer[((i + 1) * 24 - 3 * j) - 1] = brgb[2];
+        //                 }
+        //             }
+        //         }
+        //         break;
     default:
         return;
     }
@@ -632,15 +619,13 @@ void st7789SpiShowChar(
  * @param  bg  背景色
  * @param  siz  字体大小
  */
-void st7789SpiShowStr(
-    const char*             str, 
-    int16_t                 columnSpace,
-    uint16_t                wx,
-    uint16_t                hy, 
-    St7786Spi4Color18*      fg,
-    St7786Spi4Color18*      bg,
-    St7786SpiFontSize       siz
-) {
+void st7789SpiShowStr(const char* str,
+                      int16_t columnSpace,
+                      uint16_t wx,
+                      uint16_t hy,
+                      St7786Spi4Color18* fg,
+                      St7786Spi4Color18* bg,
+                      St7786SpiFontSize siz) {
     /* 遍历字符串 */
     for (uint32_t i = 0; i < strlen(str); i++) {
         /* 显示字符 */
@@ -671,14 +656,13 @@ void st7789SetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
     st7789SpiSendData(x1 & 0xFF);
     /* 行坐标 */
     /* 先发高位字节 */
-    st7789SpiSendCmd(RASET); 
+    st7789SpiSendCmd(RASET);
     st7789SpiSendData(y0 >> 8);
     st7789SpiSendData(y0 & 0xFF);
     st7789SpiSendData(y1 >> 8);
     st7789SpiSendData(y1 & 0xFF);
 #if DEBUG_FLAG
-    dbgPrintf("set (%d, %d) to (%d, %d)\n",
-    x0, y0-ST_R_OFFSET, x1, y1-ST_R_OFFSET);
+    dbgPrintf("set (%d, %d) to (%d, %d)\n", x0, y0 - ST_R_OFFSET, x1, y1 - ST_R_OFFSET);
 #endif
 }
 
@@ -689,24 +673,21 @@ void st7789SetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
  */
 void st7789SetWinRec(St7786Rect* rct) {
     /* 设置window */
-    st7789SetWindow(rct->xs,
-        rct->ys,
-        rct->xs + rct->wide - 1,
-        rct->ys + rct->height - 1);
+    st7789SetWindow(rct->xs, rct->ys, rct->xs + rct->wide - 1, rct->ys + rct->height - 1);
 }
 
 /**
  * @brief   关闭背光
  */
 void st7789OffBg(void) {
-	GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
+    GPIO_ResetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
 }
 
 /**
  * @brief   开启背光
  */
 void st7789OnBg(void) {
-	GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
+    GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_BLK_Pin);
 }
 
 /**
@@ -719,15 +700,14 @@ void st7789FillRect(St7786Rect* rct, St7786Spi4Color18* fg) {
 #if DEBUG_FLAG
     /* only using in debug */
     dbgPrintf("fill rgb6bit[%d,%d,%d] from %d,%d to %d,%d ...\n",
-        fg->red,
-        fg->green,
-        fg->blue,
-        rct->xs,
-        rct->ys,
-        rct->xs + rct->wide - 1,
-        rct->ys + rct->height - 1
-    );
-#endif   
+              fg->red,
+              fg->green,
+              fg->blue,
+              rct->xs,
+              rct->ys,
+              rct->xs + rct->wide - 1,
+              rct->ys + rct->height - 1);
+#endif
     /* 设置window */
     st7789SetWinRec(rct);
     /* 开始写入 */
@@ -751,88 +731,86 @@ void st7789DMAFillRect(St7786Rect* rct, St7786Spi4Color18* fg) {
 #if DEBUG_FLAG
     /* only using in debug */
     dbgPrintf("DMA fill rgb6bit[%d,%d,%d] from %d,%d to %d,%d ...\n",
-        fg->red,
-        fg->green,
-        fg->blue,
-        rct->xs,
-        rct->ys,
-        rct->xs + rct->wide - 1,
-        rct->ys + rct->height - 1
-    );
+              fg->red,
+              fg->green,
+              fg->blue,
+              rct->xs,
+              rct->ys,
+              rct->xs + rct->wide - 1,
+              rct->ys + rct->height - 1);
 #endif
     /* 转换格式 */
     uint8_t rgb[3];
     st7789ColorMap(rgb, fg);
     /* 首先判断矩形大小是否小于12000byte */
-    if (rct->height * rct->wide <= ST_MAX_RECT_SIZE) { //用面积判断
+    if (rct->height * rct->wide <= ST_MAX_RECT_SIZE) { // 用面积判断
         /* 单缓冲直接发送 */
         uint8_t buffer[rct->height * rct->wide * 3];
         for (uint32_t i = 0; i < rct->height * rct->wide * 3; i += 3) {
-            buffer[i] = rgb[0];
+            buffer[i]     = rgb[0];
             buffer[i + 1] = rgb[1];
             buffer[i + 2] = rgb[2];
         }
         st7789SetWinRec(rct);
         /* DMA发送 */
         st7789SpiSendCmd(RAMWR);
-        st7789SpiDMASendDatas(buffer, rct->height * rct->wide * 3); 
+        st7789SpiDMASendDatas(buffer, rct->height * rct->wide * 3);
     }
     /* 大于12000 byte */
     else {
-    /* 根据矩形大小创建缓冲区 */
-    /* 设置最大块高度 */
-    uint32_t maxHeight = ST_MAX_RECT_SIZE / rct->wide;
-    /* 设置缓冲块数量 */
-    uint8_t subRectNum = rct->height / maxHeight;
-    /* 剩余块高度 */
-    uint8_t lastRectHeight = rct->height % maxHeight;
-    /* 重新设置窗口高度 */
-    rct->height = maxHeight;
+        /* 根据矩形大小创建缓冲区 */
+        /* 设置最大块高度 */
+        uint32_t maxHeight = ST_MAX_RECT_SIZE / rct->wide;
+        /* 设置缓冲块数量 */
+        uint8_t subRectNum = rct->height / maxHeight;
+        /* 剩余块高度 */
+        uint8_t lastRectHeight = rct->height % maxHeight;
+        /* 重新设置窗口高度 */
+        rct->height = maxHeight;
 #if DEBUG_FLAG
-    /* only using in debug */
-    dbgPrintf("maxHeight:%d; subRectNum:%d; lastRectHeight:%d; wide:%d; total size:%d\n",
-        maxHeight,
-        subRectNum,
-        lastRectHeight,
-        rct->wide,
-        rct->height * rct->wide
-    );
+        /* only using in debug */
+        dbgPrintf("maxHeight:%d; subRectNum:%d; lastRectHeight:%d; wide:%d; total size:%d\n",
+                  maxHeight,
+                  subRectNum,
+                  lastRectHeight,
+                  rct->wide,
+                  rct->height * rct->wide);
 #endif
-    uint32_t size = rct->wide * maxHeight * 3;
-    /* 分配缓冲区 */
-    uint8_t* buffer = (uint8_t*)malloc(size);
-    /* 先不判断是否整除，直接填充规则部分 */
-    /* 循环填充缓冲区 */
-    for (uint32_t j = 0; j < size; j += 3) {
-        buffer[j] = rgb[0];
-        buffer[j + 1] = rgb[1];
-        buffer[j + 2] = rgb[2];
-    }
-    for (uint8_t i = 0; i < subRectNum; i++) {
-        st7789SetWinRec(rct);
-        /* 窗口y坐标递增 */
-        rct->ys += maxHeight;
-        /* DMA发送 */
-        st7789SpiSendCmd(RAMWR);
-        /* 发给DMA后无需管理，CPU填充缓冲区 */
-        st7789SpiDMASendDatas(buffer, size);  
-    }
-    /* 释放内存 */
-    if (lastRectHeight != 0) {
-        /* 发送剩余块 */
-        uint8_t buffer[lastRectHeight * rct->wide * 3];
-        for (uint32_t i = 0; i < lastRectHeight * rct->wide * 3; i += 3) {
-            buffer[i] = rgb[0];
-            buffer[i + 1] = rgb[1];
-            buffer[i + 2] = rgb[2];
+        uint32_t size = rct->wide * maxHeight * 3;
+        /* 分配缓冲区 */
+        uint8_t* buffer = (uint8_t*)malloc(size);
+        /* 先不判断是否整除，直接填充规则部分 */
+        /* 循环填充缓冲区 */
+        for (uint32_t j = 0; j < size; j += 3) {
+            buffer[j]     = rgb[0];
+            buffer[j + 1] = rgb[1];
+            buffer[j + 2] = rgb[2];
         }
-        rct->height = lastRectHeight;
-        st7789SetWinRec(rct);
-        /* DMA发送 */
-        st7789SpiSendCmd(RAMWR);
-        st7789SpiDMASendDatas(buffer, lastRectHeight * rct->wide * 3);
-    }
-    free(buffer);
+        for (uint8_t i = 0; i < subRectNum; i++) {
+            st7789SetWinRec(rct);
+            /* 窗口y坐标递增 */
+            rct->ys += maxHeight;
+            /* DMA发送 */
+            st7789SpiSendCmd(RAMWR);
+            /* 发给DMA后无需管理，CPU填充缓冲区 */
+            st7789SpiDMASendDatas(buffer, size);
+        }
+        /* 释放内存 */
+        if (lastRectHeight != 0) {
+            /* 发送剩余块 */
+            uint8_t buffer[lastRectHeight * rct->wide * 3];
+            for (uint32_t i = 0; i < lastRectHeight * rct->wide * 3; i += 3) {
+                buffer[i]     = rgb[0];
+                buffer[i + 1] = rgb[1];
+                buffer[i + 2] = rgb[2];
+            }
+            rct->height = lastRectHeight;
+            st7789SetWinRec(rct);
+            /* DMA发送 */
+            st7789SpiSendCmd(RAMWR);
+            st7789SpiDMASendDatas(buffer, lastRectHeight * rct->wide * 3);
+        }
+        free(buffer);
     }
 }
 /**
@@ -856,9 +834,9 @@ void st7789ColorMap(uint8_t* buffer, St7786Spi4Color18* color) {
  * @param  height y方向长度
  */
 void st7789RectSet(St7786Rect* rct, uint32_t xs, uint32_t ys, uint32_t wide, uint32_t height) {
-    rct->xs = xs;
-    rct->ys = ys;
-    rct->wide = wide;
+    rct->xs     = xs;
+    rct->ys     = ys;
+    rct->wide   = wide;
     rct->height = height;
 }
 
@@ -870,9 +848,9 @@ void st7789RectSet(St7786Rect* rct, uint32_t xs, uint32_t ys, uint32_t wide, uin
  * @param  B  BLUE
  */
 void st7789ColorSet(St7786Spi4Color18* color, uint8_t R, uint8_t G, uint8_t B) {
-    color->red = R;
+    color->red   = R;
     color->green = G;
-    color->blue = B;
+    color->blue  = B;
 }
 
 /**
@@ -882,12 +860,7 @@ void st7789ColorSet(St7786Spi4Color18* color, uint8_t R, uint8_t G, uint8_t B) {
  * @param  fg  前景色指针
  * @param  bg  背景色指针
  */
-void st7789SetRectFg(
-    St7786Rect*         rct, 
-    St7786Spi4Color18*  fg, 
-    St7786Spi4Color18*  bg
-) {
-}
+void st7789SetRectFg(St7786Rect* rct, St7786Spi4Color18* fg, St7786Spi4Color18* bg) {}
 
 /**
  * @brief  设置窗口内的背景
@@ -896,12 +869,7 @@ void st7789SetRectFg(
  * @param  fg  前景色指针
  * @param  bg  背景色指针
  */
-void st7789SetRectBg(
-    St7786Rect* rct, 
-    St7786Spi4Color18* fg, 
-    St7786Spi4Color18* bg
-) {
-}
+void st7789SetRectBg(St7786Rect* rct, St7786Spi4Color18* fg, St7786Spi4Color18* bg) {}
 
 /**
  * @brief  st7789硬件重置
@@ -914,8 +882,8 @@ void st7789HardReset(void) {
     GPIO_SetBits(St7789Init.ST_CL_GPIOx, St7789Init.ST_RES_Pin);
     myDelay(20);
 #if DEBUG_FLAG
-        /* only using in debug */
-        dbgPrintf("HardReset...\n");
+    /* only using in debug */
+    dbgPrintf("HardReset...\n");
 #endif
 }
 
@@ -940,9 +908,7 @@ void st7789Clear(void) {
     dbgPrintf("clean LCD...\n");
 #endif
     St7786Spi4Color18 black = {0, 0, 0};
-    St7786Rect screen = {
-        0, 0, 240, 280
-      };
+    St7786Rect screen       = {0, 0, 240, 280};
     st7789DMAFillRect(&screen, &black);
 }
 
@@ -963,8 +929,7 @@ void st7789SetLightLv(uint8_t lv) {
  * @param  thickness  粗细
  * @param  fg  前景色
  */
-void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg) {
-}
+void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg) {}
 
 /**
  * @brief  LCD画框框函数
@@ -973,8 +938,7 @@ void st7789DrawLine(St7786Line* line, uint8_t thickness, St7786Spi4Color18* fg) 
  * @param  thickness  线条宽度
  * @param  fg  前景色
  */
-void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg) {
-}
+void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg) {}
 
 /**
  * @brief  LCD画点函数
@@ -983,8 +947,7 @@ void st7789DrawRect(St7786Rect* rct, uint8_t thickness, St7786Spi4Color18* fg) {
  * @param  thickness  大小
  * @param  fg  前景色
  */
-void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* fg) {
-}
+void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* fg) {}
 
 /**
  * @brief  LCD画椭圆函数
@@ -993,5 +956,4 @@ void st7789DrawPoint(St7786Point* point, uint8_t thickness, St7786Spi4Color18* f
  * @param  thickness  线条粗细
  * @param  fg  前景色
  */
-void st7789DrawOval(St7786Oval* oval, uint8_t thickness, St7786Spi4Color18* fg) {
-}
+void st7789DrawOval(St7786Oval* oval, uint8_t thickness, St7786Spi4Color18* fg) {}

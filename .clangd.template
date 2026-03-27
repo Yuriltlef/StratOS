@@ -55,6 +55,7 @@ CompileFlags:
   Remove:
     - -fno-weak
     - -std=c++17          # 确保即使有残留也移除（来自数据库的）
+    - -Wl,*
 
 # 为 C++ 文件单独添加 C++17 标准
 If:
@@ -71,15 +72,6 @@ Diagnostics:
     - "non_asm_stmt_in_naked_function"
     - "embedded_include_in_asm"
     - "expected_string_literal_in_asm"
-    - "base_must_be_class"
-    - "unknown_type_or_class_name_suggest"
-    - "using_decl_requires_typename"
-    - "no_template_named"
-    - "no_template_suggest"
-    - "template_arg_must_be_type"
-    - "template_arg_list_different_arity"
-    - "undeclared_var_use"
-    - "unknown-typename"
 
 Documentation:
   CommentFormat: Doxygen
