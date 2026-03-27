@@ -76,6 +76,7 @@ configure_target(${OS_ELF_TARGET})
 # 创建接口库
 add_library(OS_INTERNAL_INC INTERFACE)
 target_include_directories(OS_INTERNAL_INC INTERFACE 
+    ${OS_INC}
     ${OS_CMSIS_INC}
     ${OS_STDPERIPH_DRIVER_INC}
 )
@@ -87,6 +88,7 @@ add_library(OS_INTERNAL_SRC OBJECT
     ${OS_STDPERIPH_DRIVER_SRC}
 )
 target_include_directories(OS_INTERNAL_SRC PRIVATE 
+    ${OS_INC}
     ${OS_CMSIS_INC}
     ${OS_STDPERIPH_DRIVER_INC}
 )
