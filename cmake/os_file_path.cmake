@@ -19,13 +19,17 @@
 # ******************************************************************************
 #
 
-#
+# ====================== 链接脚本 ======================
 set(OS_LD_SCRIPT 
     "${CMAKE_SOURCE_DIR}/os_linker/stm32_f10x/STM32F103md_FLASH.ld"
 )
 # ====================== 启动文件 ======================
 set(OS_STARTUP
     "${CMAKE_SOURCE_DIR}/os_boost/stm32_f10x/startup_stm32f10x_md.s"
+)
+# ====================== StratOS系统目录 ======================
+set(OS_INC
+    "${CMAKE_SOURCE_DIR}/"
 )
 # ====================== CMSIS 内核文件 ======================
 file(GLOB_RECURSE OS_CMSIS_SRC
