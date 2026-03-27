@@ -84,6 +84,20 @@ class ClangConfigGenerator:
         """Format suppress list"""
         indent_str = " " * indent
         return "\n".join([f'{indent_str}- "{item}"' for item in suppress_list])
+    
+    def _get_project_include_dirs(self) -> List[str]:
+        """检测常见的项目头文件目录"""
+        dirs = []
+        # 项目自身的 include 目录
+        proj_include = Path.cwd() / "include"
+        if proj_include.exists():
+            dirs.append(str(proj_include.resolve()))
+        # MUSSTL 的安装头文件目录（根据你的实际路径调整）
+        musstl_include = Path.cwd() / "libraries" / "MUSSTL" / "install" / "include"
+        if musstl_include.exists():
+            dirs.append(str(musstl_include.resolve()))
+        # 可根据需要添加更多路径
+        return dirs
 
     def _get_compile_flags(self) -> List[str]:
         """Get compilation flags list"""
@@ -91,6 +105,7 @@ class ClangConfigGenerator:
             "--target=arm-none-eabi",
             "-mthumb",
             f"-mcpu={self.target_mcu}",
+            "-std=c++17",  # 添加 C++17 标准
 
             # C++ feature restrictions
             "-fno-exceptions",
@@ -131,6 +146,10 @@ class ClangConfigGenerator:
             "-include",
             "stm32f10x.h"
         ]
+
+            # 添加项目头文件路径
+        for inc in self._get_project_include_dirs():
+            flags.extend(["-I", inc])
 
         # Add toolchain header paths from compiler
         flags.extend(self._get_toolchain_include_paths())

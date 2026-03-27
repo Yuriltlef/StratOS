@@ -21,31 +21,31 @@
 
 #
 set(OS_LD_SCRIPT 
-    "${CMAKE_SOURCE_DIR}/link/stm32_f10x/STM32F103md_FLASH.ld"
+    "${CMAKE_SOURCE_DIR}/os_linker/stm32_f10x/STM32F103md_FLASH.ld"
 )
 # ====================== 启动文件 ======================
 set(OS_STARTUP
-    "${CMAKE_SOURCE_DIR}/boost/stm32_f10x/startup_stm32f10x_md.s"
+    "${CMAKE_SOURCE_DIR}/os_boost/stm32_f10x/startup_stm32f10x_md.s"
 )
 # ====================== CMSIS 内核文件 ======================
 file(GLOB_RECURSE OS_CMSIS_SRC
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/CMSIS/CM3/CoreSupport/*.c"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/*.c"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/CMSIS/CM3/CoreSupport/*.c"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/*.c"
 )
 set(OS_CMSIS_INC
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/CMSIS/"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/CMSIS/CM3/CoreSupport/"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/CMSIS/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/CMSIS/CM3/CoreSupport/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/"
 )
 # ====================== 标准库外设源文件 ======================
 file(GLOB_RECURSE OS_STDPERIPH_DRIVER_SRC
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/STM32F10x_StdPeriph_Driver/src/*.c"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/STM32F10x_StdPeriph_Driver/src/*.cpp"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/STM32F10x_StdPeriph_Driver/src/*.c"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/STM32F10x_StdPeriph_Driver/src/*.cpp"
 )
 set(OS_STDPERIPH_DRIVER_INC
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/STM32F10x_StdPeriph_Driver/"
-    "${CMAKE_SOURCE_DIR}/stm32SL_temp/Libraries/STM32F10x_StdPeriph_Driver/inc/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/STM32F10x_StdPeriph_Driver/"
+    "${CMAKE_SOURCE_DIR}/libraries/stm32SL/Libraries/STM32F10x_StdPeriph_Driver/inc/"
 )
 # ====================== 用户文件 ======================
 file(GLOB_RECURSE USER_SRC

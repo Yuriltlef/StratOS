@@ -1,0 +1,38 @@
+@PACKAGE_INIT@
+
+# 检查C++标准
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-std=c++17 HAS_CXX17)
+if(NOT HAS_CXX17)
+    message(FATAL_ERROR "µSTL requires C++17 support")
+endif()
+
+# 包含目标文件
+include("${CMAKE_CURRENT_LIST_DIR}/MUSSTLTargets.cmake")
+
+# 提供find_package兼容性
+set(MUSSTL_FOUND TRUE)
+set(MUSSTL_VERSION @PROJECT_VERSION@)
+# 检查必需的定义
+if(NOT DEFINED MUSSTL_NO_DYNAMIC_ALLOCATION)
+    set(MUSSTL_NO_DYNAMIC_ALLOCATION 1)
+endif()
+
+# 提供使用函数
+macro(MUSSTL_require_static_allocation)
+    if(NOT MUSSTL_NO_DYNAMIC_ALLOCATION)
+        message(FATAL_ERROR 
+            "MUSSTL requires static allocation. "
+            "Define MUSSTL_NO_DYNAMIC_ALLOCATION=1"
+        )
+    endif()
+endmacro()
+
+macro(MUSSTL_require_no_exceptions)
+    if(NOT MUSSTL_NO_EXCEPTIONS)
+        message(FATAL_ERROR 
+            "MUSSTL requires no exceptions. "
+            "Define MUSSTL_NO_EXCEPTIONS=1"
+        )
+    endif()
+endmacro()

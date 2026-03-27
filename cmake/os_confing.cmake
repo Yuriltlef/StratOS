@@ -162,6 +162,7 @@ set(OS_LD_BASE_FLAGS
     -Wl,--gc-sections
     -Wl,--cref
     -Wl,--print-memory-usage
+    -Wl,--no-warn-rwx-segments
 )
 set(OS_CPP_LD_FLAGS
     -Wl,--no-wchar-size-warning

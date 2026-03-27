@@ -10,6 +10,9 @@ include(${CMAKE_SOURCE_DIR}/cmake/os_file_path.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/os_confing.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/os_util.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/path.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/log_utils.cmake)
+
+set(LOG_PROJECT_NAME ${OS_PROJECT_NAME})
 
 # 配置基础设置
 set(LIYSTD_LICENSE "LGPL-3.0" CACHE STRING "Library license type")
@@ -53,15 +56,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 输出基础配置信息
 print_project_info()
-message("[${CMAKE_PROJECT_NAME}][info] Now cmake version is " ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-message("[${CMAKE_PROJECT_NAME}][info] CXX standard of " ${PROJECT_NAME} " is " ${OS_CPP_STANDARD})
-message("[${CMAKE_PROJECT_NAME}][info] C standard of " ${PROJECT_NAME} " is " ${OS_C_STANDARD})
-message("[${CMAKE_PROJECT_NAME}][info] Color output is enabled")
+log_info("Now cmake version is ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
+log_info("CXX standard of ${PROJECT_NAME} is ${OS_CPP_STANDARD}")
+log_info("C standard of ${PROJECT_NAME} is ${OS_C_STANDARD}")
+log_info("Color output is enabled")
 
 configure_mutual_marco(${OS_STM_LIB_TYPE_FLAG} ${OS_STM_MODEL} ${OS_CONFING})
 
-# 配置clangd
-generate_clang_config(TOOLCHAIN_PATH ${ARM_TOOLCHAIN_PATH})
+# 配置clangd(禁用，请勿开启)
+# generate_clang_config(TOOLCHAIN_PATH ${ARM_TOOLCHAIN_PATH})
 
 # 配置StratOS构建测试
 add_executable(${OS_ELF_TARGET}
@@ -87,6 +90,12 @@ target_include_directories(OS_INTERNAL_SRC PRIVATE
     ${OS_CMSIS_INC}
     ${OS_STDPERIPH_DRIVER_INC}
 )
+
+list(APPEND CMAKE_PREFIX_PATH "${MUSSTL_INSTALL_DIR}")
+# 查找 MUSSTL 库
+find_package(MUSSTL 0.1.0 REQUIRED)
+
+log_info("MUSSTL found: ${MUSSTL_FOUND}")
 
 configure_target(OS_INTERNAL_SRC)
 
