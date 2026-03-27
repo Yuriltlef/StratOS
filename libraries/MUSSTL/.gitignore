@@ -1,0 +1,76 @@
+# CMake 项目常用 .gitignore
+
+# 构建目录
+/build/
+/Build/
+/cmake-build-*/
+/out/
+/build-*/
+
+# CMake 生成文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+install_manifest.txt
+
+# 可执行、库与中间文件
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+*.lo
+*.pch
+*.pdb
+
+# 编译器/覆盖率文件
+*.gcno
+*.gcda
+*.gcov
+*.profraw
+*.profdata
+coverage/
+coverage.*
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+*.userosscache
+*.ncb
+*.sdf
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio 特定
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+
+# Xcode / macOS
+*.xcuserstate
+*.xcuserdata/
+DerivedData/
+
+# 临时/备份文件
+*~
+*.swp
+*.swo
+*.tmp
+*.temp
+.#*
+# 标签/索引
+tags
+cscope.*
+
+# 操作系统文件
+.DS_Store
+Thumbs.db

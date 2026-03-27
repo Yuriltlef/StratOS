@@ -22,13 +22,16 @@
 #
 string(LENGTH "[${OS_PROJECT_NAME}][info] " log_head_len)
 string(REPEAT " " ${log_head_len} log_head_padding)
+include(${CMAKE_SOURCE_DIR}/cmake/log_utils.cmake)
+
 # 基础宏定义
 function(configure_mutual_marco)
     foreach(marco IN LISTS ARGN)
         add_definitions(-D${marco})
-        message("[${CMAKE_PROJECT_NAME}][info] defined global marco: " ${marco})
+        log_info("defined global marco: ${marco}")
     endforeach()
 endfunction()
+
 # 为特定目标设置编译选项
 function(configure_arm_compiler target_name)
     target_compile_definitions(${target_name} PRIVATE
@@ -41,30 +44,32 @@ function(configure_arm_compiler target_name)
             NO_RTTI
         >
     )
-    message("[${CMAKE_PROJECT_NAME}][info] ${target_name} defined C: __CORTEX_M3")
-    message("[${CMAKE_PROJECT_NAME}][info] ${target_name} defined CPP: __CPLUSPLUS NO_EXCEPTIONS NO_RTTI")
+    log_info("${target_name} defined C: __CORTEX_M3")
+    log_info("${target_name} defined CPP: __CPLUSPLUS NO_EXCEPTIONS NO_RTTI")
 endfunction()
+
 # 输出提示:美观的项目名和版本号
 function(print_project_info)
     # 获取当前日期
     string(TIMESTAMP CURRENT_DATE "%Y-%m-%d")
     string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
-    message("")
-    message("[${CMAKE_PROJECT_NAME}][info]┌────────────────────────────────────────┐")
-    message("[${CMAKE_PROJECT_NAME}][info]│            STRATOS  FIRMWARE           │")
-    message("[${CMAKE_PROJECT_NAME}][info]├────────────────────────────────────────┤")
-    message("[${CMAKE_PROJECT_NAME}][info]│  Project: ${CMAKE_PROJECT_NAME}")
-    message("[${CMAKE_PROJECT_NAME}][info]│                                        │")
-    message("[${CMAKE_PROJECT_NAME}][info]│  Version: ${PROJECT_VERSION}")
-    message("[${CMAKE_PROJECT_NAME}][info]│                                        │")
-    message("[${CMAKE_PROJECT_NAME}][info]│  Build:   ${CURRENT_DATE} ${CURRENT_TIME}")
-    message("[${CMAKE_PROJECT_NAME}][info]│                                        │")
-    message("[${CMAKE_PROJECT_NAME}][info]│  Target:  ${CMAKE_SYSTEM_PROCESSOR} ${OS_MCU}")
-    message("[${CMAKE_PROJECT_NAME}][info]│                                        │")
-    message("[${CMAKE_PROJECT_NAME}][info]│  Build Type:  ${CMAKE_BUILD_TYPE}")
-    message("[${CMAKE_PROJECT_NAME}][info]└────────────────────────────────────────┘")
-    message("")
+    log_info("")
+    log_info("┌────────────────────────────────────────┐")
+    log_info("│            STRATOS  FIRMWARE           │")
+    log_info("├────────────────────────────────────────┤")
+    log_info("│  Project: ${CMAKE_PROJECT_NAME}")
+    log_info("│                                        │")
+    log_info("│  Version: ${PROJECT_VERSION}")
+    log_info("│                                        │")
+    log_info("│  Build:   ${CURRENT_DATE} ${CURRENT_TIME}")
+    log_info("│                                        │")
+    log_info("│  Target:  ${CMAKE_SYSTEM_PROCESSOR} ${OS_MCU}")
+    log_info("│                                        │")
+    log_info("│  Build Type:  ${CMAKE_BUILD_TYPE}")
+    log_info("└────────────────────────────────────────┘")
+    log_info("")
 endfunction()
+
 # 配置目标编译指令
 function(configure_compiler target_name)
     target_compile_options(${target_name} PRIVATE
@@ -149,72 +154,73 @@ function(configure_compiler target_name)
     list(JOIN OS_ASM_FLAGS " " OS_ASM_FLAGS_STR)
     if(ENABLE_FULL_COMPILE_OPTIONS)
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_CPP_FLAGS_STR}
                 ${OS_CPP_WARNNING_STR}
                 ${OS_CPP_DEBUG_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_C_FLAGS_STR}
                 ${OS_C_WARNNING_FLAGS_STR}
                 ${OS_C_DEBUG_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_ASM_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_CPP_FLAGS_STR}
                 ${OS_CPP_WARNNING_STR}
                 ${OS_CPP_RELEASE_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_C_FLAGS_STR}
                 ${OS_C_WARNNING_FLAGS_STR}
                 ${OS_C_RELEASE_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_ASM_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_CPP_FLAGS_STR}
                 ${OS_CPP_WARNNING_STR}
                 ${OS_CPP_MINSIZEREL_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_C_FLAGS_STR}
                 ${OS_C_WARNNING_FLAGS_STR}
                 ${OS_C_MINSIZEREL_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_ASM_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add CPP ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_CPP_FLAGS_STR}
                 ${OS_CPP_WARNNING_STR}
                 ${OS_CPP_RELWITHDEBINFO_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add C ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_MUTUAL_FLAGS_STR}
                 ${OS_C_FLAGS_STR}
                 ${OS_C_WARNNING_FLAGS_STR}
                 ${OS_C_RELWITHDEBINFO_FLAGS_STR}"
             )
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
+            log_info("${target_name} add ASM ${CMAKE_BUILD_TYPE} compile options:
                 ${OS_ASM_FLAGS_STR}"
             )
         endif()
     endif()
 endfunction()
+
 # 配置目标链接器选项（支持不同构建类型）
 function(configure_linker target_name)
     set(_OS_MAP_OPTION "-Wl,-Map=${target_name}.map")
@@ -254,42 +260,39 @@ function(configure_linker target_name)
     list(JOIN OS_LD_RELWITHDEBINFO_FLAGS " " OS_LD_RELWITHDEBINFO_FLAGS_STR)
     if(ENABLE_FULL_LD_OPTIONS)
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
+            log_info("${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
                 ${OS_LD_BASE_FLAGS_STR}
                 ${_OS_MAP_OPTION}
                 ${OS_LD_DEBUG_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
+            log_info("${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
                 ${OS_LD_BASE_FLAGS_STR}
                 ${_OS_MAP_OPTION}
                 ${OS_LD_RELEASE_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
+            log_info("${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
                 ${OS_LD_BASE_FLAGS_STR}
                 ${_OS_MAP_OPTION}
                 ${OS_LD_MINSIZEREL_FLAGS_STR}"
             )
         elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            message("[${CMAKE_PROJECT_NAME}][info] ${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
+            log_info("${target_name} add LD ${CMAKE_BUILD_TYPE} link options:
                 ${OS_LD_BASE_FLAGS_STR}
                 ${_OS_MAP_OPTION}
                 ${OS_LD_RELWITHDEBINFO_FLAGS_STR}"
             )
         endif()
         if(OS_CPP_LD_FLAGS)
-            # string(LENGTH "[${CMAKE_PROJECT_NAME}][info] " log_head_len)
-            # string(REPEAT " " ${log_head_len} log_head_padding)
-            message(
-                "${log_head_padding}${OS_CPP_LD_FLAGS_STR}"
-            )
+            message("${log_head_padding}${OS_CPP_LD_FLAGS_STR}")
         endif()
     endif()
 endfunction()
+
 #配置目标的所有命令
 function(configure_target target_name)
-    message("[${CMAKE_PROJECT_NAME}][info] ${target_name} build type: ${CMAKE_BUILD_TYPE}")
+    log_info("${target_name} build type: ${CMAKE_BUILD_TYPE}")
     configure_arm_compiler(${target_name})
     configure_compiler(${target_name})
     configure_linker(${target_name})
@@ -297,6 +300,7 @@ function(configure_target target_name)
         debug_language_detection(${target_name})
     endif()
 endfunction()
+
 # 配置目标输出文件并移动到指定目录
 function(configure_target_output target_name output_dir)
     # 确保输出目录存在
@@ -326,32 +330,34 @@ function(configure_target_output target_name output_dir)
     )
     # 输出信息
     if(ENABLE_USER_BIN_OUTPUT)
-        message("[${CMAKE_PROJECT_NAME}][info] ${target_name} output confing:")
-        message("${log_head_padding}  - temp file : ${CMAKE_CURRENT_BINARY_DIR}/")
-        message("${log_head_padding}  - final file: ${output_dir}")
-        message("${log_head_padding}  - build file: ${output_name}.elf, ${output_name}.bin, ${output_name}.hex")
+        log_info("${target_name} output config:")
+        log_info("${log_head_padding}  - temp file : ${CMAKE_CURRENT_BINARY_DIR}/")
+        log_info("${log_head_padding}  - final file: ${output_dir}")
+        log_info("${log_head_padding}  - build file: ${output_name}.elf, ${output_name}.bin, ${output_name}.hex")
     endif()
 endfunction()
+
 # 调试语言检测
 function(debug_language_detection target_name)
     message("")
-    message("[${CMAKE_PROJECT_NAME}][debug] ============ ${target_name} language check ==========")
+    log_debug("============ ${target_name} language check ==========")
     get_target_property(source_files_ ${target_name} SOURCES)
     foreach(source_file IN LISTS source_files_)
         get_source_file_property(file_language ${source_file} LANGUAGE)
-        message("[${CMAKE_PROJECT_NAME}][debug] file: ${source_file} -> language: ${file_language}")
+        log_debug("file: ${source_file} -> language: ${file_language}")
         # 测试LGE
         if(file_language STREQUAL "C")
-            message("[${CMAKE_PROJECT_NAME}][debug]   C LGE: $<$<COMPILE_LANGUAGE:C>:C_LANG>")
+            log_debug("  C LGE: $<$<COMPILE_LANGUAGE:C>:C_LANG>")
         elseif(file_language STREQUAL "CXX")
-            message("[${CMAKE_PROJECT_NAME}][debug]   C++ LGE: $<$<COMPILE_LANGUAGE:CXX>:CXX_LANG>")
+            log_debug("  C++ LGE: $<$<COMPILE_LANGUAGE:CXX>:CXX_LANG>")
         elseif(file_language STREQUAL "ASM")
-            message("[${CMAKE_PROJECT_NAME}][debug]   ASM LGE: $<$<COMPILE_LANGUAGE:ASM>:ASM_LANG>")
+            log_debug("  ASM LGE: $<$<COMPILE_LANGUAGE:ASM>:ASM_LANG>")
         endif()
     endforeach()
-    message("[${CMAKE_PROJECT_NAME}][debug] ============ ${target_name} language check ==========")
+    log_debug("============ ${target_name} language check ==========")
     message("")
 endfunction()
+
 # 禁用标准库的CMSIS警告
 function(disable_cmsis_warnings)
     set(CMSIS_DISABLE_WARNINGS_C
@@ -367,7 +373,7 @@ function(disable_cmsis_warnings)
             $<$<COMPILE_LANGUAGE:C>:${CMSIS_DISABLE_WARNINGS_C}>
             $<$<COMPILE_LANGUAGE:CXX>:${CMSIS_DISABLE_WARNINGS_CXX}>
         )
-        message("[${CMAKE_PROJECT_NAME}][note] CMSIS warnings disabled for OS_INTERNAL_SRC (C only)")
+        log_info("CMSIS warnings disabled for OS_INTERNAL_SRC (C only)")
     endif()
     # 为 OS_INTERNAL_INC 目标禁用警告（仅对C语言）
     if(TARGET OS_INTERNAL_INC)
@@ -375,29 +381,32 @@ function(disable_cmsis_warnings)
             $<$<COMPILE_LANGUAGE:C>:${CMSIS_DISABLE_WARNINGS_C}>
             $<$<COMPILE_LANGUAGE:CXX>:${CMSIS_DISABLE_WARNINGS_CXX}>
         )
-        message("[${CMAKE_PROJECT_NAME}][note] CMSIS warnings disabled for OS_INTERNAL_INC (C only)")
+        log_info("CMSIS warnings disabled for OS_INTERNAL_INC (C only)")
     endif()
 endfunction()
+
 # 提供接口方便的链接OS内部库
 function(target_use_os_internal target_name)
     # 检查目标是否存在
     if(NOT TARGET ${target_name})
-        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}][error] Target ${target_name} does not exist")
+        log_error("Target ${target_name} does not exist" FATAL)
     endif()
     # 检查OS内部库是否存在
     if(NOT TARGET OS_INTERNAL_SRC)
-        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}][error] OS_INTERNAL_SRC target not found")
+        log_error("OS_INTERNAL_SRC target not found" FATAL)
     endif()
     # 链接必要的库
     target_link_libraries(${target_name} 
         PRIVATE 
         OS_INTERNAL_SRC
+        MUSSTL::MUSSTL
     )
-    message("[${CMAKE_PROJECT_NAME}][Tcfg] ${target_name} successfully configured with OS internal libraries:")
-    message("${log_head_padding}  - Automatically linked: OS_INTERNAL_SRC")
-    message("${log_head_padding}  - Automatically configured: compiler options, linker options")
-    message("${log_head_padding}  - CMSIS warnings automatically disabled")
+    log_info("${target_name} successfully configured with OS internal libraries:")
+    log_info("${log_head_padding}  - Automatically linked: OS_INTERNAL_SRC")
+    log_info("${log_head_padding}  - Automatically configured: compiler options, linker options")
+    log_info("${log_head_padding}  - CMSIS warnings automatically disabled")
 endfunction()
+
 # 创建用户接口库并链接到用户目标
 function(target_add_user_includes target_name)
     # 解析用户提供的头文件路径
@@ -409,7 +418,7 @@ function(target_add_user_includes target_name)
     endif()
     # 检查目标是否存在
     if(NOT TARGET ${target_name})
-        message(FATAL_ERROR "[${CMAKE_PROJECT_NAME}][error] Target ${target_name} does not exist")
+        log_error("Target ${target_name} does not exist" FATAL)
     endif()
     # 创建唯一的接口库名称
     set(interface_lib_name "${target_name}_USER_INC_INTERFACE")
@@ -421,18 +430,19 @@ function(target_add_user_includes target_name)
     target_link_libraries(${interface_lib_name} INTERFACE OS_INTERNAL_INC)
     # 将用户目标链接到接口库
     target_link_libraries(${target_name} PRIVATE ${interface_lib_name})
-    message("[${CMAKE_PROJECT_NAME}][Tcfg] Created interface library: ${interface_lib_name}")
-    message("[${CMAKE_PROJECT_NAME}][Tcfg] ${target_name} linked with user includes and OS internal libraries")
+    log_info("Created interface library: ${interface_lib_name}")
+    log_info("${target_name} linked with user includes and OS internal libraries")
     # 输出包含路径信息
     if(ENABLE_USER_INC_OUTPUT)
         if(all_include_paths)
-            message("[${CMAKE_PROJECT_NAME}][info] User include paths:")
+            log_info("User include paths:")
             foreach(inc_path IN LISTS all_include_paths)
-                message("${log_head_padding}   - ${inc_path}")
+                log_info("${log_head_padding}   - ${inc_path}")
             endforeach()
         endif()
     endif()
 endfunction()
+
 # 封装target_add_user_includes target_use_os_internal到一起
 function(configure_user_target_include target_name)
     set(other_paths ${ARGN})
@@ -440,8 +450,9 @@ function(configure_user_target_include target_name)
     configure_target(${target_name})
     target_use_os_internal(${target_name})
     target_add_user_includes(${target_name} ${other_paths})
-    message("[${CMAKE_PROJECT_NAME}][Tcfg] Success: ${target_name} fully configured with OS environment")
+    log_info("Success: ${target_name} fully configured with OS environment")
 endfunction()
+
 # 生成 clang 配置文件的函数
 function(generate_clang_config)
     if(ENABLE_AUTO_CFG_CLANG)
@@ -458,26 +469,23 @@ function(generate_clang_config)
         # 查找 Python 解释器
         find_package(Python3 COMPONENTS Interpreter QUIET)
         if(NOT Python3_FOUND)
-            message("[${CMAKE_PROJECT_NAME}][error] can not find Python3 - skip clang configure")
+            log_error("can not find Python3 - skip clang configure")
             message(WARNING "skip clangd configure.")
             return()
         endif()
         # 检查脚本是否存在
         if(NOT EXISTS "${CLANG_CFG_PY_SCRIPT}")
-            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config script: ${CLANG_CFG_PY_SCRIPT}")
-            message(FATAL_ERROR "can not find clang config script: ${CLANG_CFG_PY_SCRIPT}")
+            log_error("can not find clang config script: ${CLANG_CFG_PY_SCRIPT}" FATAL)
         endif()
         if(NOT EXISTS "${TIDY_TEMPLATE}")
-            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config template: ${TIDY_TEMPLATE}")
-            message(FATAL_ERROR "can not find clang config template ${TIDY_TEMPLATE}")
+            log_error("can not find clang config template: ${TIDY_TEMPLATE}" FATAL)
         endif()
         if(NOT EXISTS "${CLANGD_TEMPLATE}")
-            message("[${CMAKE_PROJECT_NAME}][error] can not find clang config template: ${CLANGD_TEMPLATE}")
-            message(FATAL_ERROR "can not find clang config template ${CLANGD_TEMPLATE}")
+            log_error("can not find clang config template: ${CLANGD_TEMPLATE}" FATAL)
         endif()
-        message("[${CMAKE_PROJECT_NAME}][info] auto generate clang config files...")
-        message("[${CMAKE_PROJECT_NAME}][info]   - project toolchain: ${CLANG_CONFIG_TOOLCHAIN_PATH}")
-        message("[${CMAKE_PROJECT_NAME}][info]   - target MCU: ${CLANG_CONFIG_TARGET_MCU}")
+        log_info("auto generate clang config files...")
+        log_info("  - project toolchain: ${CLANG_CONFIG_TOOLCHAIN_PATH}")
+        log_info("  - target MCU: ${CLANG_CONFIG_TARGET_MCU}")
         # 执行 Python 脚本
         execute_process(
             COMMAND 
@@ -494,17 +502,17 @@ function(generate_clang_config)
         )
         # 处理结果
         if(result_code EQUAL 0)
-            message("[${CMAKE_PROJECT_NAME}][info] generate clang config files success")
+            log_info("generate clang config files success")
             if(output_text)
                 message(VERBOSE "输出: ${output_text}")
             endif()
         else()
-            message("[${CMAKE_PROJECT_NAME}][error] ❌ generate clang config files failed")
+            log_error("❌ generate clang config files failed")
             if(error_text)
-                message(FATAL_ERROR "${error_text}")
+                log_error("${error_text}" FATAL)
             endif()
             if(output_text)
-                message(FATAL_ERROR "${output_text}")
+                log_error("${output_text}" FATAL)
             endif()
         endif()
     endif()

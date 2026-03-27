@@ -28,3 +28,6 @@ set(CLANG_CFG_PY_SCRIPT "${CMAKE_SOURCE_DIR}/scripts/cfg_clangd.py")
 # 模板文件
 set(TIDY_TEMPLATE "${CMAKE_SOURCE_DIR}/.clang-tidy.template")
 set(CLANGD_TEMPLATE "${CMAKE_SOURCE_DIR}/.clangd.template")
+
+# 设置 MUSSTL 安装路径（相对于项目根目录）
+set(MUSSTL_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/MUSSTL/install")
