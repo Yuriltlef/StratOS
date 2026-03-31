@@ -126,7 +126,7 @@ template <typename T>
 inline constexpr bool has_disable_irq_method_v = has_disable_irq_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 get_value()（返回 reload_type）
+ * @brief 检测类型 T 是否提供静态方法 get_value() -> reload_type
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
@@ -135,6 +135,15 @@ template <typename T>
 struct has_get_value_method<T, std::void_t<decltype(T::get_value())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_value_method_v = has_get_value_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_value() 返回类型是否为 reload_type
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_value_return_type : std::is_same<decltype(T::get_value()), typename T::reload_type> {};
+template <typename T>
+inline constexpr bool is_correct_get_value_return_type_v = is_correct_get_value_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 is_overflow()（返回 bool）
@@ -170,6 +179,7 @@ struct is_valid_systick_policy : std::conjunction<has_reload_type<T>,
                                                   has_enable_irq_method<T>,
                                                   has_disable_irq_method<T>,
                                                   has_get_value_method<T>,
+                                                  is_correct_get_value_return_type<T>,
                                                   has_is_overflow_method<T>> {};
 template <typename T>
 inline constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::value;
@@ -241,6 +251,8 @@ struct OS_SysTick {
     static_assert(traits::has_enable_irq_method_v<Policy>, "Policy must provide enable_irq()");
     static_assert(traits::has_disable_irq_method_v<Policy>, "Policy must provide disable_irq()");
     static_assert(traits::has_get_value_method_v<Policy>, "Policy must provide get_value() -> reload_type");
+    static_assert(traits::is_correct_get_value_return_type_v<Policy>,
+                  "Policy's get_value() must return the correct reload_type");
     static_assert(traits::has_is_overflow_method_v<Policy>, "Policy must provide is_overflow() -> bool");
 
     /// 重装载值类型别名

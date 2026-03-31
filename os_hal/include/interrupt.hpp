@@ -105,7 +105,7 @@ template <typename T>
 inline constexpr bool has_disable_method_v = has_disable_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, T::priority_group_type)
+ * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, T::priority_type)
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
@@ -113,13 +113,13 @@ struct has_set_priority_method : std::false_type {};
 template <typename T>
 struct has_set_priority_method<T,
                                std::void_t<decltype(T::set_priority(std::declval<typename T::IRQn_Type>(),
-                                                                    std::declval<typename T::priority_group_type>()))>>
+                                                                    std::declval<typename T::priority_type>()))>>
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_set_priority_method_v = has_set_priority_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 get_priority(IRQn_Type)
+ * @brief 检测类型 T 是否提供静态方法 get_priority(IRQn_Type) -> T::priority_type
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
@@ -129,6 +129,16 @@ struct has_get_priority_method<T, std::void_t<decltype(T::get_priority(std::decl
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_priority_method_v = has_get_priority_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_priority(IRQn_Type) 返回类型是否为 priority_type
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_priority_return_type
+    : std::is_same<decltype(T::get_priority(std::declval<typename T::IRQn_Type>())), typename T::priority_type> {};
+template <typename T>
+inline constexpr bool is_correct_get_priority_return_type_v = is_correct_get_priority_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 trigger_software(IRQn_Type)
@@ -180,6 +190,7 @@ struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
                                                         has_disable_method<T>,
                                                         has_set_priority_method<T>,
                                                         has_get_priority_method<T>,
+                                                        is_correct_get_priority_return_type<T>,
                                                         has_trigger_software_method<T>,
                                                         has_global_enable_method<T>,
                                                         has_global_disable_method<T>> {};
@@ -221,6 +232,7 @@ struct has_set_priority_grouping_method<
 };
 template <typename T>
 inline constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
+
 /**
  * @brief 检测类型 T 是否提供静态方法 in_isr()
  * @tparam T 待检测的类型
@@ -278,11 +290,13 @@ struct InterruptController {
     static_assert(traits::is_valid_priority_type_v<Policy>, "Policy must define a valid priority_type");
     static_assert(traits::has_enable_method_v<Policy>, "Policy must provide enable(IRQn_Type)");
     static_assert(traits::has_disable_method_v<Policy>, "Policy must provide disable(IRQn_Type)");
-    static_assert(traits::has_set_priority_method_v<Policy>, "Policy must provide set_priority(IRQn_Type, uint32_t)");
+    static_assert(traits::has_set_priority_method_v<Policy>, "Policy must provide set_priority(IRQn_Type, priority_type)");
     static_assert(traits::has_get_priority_method_v<Policy>, "Policy must provide get_priority(IRQn_Type)");
     static_assert(traits::has_trigger_software_method_v<Policy>, "Policy must provide trigger_software(IRQn_Type)");
     static_assert(traits::has_global_enable_method_v<Policy>, "Policy must provide global_enable()");
     static_assert(traits::has_global_disable_method_v<Policy>, "Policy must provide global_disable()");
+    static_assert(traits::is_correct_get_priority_return_type_v<Policy>,
+                  "Policy::get_priority() must return priority_type");
 
     /// 中断号类型，取自策略类
     using IRQn_Type           = typename Policy::IRQn_Type;
@@ -319,9 +333,9 @@ struct InterruptController {
     /**
      * @brief 获取中断优先级
      * @param irq 中断号
-     * @return 优先级值（类型与策略类返回一致）
+     * @return 优先级值（priority_type）
      */
-    [[nodiscard]] inline static auto get_priority(IRQn_Type irq) noexcept -> decltype(Policy::get_priority(irq)) {
+    [[nodiscard]] inline static priority_type get_priority(IRQn_Type irq) noexcept {
         return Policy::get_priority(irq);
     }
 
