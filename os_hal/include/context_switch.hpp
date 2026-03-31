@@ -83,7 +83,7 @@ template <typename T>
 inline constexpr bool has_set_psp_v = has_set_psp<T>::value;
 
 /**
- * @brief 检测静态方法 get_psp()
+ * @brief 检测静态方法 get_psp() -> word*
  */
 template <typename T, typename = void>
 struct has_get_psp : std::false_type {};
@@ -91,6 +91,15 @@ template <typename T>
 struct has_get_psp<T, std::void_t<decltype(T::get_psp())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_psp_v = has_get_psp<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_psp() 返回类型是否为 word*
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_psp_return_type : std::is_same<decltype(T::get_psp()), typename T::word*> {};
+template <typename T>
+inline constexpr bool is_correct_get_psp_return_type_v = is_correct_get_psp_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 set_msp(word*)
@@ -103,7 +112,7 @@ template <typename T>
 inline constexpr bool has_set_msp_v = has_set_msp<T>::value;
 
 /**
- * @brief 检测静态方法 get_msp()
+ * @brief 检测静态方法 get_msp() -> word*
  */
 template <typename T, typename = void>
 struct has_get_msp : std::false_type {};
@@ -111,6 +120,15 @@ template <typename T>
 struct has_get_msp<T, std::void_t<decltype(T::get_msp())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_msp_v = has_get_msp<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_msp() 返回类型是否为 word*
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_msp_return_type : std::is_same<decltype(T::get_msp()), typename T::word*> {};
+template <typename T>
+inline constexpr bool is_correct_get_msp_return_type_v = is_correct_get_msp_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 switch_to_unprivileged()
@@ -214,7 +232,9 @@ struct is_valid_context_switch_policy : std::conjunction<has_word_type<T>,
                                                          has_switch_to_privileged<T>,
                                                          has_dmb<T>,
                                                          has_dsb<T>,
-                                                         has_isb<T>> {};
+                                                         has_isb<T>,
+                                                         is_correct_get_psp_return_type<T>,
+                                                         is_correct_get_msp_return_type<T>> {};
 template <typename T>
 inline constexpr bool is_valid_context_switch_policy_v = is_valid_context_switch_policy<T>::value;
 
@@ -284,6 +304,10 @@ struct ContextSwitch {
     static_assert(traits::has_dmb_v<Policy>, "ContextSwitch policy must provide dmb()");
     static_assert(traits::has_dsb_v<Policy>, "ContextSwitch policy must provide dsb()");
     static_assert(traits::has_isb_v<Policy>, "ContextSwitch policy must provide isb()");
+    static_assert(traits::is_correct_get_psp_return_type_v<Policy>,
+                  "ContextSwitch policy's get_psp() must return word*");
+    static_assert(traits::is_correct_get_msp_return_type_v<Policy>,
+                  "ContextSwitch policy's get_msp() must return word*");
 
     /// 栈指针基本类型（通常为 uint32_t）
     using word = typename Policy::word;
@@ -369,21 +393,21 @@ struct ContextSwitch {
 
     /**
      * @brief 获取当前异常号（用于判断是否在中断中）
-     * @return 异常号，0 表示线程模式
+     * @return 异常号，0 表示线程模式 decltype(Policy::get_current_exception()
      * @note 仅当策略类提供 get_current_exception() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_current_exception_v<P>>>
-    [[nodiscard]] inline static word get_current_exception() noexcept {
+    [[nodiscard]] inline static auto get_current_exception() noexcept -> decltype(Policy::get_current_exception()) {
         return Policy::get_current_exception();
     }
 
     /**
      * @brief 获取当前 CPU 核心 ID（多核支持）
-     * @return 核心编号
+     * @return 核心编号 decltype(Policy::core_id())
      * @note 仅当策略类提供 core_id() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_core_id_v<P>>>
-    [[nodiscard]] inline static word core_id() noexcept {
+    [[nodiscard]] inline static auto core_id() noexcept -> decltype(Policy::core_id()) {
         return Policy::core_id();
     }
 

@@ -176,7 +176,7 @@ template <typename T>
 inline constexpr bool has_set_priority_grouping_v = has_set_priority_grouping<T>::value;
 
 /**
- * @brief 检测类型 T 是否包含方法 get_priority_grouping()
+ * @brief 检测类型 T 是否包含方法 get_priority_grouping() -> T::priority_group_type
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
@@ -185,6 +185,17 @@ template <typename T>
 struct has_get_priority_grouping<T, std::void_t<decltype(T::get_priority_grouping())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_priority_grouping_v = has_get_priority_grouping<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_priority_grouping() 返回类型是否为 priority_group_type
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_priority_grouping_return_type
+    : std::is_same<decltype(T::get_priority_grouping()), typename T::priority_group_type> {};
+template <typename T>
+inline constexpr bool is_correct_get_priority_grouping_return_type_v =
+    is_correct_get_priority_grouping_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 sleep()
@@ -247,6 +258,18 @@ struct has_get_exception_priority<
 template <typename T>
 inline constexpr bool has_get_exception_priority_v = has_get_exception_priority<T>::value;
 
+/**
+ * @brief 检测类型 T 的 get_exception_priority() 返回类型是否为 priority_type
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_get_exception_priority_return_type
+    : std::is_same<decltype(T::get_exception_priority(std::declval<typename T::exception_type>())),
+                   typename T::priority_type> {};
+template <typename T>
+inline constexpr bool is_correct_get_exception_priority_return_type_v =
+    is_correct_get_exception_priority_return_type<T>::value;
+
 // ---------- 可选方法检测 ----------
 /**
  * @brief 检测类型 T 是否包含方法 enable_faults(T::fault_mask_type)
@@ -299,7 +322,9 @@ struct is_valid_system_control_policy : std::conjunction<has_exception_type<T>,
                                                          has_deep_sleep<T>,
                                                          has_set_sleep_on_exit<T>,
                                                          has_set_exception_priority<T>,
-                                                         has_get_exception_priority<T>> {};
+                                                         has_get_exception_priority<T>,
+                                                         is_correct_get_priority_grouping_return_type<T>,
+                                                         is_correct_get_exception_priority_return_type<T>> {};
 
 template <typename T>
 inline constexpr bool is_valid_system_control_policy_v = is_valid_system_control_policy<T>::value;
@@ -365,6 +390,10 @@ struct SystemControl {
                   "Policy must provide set_exception_priority(exception_type, priority_type)");
     static_assert(traits::has_get_exception_priority_v<Policy>,
                   "Policy must provide get_exception_priority(exception_type)");
+    static_assert(traits::is_correct_get_priority_grouping_return_type_v<Policy>,
+                  "Policy's get_priority_grouping() must return priority_group_type");
+    static_assert(traits::is_correct_get_exception_priority_return_type_v<Policy>,
+                  "Policy's get_exception_priority() must return priority_type");
 
     /// 类型别名，供外部使用
     using exception_type      = typename Policy::exception_type;
