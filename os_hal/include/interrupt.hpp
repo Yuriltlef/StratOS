@@ -234,7 +234,7 @@ template <typename T>
 inline constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 in_isr()
+ * @brief 检测类型 T 是否提供静态方法 get_priority_grouping()
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>

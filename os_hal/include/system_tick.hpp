@@ -215,7 +215,7 @@ namespace strat_os::hal
  * @par 使用示例
  * @code
  * // 假设 CortexM3SysTick 已实现所有必需方法
- * using MySysTick = OS_SysTick<CortexM3SysTick>;
+ * using MySysTick = SystemTick<CortexM3SysTick>;
  *
  * // 初始化：重装载值 1000，时钟源选择处理器时钟
  * MySysTick::init(1000, CortexM3SysTick::clock_source::processor);
@@ -237,7 +237,7 @@ namespace strat_os::hal
  * @warning 重装载值不能超过硬件支持的最大值（如 Cortex‑M 为 24 位，即 0xFFFFFF）。
  */
 template <typename SysTickPolicy, typename = std::enable_if_t<traits::is_valid_systick_policy_v<SysTickPolicy>>>
-struct OS_SysTick {
+struct SystemTick {
     /// 策略类别名
     using Policy = SysTickPolicy;
 
