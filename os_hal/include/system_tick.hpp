@@ -1,19 +1,19 @@
 /**
- * @file systick.hpp
+ * @file system_tick.hpp
  * @author StratOS Team
- * @brief 系统节拍定时器（SysTick）策略接口与适配器
+ * @brief 系统节拍定时器（SystemTick）策略接口与适配器
  * @version 1.0.0
  * @date 2026-03-31
  *
  * @copyright Copyright (c) 2026 StratOS
  *
  * @details
- * 本文件定义了硬件抽象层（HAL）的 SysTick 定时器抽象接口，采用静态策略模式。
- * SysTick 是一个简单的 24 位递减计数器，通常用于 RTOS 的系统时钟节拍。
+ * 本文件定义了硬件抽象层（HAL）的 SystemTick 定时器抽象接口，采用静态策略模式。
+ * SystemTick 是一个简单的 n 位递减计数器，通常用于 RTOS 的系统时钟节拍。
  *
- * 该设计将 SysTick 的硬件操作（初始化、使能/禁用、中断控制、状态读取等）
+ * 该设计将 SystemTick 的硬件操作（初始化、使能/禁用、中断控制、状态读取等）
  * 封装为策略类，并通过类型萃取在编译期验证策略的完整性，最终通过适配器
- * 模板 `OS_SysTick` 提供统一的静态接口供 RTOS 内核使用。
+ * 模板 `SystemTick` 提供统一的静态接口供 RTOS 内核使用。
  *
  * 主要特性：
  * - 策略类必须定义 `reload_type`（重装载值类型）和 `clock_source_type`（时钟源类型）
@@ -23,12 +23,12 @@
  * @note 典型的重装载值类型为 uint32_t，但实际硬件可能只使用低 24 位。
  *       时钟源类型可以是枚举或整数，由具体策略定义。
  *
- * @warning SysTick 的重装载值必须遵循平台规范，否则硬件行为未定义。
+ * @warning SystemTick 的重装载值必须遵循平台规范，否则硬件行为未定义。
  */
 #pragma once
 
-#ifndef STRATOS_HAL_SYSTICK_HPP
-#define STRATOS_HAL_SYSTICK_HPP
+#ifndef STRATOS_HAL_SYSTEM_TICK_HPP
+#define STRATOS_HAL_SYSTEM_TICK_HPP
 
 #include <type_traits> // for std::false_type, std::true_type, etc.
 #include <utility>     // for std::declval
@@ -157,7 +157,7 @@ template <typename T>
 inline constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::value;
 
 /**
- * @brief 组合检测，判断类型 T 是否为有效的 SysTick 策略
+ * @brief 组合检测，判断类型 T 是否为有效的 SystemTick 策略
  * @tparam T 待检测的类型
  *
  * 要求 T 必须定义 reload_type 和 clock_source_type，并提供以下静态方法：
@@ -188,7 +188,7 @@ inline constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::va
 /**
  * @brief 检测类型 T 是否提供静态方法 get_calibration()（返回任意类型）
  * @tparam T 待检测的类型
- * @note 该方法是可选的，用于读取 SysTick 校准值。
+ * @note 该方法是可选的，用于读取 SystemTick 校准值。
  */
 template <typename T, typename = void>
 struct has_get_calibration_method : std::false_type {};
@@ -203,8 +203,8 @@ namespace strat_os::hal
 {
 
 /**
- * @brief SysTick 定时器适配器模板
- * @tparam SysTickPolicy 具体的策略类，必须满足 SysTick 策略接口
+ * @brief SystemTick 定时器适配器模板
+ * @tparam SystemTickPolicy 具体的策略类，必须满足 SystemTick 策略接口
  *
  * 该类将策略类包装为统一的静态接口，并进行编译期验证。
  * 所有方法均为内联且 noexcept，转发到策略类的对应静态方法。
@@ -236,10 +236,10 @@ namespace strat_os::hal
  * @note 策略类必须定义 reload_type 和 clock_source_type 嵌套类型。
  * @warning 重装载值不能超过硬件支持的最大值（如 Cortex‑M 为 24 位，即 0xFFFFFF）。
  */
-template <typename SysTickPolicy, typename = std::enable_if_t<traits::is_valid_systick_policy_v<SysTickPolicy>>>
+template <typename SystemTickPolicy, typename = std::enable_if_t<traits::is_valid_systick_policy_v<SystemTickPolicy>>>
 struct SystemTick {
     /// 策略类别名
-    using Policy = SysTickPolicy;
+    using Policy = SystemTickPolicy;
 
     // ----- 细粒度静态断言，提供清晰的错误信息 -----
     static_assert(traits::has_reload_type_v<Policy>, "Policy must define 'reload_type'");
@@ -264,7 +264,7 @@ struct SystemTick {
     static constexpr bool enhanced_systick = traits::has_get_calibration_method_v<Policy>;
 
     /**
-     * @brief 初始化 SysTick 定时器
+     * @brief 初始化 SystemTick 定时器
      * @param reload 重装载值（通常为 24 位，实际有效位数取决于硬件）
      * @param src    时钟源（具体值由策略定义）
      *
@@ -276,21 +276,21 @@ struct SystemTick {
     }
 
     /**
-     * @brief 使能 SysTick 计数器
+     * @brief 使能 SystemTick 计数器
      */
     inline static void enable() noexcept {
         Policy::enable();
     }
 
     /**
-     * @brief 禁用 SysTick 计数器
+     * @brief 禁用 SystemTick 计数器
      */
     inline static void disable() noexcept {
         Policy::disable();
     }
 
     /**
-     * @brief 使能 SysTick 中断
+     * @brief 使能 SystemTick 中断
      * @note 当计数器减到 0 时触发中断。
      */
     inline static void enable_irq() noexcept {
@@ -298,7 +298,7 @@ struct SystemTick {
     }
 
     /**
-     * @brief 禁用 SysTick 中断
+     * @brief 禁用 SystemTick 中断
      */
     inline static void disable_irq() noexcept {
         Policy::disable_irq();
@@ -324,7 +324,7 @@ struct SystemTick {
     // ----- 可选增强功能 -----
 
     /**
-     * @brief 获取 SysTick 校准值
+     * @brief 获取 SystemTick 校准值
      * @return 校准值（类型由策略定义，通常为 uint32_t）
      * @note 仅当策略提供 get_calibration() 方法时可用。
      *       校准值可用于生成精确的延时（如 10ms）。
@@ -337,4 +337,4 @@ struct SystemTick {
 
 } // namespace strat_os::hal
 
-#endif // STRATOS_HAL_SYSTICK_HPP
+#endif // STRATOS_HAL_SYSTEM_TICK_HPP
