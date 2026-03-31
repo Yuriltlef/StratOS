@@ -24,9 +24,8 @@
 #ifndef STRATOS_HAL_INTERRUPT_HPP
 #define STRATOS_HAL_INTERRUPT_HPP
 
-#include <cstdint>
-#include <type_traits>
-#include <utility>
+#include <type_traits> // for std::false_type, std::true_type, etc.
+#include <utility>     // for std::declval
 
 namespace strat_os::hal::traits
 {
@@ -40,6 +39,26 @@ template <typename T>
 struct has_irqn_type<T, std::void_t<typename T::IRQn_Type>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_irqn_type_v = has_irqn_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 priority_group_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_priority_group_type : std::false_type {};
+template <typename T>
+struct has_priority_group_type<T, std::void_t<typename T::priority_group_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 priority_group_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_priority_group_type : std::is_unsigned<typename T::priority_group_type> {};
+template <typename T>
+inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 enable(IRQn_Type)
@@ -66,15 +85,15 @@ template <typename T>
 inline constexpr bool has_disable_method_v = has_disable_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, uint32_t)
+ * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, T::priority_group_type)
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
 struct has_set_priority_method : std::false_type {};
 template <typename T>
-struct has_set_priority_method<
-    T,
-    std::void_t<decltype(T::set_priority(std::declval<typename T::IRQn_Type>(), std::declval<uint32_t>()))>>
+struct has_set_priority_method<T,
+                               std::void_t<decltype(T::set_priority(std::declval<typename T::IRQn_Type>(),
+                                                                    std::declval<typename T::priority_group_type>()))>>
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_set_priority_method_v = has_set_priority_method<T>::value;
@@ -133,6 +152,8 @@ inline constexpr bool has_global_disable_method_v = has_global_disable_method<T>
  */
 template <typename T>
 struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
+                                                        has_priority_group_type<T>,
+                                                        is_valid_priority_group_type<T>,
                                                         has_enable_method<T>,
                                                         has_disable_method<T>,
                                                         has_set_priority_method<T>,
@@ -166,15 +187,16 @@ template <typename T>
 inline constexpr bool has_get_current_irq_method_v = has_get_current_irq_method<T>::value;
 
 /**
- * @brief 检测类型 T 是否提供静态方法 set_priority_grouping(uint32_t)
+ * @brief 检测类型 T 是否提供静态方法 set_priority_grouping(T::priority_group_type)
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
 struct has_set_priority_grouping_method : std::false_type {};
 template <typename T>
-struct has_set_priority_grouping_method<T,
-                                        std::void_t<decltype(T::set_priority_grouping(std::declval<std::uint32_t>()))>>
-    : std::true_type {};
+struct has_set_priority_grouping_method<
+    T,
+    std::void_t<decltype(T::set_priority_grouping(std::declval<typename T::priority_group_type>()))>> : std::true_type {
+};
 template <typename T>
 inline constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
 /**
@@ -226,8 +248,10 @@ struct InterruptController {
     /// 策略类别名
     using Policy = InterruptControllerPolicy;
 
-    // 细粒度静态断言，提供清晰的错误信息
+    /// 细粒度静态断言，提供清晰的错误信息
     static_assert(traits::has_irqn_type_v<Policy>, "Policy must define IRQn_Type");
+    static_assert(traits::has_priority_group_type_v<Policy>, "Policy must define priority_group_type");
+    static_assert(traits::is_valid_priority_group_type_v<Policy>, "Policy must define a valid priority_group_type");
     static_assert(traits::has_enable_method_v<Policy>, "Policy must provide enable(IRQn_Type)");
     static_assert(traits::has_disable_method_v<Policy>, "Policy must provide disable(IRQn_Type)");
     static_assert(traits::has_set_priority_method_v<Policy>, "Policy must provide set_priority(IRQn_Type, uint32_t)");
@@ -237,7 +261,8 @@ struct InterruptController {
     static_assert(traits::has_global_disable_method_v<Policy>, "Policy must provide global_disable()");
 
     /// 中断号类型，取自策略类
-    using IRQn_Type = typename Policy::IRQn_Type;
+    using IRQn_Type           = typename Policy::IRQn_Type;
+    using priority_group_type = typename Policy::priority_group_type;
     /// 是否支持增强功能（编译期常量）
     static constexpr bool enhanced_controller = traits::is_enhanced_interrupt_controller_v<Policy>;
 
@@ -262,7 +287,7 @@ struct InterruptController {
      * @param irq      中断号
      * @param priority 优先级值（数值越小优先级越高）
      */
-    inline static void set_priority(IRQn_Type irq, std::uint32_t priority) noexcept {
+    inline static void set_priority(IRQn_Type irq, priority_group_type priority) noexcept {
         Policy::set_priority(irq, priority);
     }
 
@@ -325,7 +350,7 @@ struct InterruptController {
      * @note 仅当策略类提供 set_priority_grouping() 方法时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_set_priority_grouping_method_v<P>>>
-    static void set_priority_grouping(std::uint32_t group) noexcept {
+    static void set_priority_grouping(priority_group_type group) noexcept {
         P::set_priority_grouping(group);
     }
 

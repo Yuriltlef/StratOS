@@ -30,16 +30,11 @@
 #define STRATOS_HAL_ATOMIC_HPP
 
 #include <atomic>      // for std::memory_order
-#include <cstdint>     // for std::uint32_t
 #include <type_traits> // for std::false_type, std::true_type, etc.
 #include <utility>     // for std::declval
 
 namespace strat_os::hal::traits
 {
-
-// -----------------------------------------------------------------------------
-// 基础类型检测
-// -----------------------------------------------------------------------------
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 value_type
@@ -53,6 +48,17 @@ template <typename T>
 inline constexpr bool has_value_type_v = has_value_type<T>::value;
 
 /**
+ * @brief 检测类型 T 是否包含嵌套类型 bit_index_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_bit_index_type : std::false_type {};
+template <typename T>
+struct has_bit_index_type<T, std::void_t<typename T::bit_index_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_bit_index_type_v = has_bit_index_type<T>::value;
+
+/**
  * @brief 检测 value_type 是否为无符号整数类型
  * @note 仅当 T 包含 value_type 时使用，否则应放在 has_value_type 之后以避免硬错误
  */
@@ -60,6 +66,15 @@ template <typename T>
 struct is_valid_value_type : std::is_unsigned<typename T::value_type> {};
 template <typename T>
 inline constexpr bool is_valid_value_type_v = is_valid_value_type<T>::value;
+
+/**
+ * @brief 检测 bit_index_type 是否为无符号整数类型
+ * @note 仅当 T 包含 bit_index_type 时使用，否则应放在 has_bit_index_type 之后以避免硬错误
+ */
+template <typename T>
+struct is_valid_bit_index_type : std::is_unsigned<typename T::bit_index_type> {};
+template <typename T>
+inline constexpr bool is_valid_bit_index_type_v = is_valid_bit_index_type<T>::value;
 
 /**
  * @brief 检测静态方法 load(volatile value_type*)
@@ -122,19 +137,15 @@ struct has_compare_exchange_method<
 template <typename T>
 inline constexpr bool has_compare_exchange_method_v = has_compare_exchange_method<T>::value;
 
-// -----------------------------------------------------------------------------
-// 检测位操作方法
-// -----------------------------------------------------------------------------
-
 /**
  * @brief 检测静态方法 set_bit(volatile value_type*, uint32_t)
  */
 template <typename T, typename = void>
 struct has_set_bit_method : std::false_type {};
 template <typename T>
-struct has_set_bit_method<
-    T,
-    std::void_t<decltype(T::set_bit(std::declval<volatile typename T::value_type*>(), std::declval<std::uint32_t>()))>>
+struct has_set_bit_method<T,
+                          std::void_t<decltype(T::set_bit(std::declval<volatile typename T::value_type*>(),
+                                                          std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_set_bit_method_v = has_set_bit_method<T>::value;
@@ -145,9 +156,9 @@ inline constexpr bool has_set_bit_method_v = has_set_bit_method<T>::value;
 template <typename T, typename = void>
 struct has_clear_bit_method : std::false_type {};
 template <typename T>
-struct has_clear_bit_method<
-    T,
-    std::void_t<decltype(T::clear_bit(std::declval<volatile typename T::value_type*>(), std::declval<std::uint32_t>()))>>
+struct has_clear_bit_method<T,
+                            std::void_t<decltype(T::clear_bit(std::declval<volatile typename T::value_type*>(),
+                                                              std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_clear_bit_method_v = has_clear_bit_method<T>::value;
@@ -161,7 +172,7 @@ template <typename T>
 struct has_test_and_set_bit_method<
     T,
     std::void_t<decltype(T::test_and_set_bit(std::declval<volatile typename T::value_type*>(),
-                                             std::declval<std::uint32_t>()))>> : std::true_type {};
+                                             std::declval<typename T::bit_index_type>()))>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_test_and_set_bit_method_v = has_test_and_set_bit_method<T>::value;
 
@@ -171,9 +182,9 @@ inline constexpr bool has_test_and_set_bit_method_v = has_test_and_set_bit_metho
 template <typename T, typename = void>
 struct has_flip_bit_method : std::false_type {};
 template <typename T>
-struct has_flip_bit_method<
-    T,
-    std::void_t<decltype(T::flip_bit(std::declval<volatile typename T::value_type*>(), std::declval<std::uint32_t>()))>>
+struct has_flip_bit_method<T,
+                           std::void_t<decltype(T::flip_bit(std::declval<volatile typename T::value_type*>(),
+                                                            std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
 inline constexpr bool has_flip_bit_method_v = has_flip_bit_method<T>::value;
@@ -190,10 +201,6 @@ struct has_test_and_set_method<T,
 template <typename T>
 inline constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::value;
 
-// -----------------------------------------------------------------------------
-// 组合检测：是否为有效的原子操作策略
-// -----------------------------------------------------------------------------
-
 /**
  * @brief 组合检测，判断类型 T 是否为有效的原子操作策略
  * @tparam T 待检测的类型
@@ -202,7 +209,9 @@ inline constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::va
  */
 template <typename T>
 struct is_valid_atomic_policy : std::conjunction<has_value_type<T>,
+                                                 has_bit_index_type<T>,
                                                  is_valid_value_type<T>,
+                                                 is_valid_bit_index_type<T>,
                                                  has_load_method<T>,
                                                  has_store_method<T>,
                                                  has_add_method<T>,
@@ -216,10 +225,7 @@ struct is_valid_atomic_policy : std::conjunction<has_value_type<T>,
 template <typename T>
 inline constexpr bool is_valid_atomic_policy_v = is_valid_atomic_policy<T>::value;
 
-// -----------------------------------------------------------------------------
 // 检测带内存顺序的原子操作方法（可选）
-// -----------------------------------------------------------------------------
-
 /**
  * @brief 检测带内存顺序的 load(volatile value_type*, std::memory_order)
  */
@@ -338,6 +344,9 @@ struct Atomic {
     // ----- 细粒度静态断言，提供清晰的错误信息 -----
     static_assert(traits::has_value_type_v<Policy>, "Atomic policy must provide a nested type 'value_type'");
     static_assert(traits::is_valid_value_type_v<Policy>, "Atomic policy::value_type must be an unsigned integer type");
+    static_assert(traits::has_bit_index_type_v<Policy>, "Atomic policy must provide a nested type 'bit_index_type'");
+    static_assert(traits::is_valid_bit_index_type_v<Policy>,
+                  "Atomic policy::bit_index_type must be an unsigned integer type");
     static_assert(traits::has_load_method_v<Policy>, "Atomic policy must provide load(volatile value_type*)");
     static_assert(traits::has_store_method_v<Policy>,
                   "Atomic policy must provide store(volatile value_type*, value_type)");
@@ -358,6 +367,8 @@ struct Atomic {
 
     /// 原子操作的基本类型（无符号整数）
     using value_type = typename Policy::value_type;
+    /// 位索引类型（无符号整数）
+    using bit_index_type = typename Policy::bit_index_type;
     /// 内存顺序能力标志（编译期常量）
     static constexpr bool memory_order_capable = traits::is_memory_order_capable_v<Policy>;
 
@@ -500,38 +511,38 @@ struct Atomic {
     /**
      * @brief 原子地设置指定位为 1
      * @param ptr 指向 volatile 内存的指针
-     * @param bit 位索引（0 ~ 31）
+     * @param bit 位索引
      */
-    inline static void set_bit(volatile value_type* ptr, std::uint32_t bit) noexcept {
+    inline static void set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         Policy::set_bit(ptr, bit);
     }
 
     /**
      * @brief 原子地清除指定位为 0
      * @param ptr 指向 volatile 内存的指针
-     * @param bit 位索引（0 ~ 31）
+     * @param bit 位索引
      */
-    inline static void clear_bit(volatile value_type* ptr, std::uint32_t bit) noexcept {
+    inline static void clear_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         Policy::clear_bit(ptr, bit);
     }
 
     /**
      * @brief 原子地测试并设置指定位（返回旧值，并置为 1）
      * @param ptr 指向 volatile 内存的指针
-     * @param bit 位索引（0 ~ 31）
+     * @param bit 位索引
      * @return true  原值为 1
      * @return false 原值为 0
      */
-    [[nodiscard]] inline static bool test_and_set_bit(volatile value_type* ptr, std::uint32_t bit) noexcept {
+    [[nodiscard]] inline static bool test_and_set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         return Policy::test_and_set_bit(ptr, bit);
     }
 
     /**
      * @brief 原子地翻转指定位
      * @param ptr 指向 volatile 内存的指针
-     * @param bit 位索引（0 ~ 31）
+     * @param bit 位索引
      */
-    inline static void flip_bit(volatile value_type* ptr, std::uint32_t bit) noexcept {
+    inline static void flip_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         Policy::flip_bit(ptr, bit);
     }
 
