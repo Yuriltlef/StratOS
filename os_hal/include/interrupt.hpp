@@ -61,6 +61,26 @@ template <typename T>
 inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
 
 /**
+ * @brief 检测类型 T 是否包含嵌套类型 priority_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_priority_type : std::false_type {};
+template <typename T>
+struct has_priority_type<T, std::void_t<typename T::priority_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_priority_type_v = has_priority_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 priority_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_priority_type : std::is_unsigned<typename T::priority_type> {};
+template <typename T>
+inline constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
+
+/**
  * @brief 检测类型 T 是否提供静态方法 enable(IRQn_Type)
  * @tparam T 待检测的类型
  */
@@ -154,6 +174,8 @@ template <typename T>
 struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
                                                         has_priority_group_type<T>,
                                                         is_valid_priority_group_type<T>,
+                                                        has_priority_type<T>,
+                                                        is_valid_priority_type<T>,
                                                         has_enable_method<T>,
                                                         has_disable_method<T>,
                                                         has_set_priority_method<T>,
@@ -252,6 +274,8 @@ struct InterruptController {
     static_assert(traits::has_irqn_type_v<Policy>, "Policy must define IRQn_Type");
     static_assert(traits::has_priority_group_type_v<Policy>, "Policy must define priority_group_type");
     static_assert(traits::is_valid_priority_group_type_v<Policy>, "Policy must define a valid priority_group_type");
+    static_assert(traits::has_priority_type_v<Policy>, "Policy must define priority_type");
+    static_assert(traits::is_valid_priority_type_v<Policy>, "Policy must define a valid priority_type");
     static_assert(traits::has_enable_method_v<Policy>, "Policy must provide enable(IRQn_Type)");
     static_assert(traits::has_disable_method_v<Policy>, "Policy must provide disable(IRQn_Type)");
     static_assert(traits::has_set_priority_method_v<Policy>, "Policy must provide set_priority(IRQn_Type, uint32_t)");
@@ -263,6 +287,7 @@ struct InterruptController {
     /// 中断号类型，取自策略类
     using IRQn_Type           = typename Policy::IRQn_Type;
     using priority_group_type = typename Policy::priority_group_type;
+    using priority_type       = typename Policy::priority_type;
     /// 是否支持增强功能（编译期常量）
     static constexpr bool enhanced_controller = traits::is_enhanced_interrupt_controller_v<Policy>;
 
@@ -287,7 +312,7 @@ struct InterruptController {
      * @param irq      中断号
      * @param priority 优先级值（数值越小优先级越高）
      */
-    inline static void set_priority(IRQn_Type irq, priority_group_type priority) noexcept {
+    inline static void set_priority(IRQn_Type irq, priority_type priority) noexcept {
         Policy::set_priority(irq, priority);
     }
 
