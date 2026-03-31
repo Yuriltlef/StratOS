@@ -289,7 +289,7 @@ struct InterruptController {
     using priority_group_type = typename Policy::priority_group_type;
     using priority_type       = typename Policy::priority_type;
     /// 是否支持增强功能（编译期常量）
-    static constexpr bool enhanced_controller = traits::is_enhanced_interrupt_controller_v<Policy>;
+    static constexpr bool enhanced_interrupt_controller = traits::is_enhanced_interrupt_controller_v<Policy>;
 
     /**
      * @brief 使能指定中断
