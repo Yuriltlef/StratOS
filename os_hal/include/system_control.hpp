@@ -21,8 +21,11 @@
  * - SystemControl 适配器模板：接收一个策略类，进行编译期验证，并转发所有操作。
  *
  * 策略类需定义以下嵌套类型：
- * - exception_type：表示异常编号的类型（如 CMSIS 的 IRQn_Type）
- * - priority_type：表示优先级值的类型（如 uint8_t）
+ *          - exception_type：异常编号的类型（如 CMSIS 的 IRQn_Type）
+ *          - priority_type：优先级值的类型（如 uint8_t）
+ *          - address_type：向量表地址的类型（通常为 uint32_t 或 uint64_t）
+ *          - priority_group_type：优先级分组值的类型（通常为 uint32_t）
+ *          - fault_mask_type：故障使能掩码的类型（通常为 uint32_t）
  *
  * 可选功能（如故障处理）通过 SFINAE 自动提供，策略可返回任意类型（利用 auto 推导）。
  *
@@ -38,13 +41,15 @@
 #ifndef STRATOS_HAL_SYSTEM_CONTROL_HPP
 #define STRATOS_HAL_SYSTEM_CONTROL_HPP
 
-#include <cstdint>
-#include <type_traits>
-#include <utility>
+#include <type_traits> // for std::false_type, std::true_type, etc.
+#include <utility>     // for std::declval
 
 namespace strat_os::hal::traits
 {
-// ---------- 检测策略类是否定义嵌套类型 ----------
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 exception_type
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_exception_type : std::false_type {};
 template <typename T>
@@ -52,6 +57,10 @@ struct has_exception_type<T, std::void_t<typename T::exception_type>> : std::tru
 template <typename T>
 inline constexpr bool has_exception_type_v = has_exception_type<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 priority_type
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_priority_type : std::false_type {};
 template <typename T>
@@ -59,7 +68,80 @@ struct has_priority_type<T, std::void_t<typename T::priority_type>> : std::true_
 template <typename T>
 inline constexpr bool has_priority_type_v = has_priority_type<T>::value;
 
+/**
+ * @brief 检测类型 T 的 priority_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_priority_type : std::is_unsigned<typename T::priority_type> {};
+template <typename T>
+inline constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 address_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_address_type : std::false_type {};
+template <typename T>
+struct has_address_type<T, std::void_t<typename T::address_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_address_type_v = has_address_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 address_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_address_type : std::is_unsigned<typename T::address_type> {};
+template <typename T>
+inline constexpr bool is_valid_address_type_v = is_valid_address_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 priority_group_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_priority_group_type : std::false_type {};
+template <typename T>
+struct has_priority_group_type<T, std::void_t<typename T::priority_group_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 priority_group_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_priority_group_type : std::is_unsigned<typename T::priority_group_type> {};
+template <typename T>
+inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 fault_mask_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_fault_mask_type : std::false_type {};
+template <typename T>
+struct has_fault_mask_type<T, std::void_t<typename T::fault_mask_type>> : std::true_type {};
+template <typename T>
+inline constexpr bool has_fault_mask_type_v = has_fault_mask_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 fault_mask_type 是否为无符号整数类型
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_valid_fault_mask_type : std::is_unsigned<typename T::fault_mask_type> {};
+template <typename T>
+inline constexpr bool is_valid_fault_mask_type_v = is_valid_fault_mask_type<T>::value;
+
 // ---------- 必需方法检测 ----------
+/**
+ * @brief 检测类型 T 是否包含方法 system_reset()
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_system_reset : std::false_type {};
 template <typename T>
@@ -67,22 +149,36 @@ struct has_system_reset<T, std::void_t<decltype(T::system_reset())>> : std::true
 template <typename T>
 inline constexpr bool has_system_reset_v = has_system_reset<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 set_vector_table(T::address_type)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_set_vector_table : std::false_type {};
 template <typename T>
-struct has_set_vector_table<T, std::void_t<decltype(T::set_vector_table(std::declval<uint32_t>()))>> : std::true_type {
-};
+struct has_set_vector_table<T, std::void_t<decltype(T::set_vector_table(std::declval<typename T::address_type>()))>>
+    : std::true_type {};
 template <typename T>
 inline constexpr bool has_set_vector_table_v = has_set_vector_table<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 set_priority_grouping(T::priority_group_type)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_set_priority_grouping : std::false_type {};
 template <typename T>
-struct has_set_priority_grouping<T, std::void_t<decltype(T::set_priority_grouping(std::declval<uint32_t>()))>>
-    : std::true_type {};
+struct has_set_priority_grouping<
+    T,
+    std::void_t<decltype(T::set_priority_grouping(std::declval<typename T::priority_group_type>()))>> : std::true_type {
+};
 template <typename T>
 inline constexpr bool has_set_priority_grouping_v = has_set_priority_grouping<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 get_priority_grouping()
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_get_priority_grouping : std::false_type {};
 template <typename T>
@@ -90,6 +186,10 @@ struct has_get_priority_grouping<T, std::void_t<decltype(T::get_priority_groupin
 template <typename T>
 inline constexpr bool has_get_priority_grouping_v = has_get_priority_grouping<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 sleep()
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_sleep : std::false_type {};
 template <typename T>
@@ -97,6 +197,10 @@ struct has_sleep<T, std::void_t<decltype(T::sleep())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_sleep_v = has_sleep<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 deep_sleep()
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_deep_sleep : std::false_type {};
 template <typename T>
@@ -104,6 +208,10 @@ struct has_deep_sleep<T, std::void_t<decltype(T::deep_sleep())>> : std::true_typ
 template <typename T>
 inline constexpr bool has_deep_sleep_v = has_deep_sleep<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 set_sleep_on_exit(bool)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_set_sleep_on_exit : std::false_type {};
 template <typename T>
@@ -112,6 +220,10 @@ template <typename T>
 inline constexpr bool has_set_sleep_on_exit_v = has_set_sleep_on_exit<T>::value;
 
 // 异常优先级相关方法（使用策略定义的 exception_type 和 priority_type）
+/**
+ * @brief 检测类型 T 是否包含方法 set_exception_priority(T::exception_type, T::priority_type)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_set_exception_priority : std::false_type {};
 template <typename T>
@@ -122,6 +234,10 @@ struct has_set_exception_priority<
 template <typename T>
 inline constexpr bool has_set_exception_priority_v = has_set_exception_priority<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 get_exception_priority(T::exception_type) -> T::priority_type
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_get_exception_priority : std::false_type {};
 template <typename T>
@@ -132,18 +248,27 @@ template <typename T>
 inline constexpr bool has_get_exception_priority_v = has_get_exception_priority<T>::value;
 
 // ---------- 可选方法检测 ----------
+/**
+ * @brief 检测类型 T 是否包含方法 enable_faults(T::fault_mask_type)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_enable_faults : std::false_type {};
 template <typename T>
-struct has_enable_faults<T, std::void_t<decltype(T::enable_faults(std::declval<std::uint32_t>()))>> : std::true_type {};
+struct has_enable_faults<T, std::void_t<decltype(T::enable_faults(std::declval<typename T::fault_mask_type>()))>>
+    : std::true_type {};
 template <typename T>
 inline constexpr bool has_enable_faults_v = has_enable_faults<T>::value;
 
+/**
+ * @brief 检测类型 T 是否包含方法 disable_faults(T::fault_mask_type)
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_disable_faults : std::false_type {};
 template <typename T>
-struct has_disable_faults<T, std::void_t<decltype(T::disable_faults(std::declval<std::uint32_t>()))>> : std::true_type {
-};
+struct has_disable_faults<T, std::void_t<decltype(T::disable_faults(std::declval<typename T::fault_mask_type>()))>>
+    : std::true_type {};
 template <typename T>
 inline constexpr bool has_disable_faults_v = has_disable_faults<T>::value;
 
@@ -159,6 +284,13 @@ inline constexpr bool has_get_fault_info_v = has_get_fault_info<T>::value;
 template <typename T>
 struct is_valid_system_control_policy : std::conjunction<has_exception_type<T>,
                                                          has_priority_type<T>,
+                                                         has_address_type<T>,
+                                                         has_priority_group_type<T>,
+                                                         has_fault_mask_type<T>,
+                                                         is_valid_priority_type<T>,
+                                                         is_valid_address_type<T>,
+                                                         is_valid_priority_group_type<T>,
+                                                         is_valid_fault_mask_type<T>,
                                                          has_system_reset<T>,
                                                          has_set_vector_table<T>,
                                                          has_set_priority_grouping<T>,
@@ -172,6 +304,12 @@ struct is_valid_system_control_policy : std::conjunction<has_exception_type<T>,
 template <typename T>
 inline constexpr bool is_valid_system_control_policy_v = is_valid_system_control_policy<T>::value;
 
+/**
+ * @brief 组合检测：判断类型 T 是否为增强型系统控制策略
+ * @tparam T 待检测的类型
+ *
+ * 增强型系统控制策略需同时提供 enable_faults、disable_faults 和 get_fault_info 方法。
+ */
 template <typename T>
 struct is_enhanced_fault_controller
     : std::conjunction<has_enable_faults<T>, has_disable_faults<T>, has_get_fault_info<T>> {};
@@ -205,9 +343,17 @@ template <typename SystemPolicy, typename = std::enable_if_t<traits::is_valid_sy
 struct SystemControl {
     using Policy = SystemPolicy;
 
-    // 细粒度静态断言，提供清晰的错误信息
+    /// 细粒度静态断言，提供清晰的错误信息
     static_assert(traits::has_exception_type_v<Policy>, "Policy must define 'exception_type'");
     static_assert(traits::has_priority_type_v<Policy>, "Policy must define 'priority_type'");
+    static_assert(traits::has_address_type_v<Policy>, "Policy must define 'address_type'");
+    static_assert(traits::has_priority_group_type_v<Policy>, "Policy must define 'priority_group_type'");
+    static_assert(traits::has_fault_mask_type_v<Policy>, "Policy must define 'fault_mask_type'");
+    static_assert(traits::is_valid_priority_type_v<Policy>, "Policy's 'priority_type' must be an unsigned integer");
+    static_assert(traits::is_valid_address_type_v<Policy>, "Policy's 'address_type' must be an unsigned integer");
+    static_assert(traits::is_valid_priority_group_type_v<Policy>,
+                  "Policy's 'priority_group_type' must be an unsigned integer");
+    static_assert(traits::is_valid_fault_mask_type_v<Policy>, "Policy's 'fault_mask_type' must be an unsigned integer");
     static_assert(traits::has_system_reset_v<Policy>, "Policy must provide system_reset()");
     static_assert(traits::has_set_vector_table_v<Policy>, "Policy must provide set_vector_table()");
     static_assert(traits::has_set_priority_grouping_v<Policy>, "Policy must provide set_priority_grouping()");
@@ -220,9 +366,12 @@ struct SystemControl {
     static_assert(traits::has_get_exception_priority_v<Policy>,
                   "Policy must provide get_exception_priority(exception_type)");
 
-    // 类型别名，供外部使用
-    using exception_type = typename Policy::exception_type;
-    using priority_type  = typename Policy::priority_type;
+    /// 类型别名，供外部使用
+    using exception_type      = typename Policy::exception_type;
+    using priority_type       = typename Policy::priority_type;
+    using address_type        = typename Policy::address_type;
+    using priority_group_type = typename Policy::priority_group_type;
+    using fault_mask_type     = typename Policy::fault_mask_type;
 
     /// 是否支持增强故障处理
     static constexpr bool enhanced_fault_controller = traits::is_enhanced_fault_controller_v<Policy>;
@@ -239,7 +388,7 @@ struct SystemControl {
      * @brief 设置向量表基址
      * @param address 向量表起始地址（必须对齐到 256 字节或更大）
      */
-    inline static void set_vector_table(std::uint32_t address) noexcept {
+    inline static void set_vector_table(address_type address) noexcept {
         Policy::set_vector_table(address);
     }
 
@@ -248,7 +397,7 @@ struct SystemControl {
      * @param group 优先级分组值（0～7，对应不同的抢占优先级位数）
      * @note 具体分组值与抢占优先级/子优先级的对应关系见芯片手册。
      */
-    inline static void set_priority_grouping(std::uint32_t group) noexcept {
+    inline static void set_priority_grouping(priority_group_type group) noexcept {
         Policy::set_priority_grouping(group);
     }
 
@@ -256,7 +405,7 @@ struct SystemControl {
      * @brief 获取当前中断优先级分组
      * @return 优先级分组值
      */
-    [[nodiscard]] inline static std::uint32_t get_priority_grouping() noexcept {
+    [[nodiscard]] inline static priority_group_type get_priority_grouping() noexcept {
         return Policy::get_priority_grouping();
     }
 
@@ -308,7 +457,7 @@ struct SystemControl {
      * @note 仅当策略支持故障处理时可用。
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_enable_faults_v<P>>>
-    inline static void enable_faults(std::uint32_t faults) noexcept {
+    inline static void enable_faults(fault_mask_type faults) noexcept {
         Policy::enable_faults(faults);
     }
 
@@ -318,7 +467,7 @@ struct SystemControl {
      * @note 仅当策略支持故障处理时可用。
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_disable_faults_v<P>>>
-    inline static void disable_faults(std::uint32_t faults) noexcept {
+    inline static void disable_faults(fault_mask_type faults) noexcept {
         Policy::disable_faults(faults);
     }
 

@@ -34,16 +34,11 @@
 #ifndef STRATOS_HAL_CONTEXT_SWITCH_HPP
 #define STRATOS_HAL_CONTEXT_SWITCH_HPP
 
-#include <type_traits>
-#include <utility> // for std::declval
+#include <type_traits> // for std::false_type, std::true_type, etc.
+#include <utility>     // for std::declval
 
 namespace strat_os::hal::traits
 {
-
-// -----------------------------------------------------------------------------
-// 基础类型检测
-// -----------------------------------------------------------------------------
-
 /**
  * @brief 检测类型 T 是否包含嵌套类型 word
  * @tparam T 待检测的类型
@@ -66,10 +61,6 @@ struct is_valid_word_type
     : std::conjunction<std::is_unsigned<T>, std::integral_constant<bool, sizeof(T) == sizeof(nullptr)>> {};
 template <typename T>
 inline constexpr bool is_valid_word_type_v = is_valid_word_type<T>::value;
-
-// -----------------------------------------------------------------------------
-// 必需方法检测
-// -----------------------------------------------------------------------------
 
 /**
  * @brief 检测静态方法 trigger_pendsv()
@@ -171,10 +162,7 @@ struct has_isb<T, std::void_t<decltype(T::isb())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_isb_v = has_isb<T>::value;
 
-// -----------------------------------------------------------------------------
 // 可选方法检测
-// -----------------------------------------------------------------------------
-
 /**
  * @brief 检测静态方法 get_current_exception()
  * @note 可选，用于获取当前异常号（非零表示在中断中）。
@@ -207,10 +195,6 @@ template <typename T>
 struct has_send_ipi<T, std::void_t<decltype(T::send_ipi(std::declval<typename T::word>()))>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_send_ipi_v = has_send_ipi<T>::value;
-
-// -----------------------------------------------------------------------------
-// 组合检测
-// -----------------------------------------------------------------------------
 
 /**
  * @brief 组合检测：判断类型 T 是否为有效的上下文切换策略
