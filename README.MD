@@ -3,7 +3,7 @@
 
 # StratOS - a RTOS for ARM Cortex-M3 using Template-based Policy Design and GNU Toolchain基于静态模板策略模式和GNU工具链的ARM Cortex-M3实时操作系统
 
-[!\[License: LGPL v3.0\](https://img.shields.io/badge/License-LGPL\_v3.0-blue.svg null)](https://www.gnu.org/licenses/lgpl-3.0)
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL_v3.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 </div>
 
