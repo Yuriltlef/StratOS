@@ -202,6 +202,18 @@ struct has_region_info_enabled<T, std::void_t<decltype(std::declval<typename T::
 template <typename T>
 inline constexpr bool has_region_info_enabled_v = has_region_info_enabled<T>::value;
 
+/**
+ * @brief 检测 region_info_type 成员 enabled 是否为 bool 类型
+ * @tparam T 待检测的策略类型
+ */
+template <typename T, typename = void>
+struct is_valid_region_info_enabled_type : std::false_type {};
+template <typename T>
+struct is_valid_region_info_enabled_type<T, std::void_t<decltype(std::declval<typename T::region_info_type>().enabled)>>
+    : std::is_same<decltype(std::declval<typename T::region_info_type>().enabled), bool> {};
+template <typename T>
+inline constexpr bool is_valid_region_info_enabled_type_v = is_valid_region_info_enabled_type<T>::value;
+
 // ----------------------------------------------------------------------------
 // 必需方法检测
 // ----------------------------------------------------------------------------
@@ -587,6 +599,7 @@ struct is_valid_mpu_policy : std::conjunction<has_region_index_type<T>,
                                               has_region_info_size<T>,
                                               has_region_info_attr<T>,
                                               has_region_info_enabled<T>,
+                                              is_valid_region_info_enabled_type<T>,
                                               has_mpu_enable_method<T>,
                                               has_mpu_disable_method<T>,
                                               has_mpu_is_enabled_method<T>,
@@ -701,6 +714,8 @@ struct Mpu {
                   "region_address_type must be an unsigned integer type");
     static_assert(traits::is_valid_region_size_type_v<Policy>, "region_size_type must be an unsigned integer type");
     static_assert(traits::is_valid_region_index_type_v<Policy>, "region_index_type must be an unsigned integer type");
+    static_assert(traits::is_valid_region_info_enabled_type_v<Policy>,
+                  "region_info_type::enabled must be of type bool");
 
     /// 区域索引类型（取自策略类）
     using region_index_type = typename Policy::region_index_type;
