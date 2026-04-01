@@ -78,7 +78,8 @@ inline constexpr bool is_valid_value_type_v = is_valid_value_type<T>::value;
 template <typename T, typename = void>
 struct is_valid_bit_index_type : std::false_type {};
 template <typename T>
-struct is_valid_bit_index_type<T, std::void_t<typename T::bit_index_type>> : std::is_unsigned<typename T::bit_index_type> {};
+struct is_valid_bit_index_type<T, std::void_t<typename T::bit_index_type>>
+    : std::is_unsigned<typename T::bit_index_type> {};
 template <typename T>
 inline constexpr bool is_valid_bit_index_type_v = is_valid_bit_index_type<T>::value;
 
@@ -281,14 +282,14 @@ template <typename T>
 inline constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub_memory_order_return_type<T>::value;
 
 /**
- * @brief 检测不带内存顺序的 compare_exchange() 返回类型是否与 value_type 一致
+ * @brief 检测不带内存顺序的 compare_exchange() 返回类型是否与 bool 一致
  */
 template <typename T>
 struct is_correct_compare_exchange_return_type
     : std::is_same<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
                                                 std::declval<typename T::value_type&>(),
                                                 std::declval<typename T::value_type>())),
-                   typename T::value_type> {};
+                   bool> {};
 template <typename T>
 inline constexpr bool is_correct_compare_exchange_return_type_v = is_correct_compare_exchange_return_type<T>::value;
 
@@ -301,7 +302,7 @@ struct is_correct_compare_exchange_memory_order_return_type
                                                 std::declval<typename T::value_type&>(),
                                                 std::declval<typename T::value_type>(),
                                                 std::declval<std::memory_order>())),
-                   typename T::value_type> {};
+                   bool> {};
 template <typename T>
 inline constexpr bool is_correct_compare_exchange_memory_order_return_type_v =
     is_correct_compare_exchange_memory_order_return_type<T>::value;
