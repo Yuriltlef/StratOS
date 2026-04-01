@@ -24,8 +24,9 @@
 #ifndef STRATOS_HAL_INTERRUPT_HPP
 #define STRATOS_HAL_INTERRUPT_HPP
 
-#include <type_traits> // for std::false_type, std::true_type, etc.
-#include <utility>     // for std::declval
+#include "os_hal/include/common_traits.hpp" // for has_priority_group_type, is_valid_priority_group_type, etc.
+#include <type_traits>                      // for std::false_type, std::true_type, etc.
+#include <utility>                          // for std::declval
 
 namespace strat_os::hal::traits
 {
@@ -41,68 +42,28 @@ template <typename T>
 inline constexpr bool has_irqn_type_v = has_irqn_type<T>::value;
 
 /**
- * @brief 检测类型 T 是否包含嵌套类型 priority_group_type
- * @tparam T 待检测的类型
- */
-template <typename T, typename = void>
-struct has_priority_group_type : std::false_type {};
-template <typename T>
-struct has_priority_group_type<T, std::void_t<typename T::priority_group_type>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
-
-/**
- * @brief 检测类型 T 的 priority_group_type 是否为无符号整数类型
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_valid_priority_group_type : std::is_unsigned<typename T::priority_group_type> {};
-template <typename T>
-inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
-
-/**
- * @brief 检测类型 T 是否包含嵌套类型 priority_type
- * @tparam T 待检测的类型
- */
-template <typename T, typename = void>
-struct has_priority_type : std::false_type {};
-template <typename T>
-struct has_priority_type<T, std::void_t<typename T::priority_type>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_priority_type_v = has_priority_type<T>::value;
-
-/**
- * @brief 检测类型 T 的 priority_type 是否为无符号整数类型
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_valid_priority_type : std::is_unsigned<typename T::priority_type> {};
-template <typename T>
-inline constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
-
-/**
  * @brief 检测类型 T 是否提供静态方法 enable(IRQn_Type)
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
-struct has_enable_method : std::false_type {};
+struct has_interrupt_enable_method : std::false_type {};
 template <typename T>
-struct has_enable_method<T, std::void_t<decltype(T::enable(std::declval<typename T::IRQn_Type>()))>> : std::true_type {
-};
+struct has_interrupt_enable_method<T, std::void_t<decltype(T::enable(std::declval<typename T::IRQn_Type>()))>>
+    : std::true_type {};
 template <typename T>
-inline constexpr bool has_enable_method_v = has_enable_method<T>::value;
+inline constexpr bool has_interrupt_enable_method_v = has_interrupt_enable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 disable(IRQn_Type)
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
-struct has_disable_method : std::false_type {};
+struct has_interrupt_disable_method : std::false_type {};
 template <typename T>
-struct has_disable_method<T, std::void_t<decltype(T::disable(std::declval<typename T::IRQn_Type>()))>>
+struct has_interrupt_disable_method<T, std::void_t<decltype(T::disable(std::declval<typename T::IRQn_Type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_disable_method_v = has_disable_method<T>::value;
+inline constexpr bool has_interrupt_disable_method_v = has_interrupt_disable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, T::priority_type)
@@ -186,8 +147,8 @@ struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
                                                         is_valid_priority_group_type<T>,
                                                         has_priority_type<T>,
                                                         is_valid_priority_type<T>,
-                                                        has_enable_method<T>,
-                                                        has_disable_method<T>,
+                                                        has_interrupt_enable_method<T>,
+                                                        has_interrupt_disable_method<T>,
                                                         has_set_priority_method<T>,
                                                         has_get_priority_method<T>,
                                                         is_correct_get_priority_return_type<T>,
@@ -207,6 +168,15 @@ template <typename T>
 struct has_in_isr_method<T, std::void_t<decltype(T::in_isr())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_in_isr_method_v = has_in_isr_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 in_isr() 方法返回类型是否为 bool
+ * @tparam T 待检测的类型
+ */
+template <typename T>
+struct is_correct_in_isr_return_type : std::is_same<decltype(T::in_isr()), bool> {};
+template <typename T>
+inline constexpr bool is_correct_in_isr_return_type_v = is_correct_in_isr_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 get_current_irq()
@@ -252,6 +222,7 @@ inline constexpr bool has_get_priority_grouping_method_v = has_get_priority_grou
  */
 template <typename T>
 struct is_enhanced_interrupt_controller : std::conjunction<has_in_isr_method<T>,
+                                                           is_correct_in_isr_return_type<T>,
                                                            has_get_current_irq_method<T>,
                                                            has_set_priority_grouping_method<T>,
                                                            has_get_priority_grouping_method<T>> {};
@@ -288,9 +259,10 @@ struct InterruptController {
     static_assert(traits::is_valid_priority_group_type_v<Policy>, "Policy must define a valid priority_group_type");
     static_assert(traits::has_priority_type_v<Policy>, "Policy must define priority_type");
     static_assert(traits::is_valid_priority_type_v<Policy>, "Policy must define a valid priority_type");
-    static_assert(traits::has_enable_method_v<Policy>, "Policy must provide enable(IRQn_Type)");
-    static_assert(traits::has_disable_method_v<Policy>, "Policy must provide disable(IRQn_Type)");
-    static_assert(traits::has_set_priority_method_v<Policy>, "Policy must provide set_priority(IRQn_Type, priority_type)");
+    static_assert(traits::has_interrupt_enable_method_v<Policy>, "Policy must provide enable(IRQn_Type)");
+    static_assert(traits::has_interrupt_disable_method_v<Policy>, "Policy must provide disable(IRQn_Type)");
+    static_assert(traits::has_set_priority_method_v<Policy>,
+                  "Policy must provide set_priority(IRQn_Type, priority_type)");
     static_assert(traits::has_get_priority_method_v<Policy>, "Policy must provide get_priority(IRQn_Type)");
     static_assert(traits::has_trigger_software_method_v<Policy>, "Policy must provide trigger_software(IRQn_Type)");
     static_assert(traits::has_global_enable_method_v<Policy>, "Policy must provide global_enable()");
@@ -368,7 +340,8 @@ struct InterruptController {
      * @return true 在中断中，false 在任务中
      * @note 仅当策略类提供 in_isr() 方法时可用，否则调用会导致编译错误
      */
-    template <typename P = Policy, typename = std::enable_if_t<traits::has_in_isr_method_v<P>>>
+    template <typename P = Policy,
+              typename = std::enable_if_t<traits::has_in_isr_method_v<P> && traits::is_correct_in_isr_return_type_v<P>>>
     [[nodiscard]] static bool in_isr() noexcept {
         return P::in_isr();
     }

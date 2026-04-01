@@ -30,8 +30,9 @@
 #ifndef STRATOS_HAL_SYSTEM_TICK_HPP
 #define STRATOS_HAL_SYSTEM_TICK_HPP
 
-#include <type_traits> // for std::false_type, std::true_type, etc.
-#include <utility>     // for std::declval
+#include "os_hal/include/common_traits.hpp" // for enable/disable method traits
+#include <type_traits>                      // for std::false_type, std::true_type, etc.
+#include <utility>                          // for std::declval
 
 namespace strat_os::hal::traits
 {
@@ -49,10 +50,12 @@ inline constexpr bool has_reload_type_v = has_reload_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 reload_type 是否为无符号整数类型
- * @tparam T 待检测的类型
+ * @tparam T 待检测的类型，仅当 T 包含 reload_type 时使用
  */
+template <typename T, typename = void>
+struct is_valid_reload_type : std::false_type {};
 template <typename T>
-struct is_valid_reload_type : std::is_unsigned<typename T::reload_type> {};
+struct is_valid_reload_type<T, std::void_t<typename T::reload_type>> : std::is_unsigned<typename T::reload_type> {};
 template <typename T>
 inline constexpr bool is_valid_reload_type_v = is_valid_reload_type<T>::value;
 
@@ -80,28 +83,6 @@ struct has_init_method<T,
 };
 template <typename T>
 inline constexpr bool has_init_method_v = has_init_method<T>::value;
-
-/**
- * @brief 检测类型 T 是否提供静态方法 enable()
- * @tparam T 待检测的类型
- */
-template <typename T, typename = void>
-struct has_enable_method : std::false_type {};
-template <typename T>
-struct has_enable_method<T, std::void_t<decltype(T::enable())>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_enable_method_v = has_enable_method<T>::value;
-
-/**
- * @brief 检测类型 T 是否提供静态方法 disable()
- * @tparam T 待检测的类型
- */
-template <typename T, typename = void>
-struct has_disable_method : std::false_type {};
-template <typename T>
-struct has_disable_method<T, std::void_t<decltype(T::disable())>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_disable_method_v = has_disable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 enable_irq()
@@ -157,6 +138,14 @@ template <typename T>
 inline constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::value;
 
 /**
+ * @brief 检测 is_overflow() 返回类型是否与 bool 一致
+ */
+template <typename T>
+struct is_correct_is_overflow_return_type : std::is_same<decltype(T::is_overflow()), bool> {};
+template <typename T>
+inline constexpr bool is_correct_is_overflow_return_type_v = is_correct_is_overflow_return_type<T>::value;
+
+/**
  * @brief 组合检测，判断类型 T 是否为有效的 SystemTick 策略
  * @tparam T 待检测的类型
  *
@@ -180,7 +169,8 @@ struct is_valid_systick_policy : std::conjunction<has_reload_type<T>,
                                                   has_disable_irq_method<T>,
                                                   has_get_value_method<T>,
                                                   is_correct_get_value_return_type<T>,
-                                                  has_is_overflow_method<T>> {};
+                                                  has_is_overflow_method<T>,
+                                                  is_correct_is_overflow_return_type<T>> {};
 template <typename T>
 inline constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::value;
 
@@ -254,6 +244,7 @@ struct SystemTick {
     static_assert(traits::is_correct_get_value_return_type_v<Policy>,
                   "Policy's get_value() must return the correct reload_type");
     static_assert(traits::has_is_overflow_method_v<Policy>, "Policy must provide is_overflow() -> bool");
+    static_assert(traits::is_correct_is_overflow_return_type_v<Policy>, "Policy's is_overflow() must return bool");
 
     /// 重装载值类型别名
     using reload_type = typename Policy::reload_type;

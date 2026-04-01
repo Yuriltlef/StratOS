@@ -393,7 +393,7 @@ struct ContextSwitch {
 
     /**
      * @brief 获取当前异常号（用于判断是否在中断中）
-     * @return 异常号，0 表示线程模式 decltype(Policy::get_current_exception()
+     * @return 异常号，0 表示线程模式 decltype(Policy::get_current_exception())
      * @note 仅当策略类提供 get_current_exception() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_current_exception_v<P>>>

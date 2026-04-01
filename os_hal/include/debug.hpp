@@ -49,10 +49,12 @@ inline constexpr bool has_cycle_counter_size_type_v = has_cycle_counter_size_typ
 
 /**
  * @brief 检测 cycle_counter_size_type 是否为无符号整数类型
- * @tparam T 待检测的类型
+ * @tparam T 待检测的类型，仅当 T 包含 cycle_counter_size_type 时使用
  */
+template <typename T, typename = void>
+struct is_valid_cycle_counter_size_type : std::false_type {};
 template <typename T>
-struct is_valid_cycle_counter_size_type : std::is_unsigned<typename T::cycle_counter_size_type> {};
+struct is_valid_cycle_counter_size_type<T, std::void_t<typename T::cycle_counter_size_type>> : std::is_unsigned<typename T::cycle_counter_size_type> {};
 template <typename T>
 inline constexpr bool is_valid_cycle_counter_size_type_v = is_valid_cycle_counter_size_type<T>::value;
 
@@ -119,6 +121,15 @@ struct has_is_cycle_counter_enabled_method<T, std::void_t<decltype(T::is_cycle_c
 template <typename T>
 inline constexpr bool has_is_cycle_counter_enabled_method_v = has_is_cycle_counter_enabled_method<T>::value;
 
+/**
+ * @brief 检测静态方法 is_cycle_counter_enabled() 的返回类型是否为 bool
+ */
+template <typename T>
+struct is_correct_is_cycle_counter_enabled_return_type : std::is_same<decltype(T::is_cycle_counter_enabled()), bool> {};
+template <typename T>
+inline constexpr bool is_correct_is_cycle_counter_enabled_return_type_v =
+    is_correct_is_cycle_counter_enabled_return_type<T>::value;
+
 // -----------------------------------------------------------------------------
 // 组合检测：是否为有效的调试策略
 // -----------------------------------------------------------------------------
@@ -143,7 +154,8 @@ struct is_valid_debug_policy : std::conjunction<has_bkpt_method<T>,
                                                 is_correct_cycle_counter_return_type<T>,
                                                 has_cycle_counter_size_type<T>,
                                                 is_valid_cycle_counter_size_type<T>,
-                                                has_is_cycle_counter_enabled_method<T>> {};
+                                                has_is_cycle_counter_enabled_method<T>,
+                                                is_correct_is_cycle_counter_enabled_return_type<T>> {};
 
 template <typename T>
 inline constexpr bool is_valid_debug_policy_v = is_valid_debug_policy<T>::value;
@@ -204,6 +216,14 @@ struct has_is_ready_method<T, std::void_t<decltype(T::is_ready())>> : std::true_
 template <typename T>
 inline constexpr bool has_is_ready_method_v = has_is_ready_method<T>::value;
 
+/**
+ * @brief 检测静态方法 is_ready() 的返回类型是否为 bool
+ */
+template <typename T>
+struct is_correct_is_ready_return_type : std::is_same<decltype(T::is_ready()), bool> {};
+template <typename T>
+inline constexpr bool is_correct_is_ready_return_type_v = is_correct_is_ready_return_type<T>::value;
+
 } // namespace strat_os::hal::traits
 
 namespace strat_os::hal
@@ -240,12 +260,18 @@ struct Debug {
     static_assert(traits::has_get_cycle_counter_method_v<Policy>, "Policy must provide get_cycle_counter()");
     static_assert(traits::has_is_cycle_counter_enabled_method_v<Policy>,
                   "Policy must provide is_cycle_counter_enabled()");
-    static_assert(traits::has_cycle_counter_size_type_v<Policy>, "Policy must provide nested type 'cycle_counter_size_type'");
+    static_assert(traits::has_cycle_counter_size_type_v<Policy>,
+                  "Policy must provide nested type 'cycle_counter_size_type'");
     static_assert(traits::is_valid_cycle_counter_size_type_v<Policy>,
                   "Policy::cycle_counter_size_type must be an unsigned integer type");
     static_assert((!traits::has_send_block_method_v<Policy> ||
                    (traits::has_size_type_v<Policy> && traits::is_valid_size_type_v<Policy>)),
-                  "DebugPolicy defines send_block() but does not provide a valid 'size_type' (unsigned and at least sizeof(size_t))");
+                  "DebugPolicy defines send_block() but does not provide a valid 'size_type' (unsigned and at least "
+                  "sizeof(size_t))");
+    static_assert(traits::is_correct_cycle_counter_return_type_v<Policy>,
+                  "Policy's get_cycle_counter() must return cycle_counter_size_type");
+    static_assert(traits::is_correct_is_cycle_counter_enabled_return_type_v<Policy>,
+                  "Policy's is_cycle_counter_enabled() must return bool");
 
     /// 周期计数器大小类型别名
     using cycle_counter_size_type = typename Policy::cycle_counter_size_type;
@@ -255,29 +281,39 @@ struct Debug {
     /**
      * @brief 插入断点（硬件断点指令）
      */
-    inline static void bkpt() noexcept { Policy::bkpt(); }
+    inline static void bkpt() noexcept {
+        Policy::bkpt();
+    }
 
     /**
      * @brief 使能周期计数器
      */
-    inline static void enable_cycle_counter() noexcept { Policy::enable_cycle_counter(); }
+    inline static void enable_cycle_counter() noexcept {
+        Policy::enable_cycle_counter();
+    }
 
     /**
      * @brief 禁用周期计数器
      */
-    inline static void disable_cycle_counter() noexcept { Policy::disable_cycle_counter(); }
+    inline static void disable_cycle_counter() noexcept {
+        Policy::disable_cycle_counter();
+    }
 
     /**
      * @brief 获取当前周期计数值
      * @return 周期计数值（类型由策略定义）
      */
-    [[nodiscard]] inline static cycle_counter_size_type get_cycle_counter() noexcept { return Policy::get_cycle_counter(); }
+    [[nodiscard]] inline static cycle_counter_size_type get_cycle_counter() noexcept {
+        return Policy::get_cycle_counter();
+    }
 
     /**
      * @brief 查询周期计数器是否已使能
      * @return true 已使能，false 未使能
      */
-    [[nodiscard]] inline static bool is_cycle_counter_enabled() noexcept { return Policy::is_cycle_counter_enabled(); }
+    [[nodiscard]] inline static bool is_cycle_counter_enabled() noexcept {
+        return Policy::is_cycle_counter_enabled();
+    }
 
     // ----- 可选方法（ITM 软件跟踪）-----
 
@@ -287,7 +323,9 @@ struct Debug {
      * @note 仅当策略提供 send_char() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_send_char_method_v<P>>>
-    inline static void send_char(char c) noexcept { P::send_char(c); }
+    inline static void send_char(char c) noexcept {
+        P::send_char(c);
+    }
 
     /**
      * @brief 发送一个内存块（通过 ITM）
@@ -321,7 +359,10 @@ struct Debug {
      * @note 仅当策略提供 is_ready() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_is_ready_method_v<P>>>
-    [[nodiscard]] inline static bool is_ready() noexcept { return P::is_ready(); }
+    [[nodiscard]] inline static bool is_ready() noexcept {
+        static_assert(traits::is_correct_is_ready_return_type_v<P>, "Policy's is_ready() must return bool");
+        return P::is_ready();
+    }
 };
 
 } // namespace strat_os::hal

@@ -41,8 +41,10 @@
 #ifndef STRATOS_HAL_SYSTEM_CONTROL_HPP
 #define STRATOS_HAL_SYSTEM_CONTROL_HPP
 
-#include <type_traits> // for std::false_type, std::true_type, etc.
-#include <utility>     // for std::declval
+#include "os_hal/include/common_traits.hpp" // for has_priority_group_type, etc.
+#include <type_traits>                      // for std::false_type, std::true_type, etc.
+#include <utility>                          // for std::declval
+
 
 namespace strat_os::hal::traits
 {
@@ -58,26 +60,6 @@ template <typename T>
 inline constexpr bool has_exception_type_v = has_exception_type<T>::value;
 
 /**
- * @brief 检测类型 T 是否包含嵌套类型 priority_type
- * @tparam T 待检测的类型
- */
-template <typename T, typename = void>
-struct has_priority_type : std::false_type {};
-template <typename T>
-struct has_priority_type<T, std::void_t<typename T::priority_type>> : std::true_type {};
-template <typename T>
-inline constexpr bool has_priority_type_v = has_priority_type<T>::value;
-
-/**
- * @brief 检测类型 T 的 priority_type 是否为无符号整数类型
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_valid_priority_type : std::is_unsigned<typename T::priority_type> {};
-template <typename T>
-inline constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
-
-/**
  * @brief 检测类型 T 是否包含嵌套类型 address_type
  * @tparam T 待检测的类型
  */
@@ -90,32 +72,14 @@ inline constexpr bool has_address_type_v = has_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 address_type 是否为无符号整数类型
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_valid_address_type : std::is_unsigned<typename T::address_type> {};
-template <typename T>
-inline constexpr bool is_valid_address_type_v = is_valid_address_type<T>::value;
-
-/**
- * @brief 检测类型 T 是否包含嵌套类型 priority_group_type
- * @tparam T 待检测的类型
+ * @tparam T 待检测的类型，仅当 T 包含 address_type 时使用
  */
 template <typename T, typename = void>
-struct has_priority_group_type : std::false_type {};
+struct is_valid_address_type : std::false_type {};  
 template <typename T>
-struct has_priority_group_type<T, std::void_t<typename T::priority_group_type>> : std::true_type {};
+struct is_valid_address_type<T, std::void_t<typename T::address_type>> : std::is_unsigned<typename T::address_type> {};
 template <typename T>
-inline constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
-
-/**
- * @brief 检测类型 T 的 priority_group_type 是否为无符号整数类型
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_valid_priority_group_type : std::is_unsigned<typename T::priority_group_type> {};
-template <typename T>
-inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
+inline constexpr bool is_valid_address_type_v = is_valid_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 fault_mask_type
@@ -130,10 +94,12 @@ inline constexpr bool has_fault_mask_type_v = has_fault_mask_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 fault_mask_type 是否为无符号整数类型
- * @tparam T 待检测的类型
+ * @tparam T 待检测的类型，仅当 T 包含 fault_mask_type 时使用
  */
+template <typename T, typename = void>
+struct is_valid_fault_mask_type : std::false_type {};
 template <typename T>
-struct is_valid_fault_mask_type : std::is_unsigned<typename T::fault_mask_type> {};
+struct is_valid_fault_mask_type<T, std::void_t<typename T::fault_mask_type>> : std::is_unsigned<typename T::fault_mask_type> {};
 template <typename T>
 inline constexpr bool is_valid_fault_mask_type_v = is_valid_fault_mask_type<T>::value;
 
@@ -409,7 +375,7 @@ struct SystemControl {
     /**
      * @brief 触发系统复位
      */
-    inline static void system_reset() noexcept {
+    [[noreturn]] inline static void system_reset() noexcept {
         Policy::system_reset();
     }
 

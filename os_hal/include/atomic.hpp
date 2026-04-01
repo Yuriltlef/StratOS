@@ -62,19 +62,23 @@ inline constexpr bool has_bit_index_type_v = has_bit_index_type<T>::value;
 
 /**
  * @brief 检测 value_type 是否为无符号整数类型
- * @note 仅当 T 包含 value_type 时使用，否则应放在 has_value_type 之后以避免硬错误
+ * @note 仅当 T 包含 value_type 时使用
  */
+template <typename T, typename = void>
+struct is_valid_value_type : std::false_type {};
 template <typename T>
-struct is_valid_value_type : std::is_unsigned<typename T::value_type> {};
+struct is_valid_value_type<T, std::void_t<typename T::value_type>> : std::is_unsigned<typename T::value_type> {};
 template <typename T>
 inline constexpr bool is_valid_value_type_v = is_valid_value_type<T>::value;
 
 /**
  * @brief 检测 bit_index_type 是否为无符号整数类型
- * @note 仅当 T 包含 bit_index_type 时使用，否则应放在 has_bit_index_type 之后以避免硬错误
+ * @note 仅当 T 包含 bit_index_type 时使用
  */
+template <typename T, typename = void>
+struct is_valid_bit_index_type : std::false_type {};
 template <typename T>
-struct is_valid_bit_index_type : std::is_unsigned<typename T::bit_index_type> {};
+struct is_valid_bit_index_type<T, std::void_t<typename T::bit_index_type>> : std::is_unsigned<typename T::bit_index_type> {};
 template <typename T>
 inline constexpr bool is_valid_bit_index_type_v = is_valid_bit_index_type<T>::value;
 
@@ -215,66 +219,112 @@ inline constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::va
  * @brief 检测 load() 的返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_load_return_type
+struct is_correct_load_return_type
     : std::is_same<decltype(T::load(std::declval<volatile typename T::value_type*>())), typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_load_return_type_v = has_correct_load_return_type<T>::value;
+inline constexpr bool is_correct_load_return_type_v = is_correct_load_return_type<T>::value;
 
 /**
  * @brief 检测 add() 的返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_add_return_type : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
-                                                                  std::declval<typename T::value_type>())),
-                                                  typename T::value_type> {};
+struct is_correct_add_return_type : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
+                                                                 std::declval<typename T::value_type>())),
+                                                 typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_add_return_type_v = has_correct_add_return_type<T>::value;
+inline constexpr bool is_correct_add_return_type_v = is_correct_add_return_type<T>::value;
 
 /**
  * @brief 检测 sub() 的返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_sub_return_type : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
-                                                                  std::declval<typename T::value_type>())),
-                                                  typename T::value_type> {};
+struct is_correct_sub_return_type : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
+                                                                 std::declval<typename T::value_type>())),
+                                                 typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_sub_return_type_v = has_correct_sub_return_type<T>::value;
+inline constexpr bool is_correct_sub_return_type_v = is_correct_sub_return_type<T>::value;
 
 // 对于带内存顺序的重载，同样检查返回类型一致性
 /**
  * @brief 检测带内存顺序的 load() 返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_load_memory_order_return_type
+struct is_correct_load_memory_order_return_type
     : std::is_same<decltype(T::load(std::declval<volatile typename T::value_type*>(),
                                     std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_load_memory_order_return_type_v = has_correct_load_memory_order_return_type<T>::value;
+inline constexpr bool is_correct_load_memory_order_return_type_v = is_correct_load_memory_order_return_type<T>::value;
 
 /**
  * @brief 检测带内存顺序的 add() 返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_add_memory_order_return_type
+struct is_correct_add_memory_order_return_type
     : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
                                    std::declval<typename T::value_type>(),
                                    std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_add_memory_order_return_type_v = has_correct_add_memory_order_return_type<T>::value;
+inline constexpr bool is_correct_add_memory_order_return_type_v = is_correct_add_memory_order_return_type<T>::value;
 
 /**
  * @brief 检测带内存顺序的 sub() 返回类型是否与 value_type 一致
  */
 template <typename T>
-struct has_correct_sub_memory_order_return_type
+struct is_correct_sub_memory_order_return_type
     : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
                                    std::declval<typename T::value_type>(),
                                    std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool has_correct_sub_memory_order_return_type_v = has_correct_sub_memory_order_return_type<T>::value;
+inline constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub_memory_order_return_type<T>::value;
+
+/**
+ * @brief 检测不带内存顺序的 compare_exchange() 返回类型是否与 value_type 一致
+ */
+template <typename T>
+struct is_correct_compare_exchange_return_type
+    : std::is_same<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
+                                                std::declval<typename T::value_type&>(),
+                                                std::declval<typename T::value_type>())),
+                   typename T::value_type> {};
+template <typename T>
+inline constexpr bool is_correct_compare_exchange_return_type_v = is_correct_compare_exchange_return_type<T>::value;
+
+/**
+ * @brief 检测带内存顺序的 compare_exchange() 返回类型是否与 value_type 一致
+ */
+template <typename T>
+struct is_correct_compare_exchange_memory_order_return_type
+    : std::is_same<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
+                                                std::declval<typename T::value_type&>(),
+                                                std::declval<typename T::value_type>(),
+                                                std::declval<std::memory_order>())),
+                   typename T::value_type> {};
+template <typename T>
+inline constexpr bool is_correct_compare_exchange_memory_order_return_type_v =
+    is_correct_compare_exchange_memory_order_return_type<T>::value;
+
+/**
+ * @brief 检测 test_and_set() 返回类型是否与 bool 一致
+ */
+template <typename T>
+struct is_correct_test_and_set_return_type
+    : std::is_same<decltype(T::test_and_set(std::declval<volatile typename T::value_type*>())), bool> {};
+template <typename T>
+inline constexpr bool is_correct_test_and_set_return_type_v = is_correct_test_and_set_return_type<T>::value;
+
+/**
+ * @brief 检测 test_and_set_bit() 返回类型是否与 bool 一致
+ */
+template <typename T>
+struct is_correct_test_and_set_bit_return_type
+    : std::is_same<decltype(T::test_and_set_bit(std::declval<volatile typename T::value_type*>(),
+                                                std::declval<typename T::bit_index_type>())),
+                   bool> {};
+template <typename T>
+inline constexpr bool is_correct_test_and_set_bit_return_type_v = is_correct_test_and_set_bit_return_type<T>::value;
 
 // -----------------------------------------------------------------------------
 // 组合检测：是否为有效的原子操作策略
@@ -305,9 +355,12 @@ struct is_valid_atomic_policy : std::conjunction<has_value_type<T>,
                                                  has_test_and_set_bit_method<T>,
                                                  has_flip_bit_method<T>,
                                                  has_test_and_set_method<T>,
-                                                 has_correct_load_return_type<T>,
-                                                 has_correct_add_return_type<T>,
-                                                 has_correct_sub_return_type<T>> {};
+                                                 is_correct_load_return_type<T>,
+                                                 is_correct_add_return_type<T>,
+                                                 is_correct_sub_return_type<T>,
+                                                 is_correct_compare_exchange_return_type<T>,
+                                                 is_correct_test_and_set_return_type<T>,
+                                                 is_correct_test_and_set_bit_return_type<T>> {};
 template <typename T>
 inline constexpr bool is_valid_atomic_policy_v = is_valid_atomic_policy<T>::value;
 
@@ -396,35 +449,6 @@ struct is_memory_order_capable : std::conjunction<has_load_memory_order_method<T
                                                   has_compare_exchange_memory_order_method<T>> {};
 template <typename T>
 inline constexpr bool is_memory_order_capable_v = is_memory_order_capable<T>::value;
-
-// 对于带内存顺序的方法，同样检查返回值类型一致性（如果方法存在）
-/**
- * @brief 检测带内存顺序的 load 返回类型是否与 value_type 一致（仅当方法存在时检查）
- */
-template <typename T>
-struct is_correct_load_memory_order_return_type
-    : std::bool_constant<!has_load_memory_order_method_v<T> || has_correct_load_memory_order_return_type_v<T>> {};
-template <typename T>
-inline constexpr bool is_correct_load_memory_order_return_type_v = is_correct_load_memory_order_return_type<T>::value;
-
-/**
- * @brief 检测带内存顺序的 add 返回类型是否与 value_type 一致
- */
-template <typename T>
-struct is_correct_add_memory_order_return_type
-    : std::bool_constant<!has_add_memory_order_method_v<T> || has_correct_add_memory_order_return_type_v<T>> {};
-template <typename T>
-inline constexpr bool is_correct_add_memory_order_return_type_v = is_correct_add_memory_order_return_type<T>::value;
-
-/**
- * @brief 检测带内存顺序的 sub 返回类型是否与 value_type 一致
- */
-template <typename T>
-struct is_correct_sub_memory_order_return_type
-    : std::bool_constant<!has_sub_memory_order_method_v<T> || has_correct_sub_memory_order_return_type_v<T>> {};
-template <typename T>
-inline constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub_memory_order_return_type<T>::value;
-
 } // namespace strat_os::hal::traits
 
 namespace strat_os::hal
@@ -459,25 +483,31 @@ struct Atomic {
     static_assert(traits::is_valid_bit_index_type_v<Policy>,
                   "Atomic policy::bit_index_type must be an unsigned integer type");
     static_assert(traits::has_load_method_v<Policy>, "Atomic policy must provide load(volatile value_type*)");
-    static_assert(traits::has_correct_load_return_type_v<Policy>, "Atomic policy::load() must return value_type");
+    static_assert(traits::is_correct_load_return_type_v<Policy>, "Atomic policy::load() must return value_type");
     static_assert(traits::has_store_method_v<Policy>,
                   "Atomic policy must provide store(volatile value_type*, value_type)");
     static_assert(traits::has_add_method_v<Policy>, "Atomic policy must provide add(volatile value_type*, value_type)");
-    static_assert(traits::has_correct_add_return_type_v<Policy>, "Atomic policy::add() must return value_type");
+    static_assert(traits::is_correct_add_return_type_v<Policy>, "Atomic policy::add() must return value_type");
     static_assert(traits::has_sub_method_v<Policy>, "Atomic policy must provide sub(volatile value_type*, value_type)");
-    static_assert(traits::has_correct_sub_return_type_v<Policy>, "Atomic policy::sub() must return value_type");
+    static_assert(traits::is_correct_sub_return_type_v<Policy>, "Atomic policy::sub() must return value_type");
     static_assert(traits::has_compare_exchange_method_v<Policy>,
                   "Atomic policy must provide compare_exchange(volatile value_type*, value_type&, value_type)");
+    static_assert(traits::is_correct_compare_exchange_return_type_v<Policy>,
+                  "Atomic policy::compare_exchange() must return value_type");
     static_assert(traits::has_set_bit_method_v<Policy>,
-                  "Atomic policy must provide set_bit(volatile value_type*, uint32_t)");
+                  "Atomic policy must provide set_bit(volatile value_type*, bit_index_type)");
     static_assert(traits::has_clear_bit_method_v<Policy>,
-                  "Atomic policy must provide clear_bit(volatile value_type*, uint32_t)");
+                  "Atomic policy must provide clear_bit(volatile value_type*, bit_index_type)");
     static_assert(traits::has_test_and_set_bit_method_v<Policy>,
-                  "Atomic policy must provide test_and_set_bit(volatile value_type*, uint32_t)");
+                  "Atomic policy must provide test_and_set_bit(volatile value_type*, bit_index_type)");
     static_assert(traits::has_flip_bit_method_v<Policy>,
-                  "Atomic policy must provide flip_bit(volatile value_type*, uint32_t)");
+                  "Atomic policy must provide flip_bit(volatile value_type*, bit_index_type)");
     static_assert(traits::has_test_and_set_method_v<Policy>,
                   "Atomic policy must provide test_and_set(volatile value_type*)");
+    static_assert(traits::is_correct_test_and_set_return_type_v<Policy>,
+                  "Atomic policy::test_and_set() must return bool");
+    static_assert(traits::is_correct_test_and_set_bit_return_type_v<Policy>,
+                  "Atomic policy::test_and_set_bit() must return bool");
 
     /// 原子操作的基本类型（无符号整数）
     using value_type = typename Policy::value_type;
@@ -623,6 +653,8 @@ struct Atomic {
                                                       value_type& expected,
                                                       value_type desired,
                                                       std::memory_order order) noexcept {
+        static_assert(traits::is_correct_compare_exchange_memory_order_return_type_v<P>,
+                      "Atomic policy::compare_exchange() with memory order must return bool");
         return Policy::compare_exchange(ptr, expected, desired, order);
     }
 
