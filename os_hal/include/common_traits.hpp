@@ -50,7 +50,7 @@ struct has_priority_type : std::false_type {};
 template <typename T>
 struct has_priority_type<T, std::void_t<typename T::priority_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_priority_type_v = has_priority_type<T>::value;
+static constexpr bool has_priority_type_v = has_priority_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 priority_type 是否为无符号整数类型
@@ -67,7 +67,7 @@ template <typename T>
 struct is_valid_priority_type<T, std::void_t<typename T::priority_type>> : std::is_unsigned<typename T::priority_type> {
 };
 template <typename T>
-inline constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
+static constexpr bool is_valid_priority_type_v = is_valid_priority_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 priority_group_type
@@ -81,7 +81,7 @@ struct has_priority_group_type : std::false_type {};
 template <typename T>
 struct has_priority_group_type<T, std::void_t<typename T::priority_group_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
+static constexpr bool has_priority_group_type_v = has_priority_group_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 priority_group_type 是否为无符号整数类型
@@ -95,7 +95,7 @@ template <typename T>
 struct is_valid_priority_group_type<T, std::void_t<typename T::priority_group_type>>
     : std::is_unsigned<typename T::priority_group_type> {};
 template <typename T>
-inline constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
+static constexpr bool is_valid_priority_group_type_v = is_valid_priority_group_type<T>::value;
 
 // ----------------------------------------------------------------------------
 // 基本方法检测
@@ -112,7 +112,7 @@ struct has_enable_method : std::false_type {};
 template <typename T>
 struct has_enable_method<T, std::void_t<decltype(T::enable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_enable_method_v = has_enable_method<T>::value;
+static constexpr bool has_enable_method_v = has_enable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 disable()
@@ -125,7 +125,7 @@ struct has_disable_method : std::false_type {};
 template <typename T>
 struct has_disable_method<T, std::void_t<decltype(T::disable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_disable_method_v = has_disable_method<T>::value;
+static constexpr bool has_disable_method_v = has_disable_method<T>::value;
 
 } // namespace strat_os::hal::traits
 

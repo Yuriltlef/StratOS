@@ -46,7 +46,7 @@ struct has_reload_type : std::false_type {};
 template <typename T>
 struct has_reload_type<T, std::void_t<typename T::reload_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_reload_type_v = has_reload_type<T>::value;
+static constexpr bool has_reload_type_v = has_reload_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 reload_type 是否为无符号整数类型
@@ -57,7 +57,7 @@ struct is_valid_reload_type : std::false_type {};
 template <typename T>
 struct is_valid_reload_type<T, std::void_t<typename T::reload_type>> : std::is_unsigned<typename T::reload_type> {};
 template <typename T>
-inline constexpr bool is_valid_reload_type_v = is_valid_reload_type<T>::value;
+static constexpr bool is_valid_reload_type_v = is_valid_reload_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 clock_source_type
@@ -68,7 +68,7 @@ struct has_clock_source_type : std::false_type {};
 template <typename T>
 struct has_clock_source_type<T, std::void_t<typename T::clock_source_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_clock_source_type_v = has_clock_source_type<T>::value;
+static constexpr bool has_clock_source_type_v = has_clock_source_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 init(reload_type, clock_source_type)
@@ -82,7 +82,7 @@ struct has_init_method<T,
                                                     std::declval<typename T::clock_source_type>()))>> : std::true_type {
 };
 template <typename T>
-inline constexpr bool has_init_method_v = has_init_method<T>::value;
+static constexpr bool has_init_method_v = has_init_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 enable_irq()
@@ -93,7 +93,7 @@ struct has_enable_irq_method : std::false_type {};
 template <typename T>
 struct has_enable_irq_method<T, std::void_t<decltype(T::enable_irq())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_enable_irq_method_v = has_enable_irq_method<T>::value;
+static constexpr bool has_enable_irq_method_v = has_enable_irq_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 disable_irq()
@@ -104,7 +104,7 @@ struct has_disable_irq_method : std::false_type {};
 template <typename T>
 struct has_disable_irq_method<T, std::void_t<decltype(T::disable_irq())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_disable_irq_method_v = has_disable_irq_method<T>::value;
+static constexpr bool has_disable_irq_method_v = has_disable_irq_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 get_value() -> reload_type
@@ -115,7 +115,7 @@ struct has_get_value_method : std::false_type {};
 template <typename T>
 struct has_get_value_method<T, std::void_t<decltype(T::get_value())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_value_method_v = has_get_value_method<T>::value;
+static constexpr bool has_get_value_method_v = has_get_value_method<T>::value;
 
 /**
  * @brief 检测类型 T 的 get_value() 返回类型是否为 reload_type
@@ -124,7 +124,7 @@ inline constexpr bool has_get_value_method_v = has_get_value_method<T>::value;
 template <typename T>
 struct is_correct_get_value_return_type : std::is_same<decltype(T::get_value()), typename T::reload_type> {};
 template <typename T>
-inline constexpr bool is_correct_get_value_return_type_v = is_correct_get_value_return_type<T>::value;
+static constexpr bool is_correct_get_value_return_type_v = is_correct_get_value_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 is_overflow()（返回 bool）
@@ -135,7 +135,7 @@ struct has_is_overflow_method : std::false_type {};
 template <typename T>
 struct has_is_overflow_method<T, std::void_t<decltype(T::is_overflow())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::value;
+static constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::value;
 
 /**
  * @brief 检测 is_overflow() 返回类型是否与 bool 一致
@@ -143,7 +143,7 @@ inline constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::valu
 template <typename T>
 struct is_correct_is_overflow_return_type : std::is_same<decltype(T::is_overflow()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_is_overflow_return_type_v = is_correct_is_overflow_return_type<T>::value;
+static constexpr bool is_correct_is_overflow_return_type_v = is_correct_is_overflow_return_type<T>::value;
 
 /**
  * @brief 组合检测，判断类型 T 是否为有效的 SystemTick 策略
@@ -172,7 +172,7 @@ struct is_valid_systick_policy : std::conjunction<has_reload_type<T>,
                                                   has_is_overflow_method<T>,
                                                   is_correct_is_overflow_return_type<T>> {};
 template <typename T>
-inline constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::value;
+static constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::value;
 
 /// 增强功能检测
 /**
@@ -185,7 +185,7 @@ struct has_get_calibration_method : std::false_type {};
 template <typename T>
 struct has_get_calibration_method<T, std::void_t<decltype(T::get_calibration())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_calibration_method_v = has_get_calibration_method<T>::value;
+static constexpr bool has_get_calibration_method_v = has_get_calibration_method<T>::value;
 
 } // namespace strat_os::hal::traits
 

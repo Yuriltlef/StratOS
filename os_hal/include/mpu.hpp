@@ -68,7 +68,7 @@ struct has_region_index_type : std::false_type {};
 template <typename T>
 struct has_region_index_type<T, std::void_t<typename T::region_index_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_index_type_v = has_region_index_type<T>::value;
+static constexpr bool has_region_index_type_v = has_region_index_type<T>::value;
 
 /**
  * @brief 检测类型 T 嵌套类型 region_index_type 是否为无符号整数类型
@@ -80,7 +80,7 @@ template <typename T>
 struct is_valid_region_index_type<T, std::void_t<typename T::region_index_type>>
     : std::is_unsigned<typename T::region_index_type> {};
 template <typename T>
-inline constexpr bool is_valid_region_index_type_v = is_valid_region_index_type<T>::value;
+static constexpr bool is_valid_region_index_type_v = is_valid_region_index_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 region_address_type
@@ -91,7 +91,7 @@ struct has_region_address_type : std::false_type {};
 template <typename T>
 struct has_region_address_type<T, std::void_t<typename T::region_address_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_address_type_v = has_region_address_type<T>::value;
+static constexpr bool has_region_address_type_v = has_region_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 嵌套类型 region_address_type 是否为无符号整数类型
@@ -103,7 +103,7 @@ template <typename T>
 struct is_valid_region_address_type<T, std::void_t<typename T::region_address_type>>
     : std::is_unsigned<typename T::region_address_type> {};
 template <typename T>
-inline constexpr bool is_valid_region_address_type_v = is_valid_region_address_type<T>::value;
+static constexpr bool is_valid_region_address_type_v = is_valid_region_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 region_size_type
@@ -114,7 +114,7 @@ struct has_region_size_type : std::false_type {};
 template <typename T>
 struct has_region_size_type<T, std::void_t<typename T::region_size_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_size_type_v = has_region_size_type<T>::value;
+static constexpr bool has_region_size_type_v = has_region_size_type<T>::value;
 
 /**
  * @brief 检测类型 T 嵌套类型 region_size_type 是否为无符号整数类型
@@ -126,7 +126,7 @@ template <typename T>
 struct is_valid_region_size_type<T, std::void_t<typename T::region_size_type>>
     : std::is_unsigned<typename T::region_size_type> {};
 template <typename T>
-inline constexpr bool is_valid_region_size_type_v = is_valid_region_size_type<T>::value;
+static constexpr bool is_valid_region_size_type_v = is_valid_region_size_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 region_attributes_type
@@ -137,7 +137,7 @@ struct has_region_attributes_type : std::false_type {};
 template <typename T>
 struct has_region_attributes_type<T, std::void_t<typename T::region_attributes_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_attributes_type_v = has_region_attributes_type<T>::value;
+static constexpr bool has_region_attributes_type_v = has_region_attributes_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 region_info_type
@@ -148,7 +148,7 @@ struct has_region_info_type : std::false_type {};
 template <typename T>
 struct has_region_info_type<T, std::void_t<typename T::region_info_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_info_type_v = has_region_info_type<T>::value;
+static constexpr bool has_region_info_type_v = has_region_info_type<T>::value;
 
 // ----------------------------------------------------------------------------
 // region_info 成员检测
@@ -164,7 +164,7 @@ template <typename T>
 struct has_region_info_base<T, std::void_t<decltype(std::declval<typename T::region_info_type>().base)>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_info_base_v = has_region_info_base<T>::value;
+static constexpr bool has_region_info_base_v = has_region_info_base<T>::value;
 
 /**
  * @brief 检测 region_info_type 是否包含成员 size
@@ -176,7 +176,7 @@ template <typename T>
 struct has_region_info_size<T, std::void_t<decltype(std::declval<typename T::region_info_type>().size)>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_info_size_v = has_region_info_size<T>::value;
+static constexpr bool has_region_info_size_v = has_region_info_size<T>::value;
 
 /**
  * @brief 检测 region_info_type 是否包含成员 attr
@@ -188,7 +188,7 @@ template <typename T>
 struct has_region_info_attr<T, std::void_t<decltype(std::declval<typename T::region_info_type>().attr)>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_info_attr_v = has_region_info_attr<T>::value;
+static constexpr bool has_region_info_attr_v = has_region_info_attr<T>::value;
 
 /**
  * @brief 检测 region_info_type 是否包含成员 enabled
@@ -200,7 +200,7 @@ template <typename T>
 struct has_region_info_enabled<T, std::void_t<decltype(std::declval<typename T::region_info_type>().enabled)>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_region_info_enabled_v = has_region_info_enabled<T>::value;
+static constexpr bool has_region_info_enabled_v = has_region_info_enabled<T>::value;
 
 /**
  * @brief 检测 region_info_type 成员 enabled 是否为 bool 类型
@@ -212,7 +212,7 @@ template <typename T>
 struct is_valid_region_info_enabled_type<T, std::void_t<decltype(std::declval<typename T::region_info_type>().enabled)>>
     : std::is_same<decltype(std::declval<typename T::region_info_type>().enabled), bool> {};
 template <typename T>
-inline constexpr bool is_valid_region_info_enabled_type_v = is_valid_region_info_enabled_type<T>::value;
+static constexpr bool is_valid_region_info_enabled_type_v = is_valid_region_info_enabled_type<T>::value;
 
 // ----------------------------------------------------------------------------
 // 必需方法检测
@@ -227,7 +227,7 @@ struct has_mpu_enable_method : std::false_type {};
 template <typename T>
 struct has_mpu_enable_method<T, std::void_t<decltype(T::enable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_enable_method_v = has_mpu_enable_method<T>::value;
+static constexpr bool has_mpu_enable_method_v = has_mpu_enable_method<T>::value;
 
 /**
  * @brief 检测静态方法 disable()
@@ -238,7 +238,7 @@ struct has_mpu_disable_method : std::false_type {};
 template <typename T>
 struct has_mpu_disable_method<T, std::void_t<decltype(T::disable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_disable_method_v = has_mpu_disable_method<T>::value;
+static constexpr bool has_mpu_disable_method_v = has_mpu_disable_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_enabled()
@@ -249,7 +249,7 @@ struct has_mpu_is_enabled_method : std::false_type {};
 template <typename T>
 struct has_mpu_is_enabled_method<T, std::void_t<decltype(T::is_enabled())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_enabled_method_v = has_mpu_is_enabled_method<T>::value;
+static constexpr bool has_mpu_is_enabled_method_v = has_mpu_is_enabled_method<T>::value;
 
 /**
  * @brief 检测静态方法 set_region()
@@ -265,7 +265,7 @@ struct has_mpu_set_region_method<T,
                                                                     std::declval<typename T::region_attributes_type>(),
                                                                     std::declval<bool>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_set_region_method_v = has_mpu_set_region_method<T>::value;
+static constexpr bool has_mpu_set_region_method_v = has_mpu_set_region_method<T>::value;
 
 /**
  * @brief 检测静态方法 disable_region()
@@ -278,7 +278,7 @@ struct has_mpu_disable_region_method<
     T,
     std::void_t<decltype(T::disable_region(std::declval<typename T::region_index_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_disable_region_method_v = has_mpu_disable_region_method<T>::value;
+static constexpr bool has_mpu_disable_region_method_v = has_mpu_disable_region_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_mpu_fault()
@@ -289,7 +289,7 @@ struct has_mpu_is_mpu_fault_method : std::false_type {};
 template <typename T>
 struct has_mpu_is_mpu_fault_method<T, std::void_t<decltype(T::is_mpu_fault())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_mpu_fault_method_v = has_mpu_is_mpu_fault_method<T>::value;
+static constexpr bool has_mpu_is_mpu_fault_method_v = has_mpu_is_mpu_fault_method<T>::value;
 
 /**
  * @brief 检测静态方法 get_fault_address()
@@ -300,7 +300,7 @@ struct has_mpu_get_fault_address_method : std::false_type {};
 template <typename T>
 struct has_mpu_get_fault_address_method<T, std::void_t<decltype(T::get_fault_address())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_get_fault_address_method_v = has_mpu_get_fault_address_method<T>::value;
+static constexpr bool has_mpu_get_fault_address_method_v = has_mpu_get_fault_address_method<T>::value;
 
 /**
  * @brief 检测静态方法 clear_fault()
@@ -311,7 +311,7 @@ struct has_mpu_clear_fault_method : std::false_type {};
 template <typename T>
 struct has_mpu_clear_fault_method<T, std::void_t<decltype(T::clear_fault())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_clear_fault_method_v = has_mpu_clear_fault_method<T>::value;
+static constexpr bool has_mpu_clear_fault_method_v = has_mpu_clear_fault_method<T>::value;
 
 /**
  * @brief 检测静态方法 region_count()
@@ -322,7 +322,7 @@ struct has_mpu_region_count_method : std::false_type {};
 template <typename T>
 struct has_mpu_region_count_method<T, std::void_t<decltype(T::region_count())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_region_count_method_v = has_mpu_region_count_method<T>::value;
+static constexpr bool has_mpu_region_count_method_v = has_mpu_region_count_method<T>::value;
 
 /**
  * @brief 检测静态方法 get_region()
@@ -334,7 +334,7 @@ template <typename T>
 struct has_mpu_get_region_method<T, std::void_t<decltype(T::get_region(std::declval<typename T::region_index_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_get_region_method_v = has_mpu_get_region_method<T>::value;
+static constexpr bool has_mpu_get_region_method_v = has_mpu_get_region_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_readable()
@@ -347,7 +347,7 @@ struct has_mpu_is_readable_method<
     T,
     std::void_t<decltype(T::is_readable(std::declval<typename T::region_address_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_readable_method_v = has_mpu_is_readable_method<T>::value;
+static constexpr bool has_mpu_is_readable_method_v = has_mpu_is_readable_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_writable()
@@ -360,7 +360,7 @@ struct has_mpu_is_writable_method<
     T,
     std::void_t<decltype(T::is_writable(std::declval<typename T::region_address_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_writable_method_v = has_mpu_is_writable_method<T>::value;
+static constexpr bool has_mpu_is_writable_method_v = has_mpu_is_writable_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_executable()
@@ -373,7 +373,7 @@ struct has_mpu_is_executable_method<
     T,
     std::void_t<decltype(T::is_executable(std::declval<typename T::region_address_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_executable_method_v = has_mpu_is_executable_method<T>::value;
+static constexpr bool has_mpu_is_executable_method_v = has_mpu_is_executable_method<T>::value;
 
 // ----------------------------------------------------------------------------
 // 可选方法检测
@@ -388,7 +388,7 @@ struct has_mpu_get_fault_access_type_method : std::false_type {};
 template <typename T>
 struct has_mpu_get_fault_access_type_method<T, std::void_t<decltype(T::get_fault_access_type())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_get_fault_access_type_method_v = has_mpu_get_fault_access_type_method<T>::value;
+static constexpr bool has_mpu_get_fault_access_type_method_v = has_mpu_get_fault_access_type_method<T>::value;
 
 /**
  * @brief 检测静态方法 set_background_region()
@@ -402,7 +402,7 @@ struct has_mpu_set_background_region_method<
     std::void_t<decltype(T::set_background_region(std::declval<typename T::region_attributes_type>(),
                                                   std::declval<bool>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_set_background_region_method_v = has_mpu_set_background_region_method<T>::value;
+static constexpr bool has_mpu_set_background_region_method_v = has_mpu_set_background_region_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_background_region_enabled()
@@ -414,7 +414,7 @@ template <typename T>
 struct has_mpu_is_background_region_enabled_method<T, std::void_t<decltype(T::is_background_region_enabled())>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_background_region_enabled_method_v =
+static constexpr bool has_mpu_is_background_region_enabled_method_v =
     has_mpu_is_background_region_enabled_method<T>::value;
 
 /**
@@ -429,7 +429,7 @@ struct has_mpu_disable_subregion_method<
     std::void_t<decltype(T::disable_subregion(std::declval<typename T::region_index_type>(),
                                               std::declval<typename T::region_index_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_disable_subregion_method_v = has_mpu_disable_subregion_method<T>::value;
+static constexpr bool has_mpu_disable_subregion_method_v = has_mpu_disable_subregion_method<T>::value;
 
 /**
  * @brief 检测静态方法 get_subregion_mask()
@@ -442,7 +442,7 @@ struct has_mpu_get_subregion_mask_method<
     T,
     std::void_t<decltype(T::get_subregion_mask(std::declval<typename T::region_index_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_get_subregion_mask_method_v = has_mpu_get_subregion_mask_method<T>::value;
+static constexpr bool has_mpu_get_subregion_mask_method_v = has_mpu_get_subregion_mask_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_overlap()
@@ -456,7 +456,7 @@ struct has_mpu_is_overlap_method<T,
                                                                     std::declval<typename T::region_index_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_is_overlap_method_v = has_mpu_is_overlap_method<T>::value;
+static constexpr bool has_mpu_is_overlap_method_v = has_mpu_is_overlap_method<T>::value;
 
 /**
  * @brief 检测静态方法 region_priority_by_number()
@@ -468,7 +468,7 @@ template <typename T>
 struct has_mpu_region_priority_by_number_method<T, std::void_t<decltype(T::region_priority_by_number())>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_mpu_region_priority_by_number_method_v = has_mpu_region_priority_by_number_method<T>::value;
+static constexpr bool has_mpu_region_priority_by_number_method_v = has_mpu_region_priority_by_number_method<T>::value;
 
 // ----------------------------------------------------------------------------
 // 返回类型检查
@@ -481,7 +481,7 @@ inline constexpr bool has_mpu_region_priority_by_number_method_v = has_mpu_regio
 template <typename T>
 struct is_correct_mpu_is_enabled_return : std::is_same<decltype(T::is_enabled()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_is_enabled_return_v = is_correct_mpu_is_enabled_return<T>::value;
+static constexpr bool is_correct_mpu_is_enabled_return_v = is_correct_mpu_is_enabled_return<T>::value;
 
 /**
  * @brief 检测 is_mpu_fault() 的返回类型是否为 bool
@@ -490,7 +490,7 @@ inline constexpr bool is_correct_mpu_is_enabled_return_v = is_correct_mpu_is_ena
 template <typename T>
 struct is_correct_mpu_is_mpu_fault_return : std::is_same<decltype(T::is_mpu_fault()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_is_mpu_fault_return_v = is_correct_mpu_is_mpu_fault_return<T>::value;
+static constexpr bool is_correct_mpu_is_mpu_fault_return_v = is_correct_mpu_is_mpu_fault_return<T>::value;
 
 /**
  * @brief 检测 get_fault_address() 的返回类型是否为 region_address_type
@@ -500,7 +500,7 @@ template <typename T>
 struct is_correct_mpu_get_fault_address_return
     : std::is_same<decltype(T::get_fault_address()), typename T::region_address_type> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_get_fault_address_return_v = is_correct_mpu_get_fault_address_return<T>::value;
+static constexpr bool is_correct_mpu_get_fault_address_return_v = is_correct_mpu_get_fault_address_return<T>::value;
 
 /**
  * @brief 检测 region_count() 的返回类型是否为 region_index_type
@@ -509,7 +509,7 @@ inline constexpr bool is_correct_mpu_get_fault_address_return_v = is_correct_mpu
 template <typename T>
 struct is_correct_mpu_region_count_return : std::is_same<decltype(T::region_count()), typename T::region_index_type> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_region_count_return_v = is_correct_mpu_region_count_return<T>::value;
+static constexpr bool is_correct_mpu_region_count_return_v = is_correct_mpu_region_count_return<T>::value;
 
 /**
  * @brief 检测 get_region() 的返回类型是否为 region_info_type
@@ -520,7 +520,7 @@ struct is_correct_mpu_get_region_return
     : std::is_same<decltype(T::get_region(std::declval<typename T::region_index_type>())),
                    typename T::region_info_type> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_get_region_return_v = is_correct_mpu_get_region_return<T>::value;
+static constexpr bool is_correct_mpu_get_region_return_v = is_correct_mpu_get_region_return<T>::value;
 
 /**
  * @brief 检测 is_readable() 的返回类型是否为 bool
@@ -530,7 +530,7 @@ template <typename T>
 struct is_correct_mpu_is_readable_return
     : std::is_same<decltype(T::is_readable(std::declval<typename T::region_address_type>())), bool> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_is_readable_return_v = is_correct_mpu_is_readable_return<T>::value;
+static constexpr bool is_correct_mpu_is_readable_return_v = is_correct_mpu_is_readable_return<T>::value;
 
 /**
  * @brief 检测 is_writable() 的返回类型是否为 bool
@@ -540,7 +540,7 @@ template <typename T>
 struct is_correct_mpu_is_writable_return
     : std::is_same<decltype(T::is_writable(std::declval<typename T::region_address_type>())), bool> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_is_writable_return_v = is_correct_mpu_is_writable_return<T>::value;
+static constexpr bool is_correct_mpu_is_writable_return_v = is_correct_mpu_is_writable_return<T>::value;
 
 /**
  * @brief 检测 is_executable() 的返回类型是否为 bool
@@ -550,7 +550,7 @@ template <typename T>
 struct is_correct_mpu_is_executable_return
     : std::is_same<decltype(T::is_executable(std::declval<typename T::region_address_type>())), bool> {};
 template <typename T>
-inline constexpr bool is_correct_mpu_is_executable_return_v = is_correct_mpu_is_executable_return<T>::value;
+static constexpr bool is_correct_mpu_is_executable_return_v = is_correct_mpu_is_executable_return<T>::value;
 
 /**
  * @brief 检测 is_background_region_enabled() 的返回类型是否为 bool
@@ -560,7 +560,7 @@ template <typename T>
 struct is_correct_is_background_region_enabled_return
     : std::is_same<decltype(T::is_background_region_enabled()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_is_background_region_enabled_return_v =
+static constexpr bool is_correct_is_background_region_enabled_return_v =
     is_correct_is_background_region_enabled_return<T>::value;
 
 /**
@@ -573,7 +573,7 @@ struct is_correct_is_overlap_return
                                           std::declval<typename T::region_index_type>())),
                    bool> {};
 template <typename T>
-inline constexpr bool is_correct_is_overlap_return_v = is_correct_is_overlap_return<T>::value;
+static constexpr bool is_correct_is_overlap_return_v = is_correct_is_overlap_return<T>::value;
 
 // ----------------------------------------------------------------------------
 // 组合检测
@@ -623,7 +623,7 @@ struct is_valid_mpu_policy : std::conjunction<has_region_index_type<T>,
                                               is_correct_mpu_is_executable_return<T>> {};
 
 template <typename T>
-inline constexpr bool is_valid_mpu_policy_v = is_valid_mpu_policy<T>::value;
+static constexpr bool is_valid_mpu_policy_v = is_valid_mpu_policy<T>::value;
 } // namespace strat_os::hal::traits
 
 namespace strat_os::hal

@@ -47,7 +47,7 @@ struct has_value_type : std::false_type {};
 template <typename T>
 struct has_value_type<T, std::void_t<typename T::value_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_value_type_v = has_value_type<T>::value;
+static constexpr bool has_value_type_v = has_value_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 bit_index_type
@@ -58,7 +58,7 @@ struct has_bit_index_type : std::false_type {};
 template <typename T>
 struct has_bit_index_type<T, std::void_t<typename T::bit_index_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_bit_index_type_v = has_bit_index_type<T>::value;
+static constexpr bool has_bit_index_type_v = has_bit_index_type<T>::value;
 
 /**
  * @brief 检测 value_type 是否为无符号整数类型
@@ -69,7 +69,7 @@ struct is_valid_value_type : std::false_type {};
 template <typename T>
 struct is_valid_value_type<T, std::void_t<typename T::value_type>> : std::is_unsigned<typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_valid_value_type_v = is_valid_value_type<T>::value;
+static constexpr bool is_valid_value_type_v = is_valid_value_type<T>::value;
 
 /**
  * @brief 检测 bit_index_type 是否为无符号整数类型
@@ -81,7 +81,7 @@ template <typename T>
 struct is_valid_bit_index_type<T, std::void_t<typename T::bit_index_type>>
     : std::is_unsigned<typename T::bit_index_type> {};
 template <typename T>
-inline constexpr bool is_valid_bit_index_type_v = is_valid_bit_index_type<T>::value;
+static constexpr bool is_valid_bit_index_type_v = is_valid_bit_index_type<T>::value;
 
 // -----------------------------------------------------------------------------
 // 方法存在性检测
@@ -96,7 +96,7 @@ template <typename T>
 struct has_load_method<T, std::void_t<decltype(T::load(std::declval<volatile typename T::value_type*>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_load_method_v = has_load_method<T>::value;
+static constexpr bool has_load_method_v = has_load_method<T>::value;
 
 /**
  * @brief 检测静态方法 store(volatile value_type*, value_type)
@@ -108,7 +108,7 @@ struct has_store_method<T,
                         std::void_t<decltype(T::store(std::declval<volatile typename T::value_type*>(),
                                                       std::declval<typename T::value_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_store_method_v = has_store_method<T>::value;
+static constexpr bool has_store_method_v = has_store_method<T>::value;
 
 /**
  * @brief 检测静态方法 add(volatile value_type*, value_type)
@@ -120,7 +120,7 @@ struct has_add_method<T,
                       std::void_t<decltype(T::add(std::declval<volatile typename T::value_type*>(),
                                                   std::declval<typename T::value_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_add_method_v = has_add_method<T>::value;
+static constexpr bool has_add_method_v = has_add_method<T>::value;
 
 /**
  * @brief 检测静态方法 sub(volatile value_type*, value_type)
@@ -132,7 +132,7 @@ struct has_sub_method<T,
                       std::void_t<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
                                                   std::declval<typename T::value_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_sub_method_v = has_sub_method<T>::value;
+static constexpr bool has_sub_method_v = has_sub_method<T>::value;
 
 /**
  * @brief 检测静态方法 compare_exchange(volatile value_type*, value_type&, value_type)
@@ -146,7 +146,7 @@ struct has_compare_exchange_method<
                                              std::declval<typename T::value_type&>(),
                                              std::declval<typename T::value_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_compare_exchange_method_v = has_compare_exchange_method<T>::value;
+static constexpr bool has_compare_exchange_method_v = has_compare_exchange_method<T>::value;
 
 /**
  * @brief 检测静态方法 set_bit(volatile value_type*, bit_index_type)
@@ -159,7 +159,7 @@ struct has_set_bit_method<T,
                                                           std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_bit_method_v = has_set_bit_method<T>::value;
+static constexpr bool has_set_bit_method_v = has_set_bit_method<T>::value;
 
 /**
  * @brief 检测静态方法 clear_bit(volatile value_type*, bit_index_type)
@@ -172,7 +172,7 @@ struct has_clear_bit_method<T,
                                                               std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_clear_bit_method_v = has_clear_bit_method<T>::value;
+static constexpr bool has_clear_bit_method_v = has_clear_bit_method<T>::value;
 
 /**
  * @brief 检测静态方法 test_and_set_bit(volatile value_type*, bit_index_type)
@@ -185,7 +185,7 @@ struct has_test_and_set_bit_method<
     std::void_t<decltype(T::test_and_set_bit(std::declval<volatile typename T::value_type*>(),
                                              std::declval<typename T::bit_index_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_test_and_set_bit_method_v = has_test_and_set_bit_method<T>::value;
+static constexpr bool has_test_and_set_bit_method_v = has_test_and_set_bit_method<T>::value;
 
 /**
  * @brief 检测静态方法 flip_bit(volatile value_type*, bit_index_type)
@@ -198,7 +198,7 @@ struct has_flip_bit_method<T,
                                                             std::declval<typename T::bit_index_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_flip_bit_method_v = has_flip_bit_method<T>::value;
+static constexpr bool has_flip_bit_method_v = has_flip_bit_method<T>::value;
 
 /**
  * @brief 检测静态方法 test_and_set(volatile value_type*)
@@ -210,7 +210,7 @@ struct has_test_and_set_method<T,
                                std::void_t<decltype(T::test_and_set(std::declval<volatile typename T::value_type*>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::value;
+static constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::value;
 
 // -----------------------------------------------------------------------------
 // 返回值类型一致性检测
@@ -223,7 +223,7 @@ template <typename T>
 struct is_correct_load_return_type
     : std::is_same<decltype(T::load(std::declval<volatile typename T::value_type*>())), typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_load_return_type_v = is_correct_load_return_type<T>::value;
+static constexpr bool is_correct_load_return_type_v = is_correct_load_return_type<T>::value;
 
 /**
  * @brief 检测 add() 的返回类型是否与 value_type 一致
@@ -233,7 +233,7 @@ struct is_correct_add_return_type : std::is_same<decltype(T::add(std::declval<vo
                                                                  std::declval<typename T::value_type>())),
                                                  typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_add_return_type_v = is_correct_add_return_type<T>::value;
+static constexpr bool is_correct_add_return_type_v = is_correct_add_return_type<T>::value;
 
 /**
  * @brief 检测 sub() 的返回类型是否与 value_type 一致
@@ -243,7 +243,7 @@ struct is_correct_sub_return_type : std::is_same<decltype(T::sub(std::declval<vo
                                                                  std::declval<typename T::value_type>())),
                                                  typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_sub_return_type_v = is_correct_sub_return_type<T>::value;
+static constexpr bool is_correct_sub_return_type_v = is_correct_sub_return_type<T>::value;
 
 // 对于带内存顺序的重载，同样检查返回类型一致性
 /**
@@ -255,7 +255,7 @@ struct is_correct_load_memory_order_return_type
                                     std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_load_memory_order_return_type_v = is_correct_load_memory_order_return_type<T>::value;
+static constexpr bool is_correct_load_memory_order_return_type_v = is_correct_load_memory_order_return_type<T>::value;
 
 /**
  * @brief 检测带内存顺序的 add() 返回类型是否与 value_type 一致
@@ -267,7 +267,7 @@ struct is_correct_add_memory_order_return_type
                                    std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_add_memory_order_return_type_v = is_correct_add_memory_order_return_type<T>::value;
+static constexpr bool is_correct_add_memory_order_return_type_v = is_correct_add_memory_order_return_type<T>::value;
 
 /**
  * @brief 检测带内存顺序的 sub() 返回类型是否与 value_type 一致
@@ -279,7 +279,7 @@ struct is_correct_sub_memory_order_return_type
                                    std::declval<std::memory_order>())),
                    typename T::value_type> {};
 template <typename T>
-inline constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub_memory_order_return_type<T>::value;
+static constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub_memory_order_return_type<T>::value;
 
 /**
  * @brief 检测不带内存顺序的 compare_exchange() 返回类型是否与 bool 一致
@@ -291,7 +291,7 @@ struct is_correct_compare_exchange_return_type
                                                 std::declval<typename T::value_type>())),
                    bool> {};
 template <typename T>
-inline constexpr bool is_correct_compare_exchange_return_type_v = is_correct_compare_exchange_return_type<T>::value;
+static constexpr bool is_correct_compare_exchange_return_type_v = is_correct_compare_exchange_return_type<T>::value;
 
 /**
  * @brief 检测带内存顺序的 compare_exchange() 返回类型是否与 value_type 一致
@@ -304,7 +304,7 @@ struct is_correct_compare_exchange_memory_order_return_type
                                                 std::declval<std::memory_order>())),
                    bool> {};
 template <typename T>
-inline constexpr bool is_correct_compare_exchange_memory_order_return_type_v =
+static constexpr bool is_correct_compare_exchange_memory_order_return_type_v =
     is_correct_compare_exchange_memory_order_return_type<T>::value;
 
 /**
@@ -314,7 +314,7 @@ template <typename T>
 struct is_correct_test_and_set_return_type
     : std::is_same<decltype(T::test_and_set(std::declval<volatile typename T::value_type*>())), bool> {};
 template <typename T>
-inline constexpr bool is_correct_test_and_set_return_type_v = is_correct_test_and_set_return_type<T>::value;
+static constexpr bool is_correct_test_and_set_return_type_v = is_correct_test_and_set_return_type<T>::value;
 
 /**
  * @brief 检测 test_and_set_bit() 返回类型是否与 bool 一致
@@ -325,7 +325,7 @@ struct is_correct_test_and_set_bit_return_type
                                                 std::declval<typename T::bit_index_type>())),
                    bool> {};
 template <typename T>
-inline constexpr bool is_correct_test_and_set_bit_return_type_v = is_correct_test_and_set_bit_return_type<T>::value;
+static constexpr bool is_correct_test_and_set_bit_return_type_v = is_correct_test_and_set_bit_return_type<T>::value;
 
 // -----------------------------------------------------------------------------
 // 组合检测：是否为有效的原子操作策略
@@ -363,7 +363,7 @@ struct is_valid_atomic_policy : std::conjunction<has_value_type<T>,
                                                  is_correct_test_and_set_return_type<T>,
                                                  is_correct_test_and_set_bit_return_type<T>> {};
 template <typename T>
-inline constexpr bool is_valid_atomic_policy_v = is_valid_atomic_policy<T>::value;
+static constexpr bool is_valid_atomic_policy_v = is_valid_atomic_policy<T>::value;
 
 // -----------------------------------------------------------------------------
 // 内存顺序支持检测
@@ -380,7 +380,7 @@ struct has_load_memory_order_method<
     std::void_t<decltype(T::load(std::declval<volatile typename T::value_type*>(), std::declval<std::memory_order>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_load_memory_order_method_v = has_load_memory_order_method<T>::value;
+static constexpr bool has_load_memory_order_method_v = has_load_memory_order_method<T>::value;
 
 /**
  * @brief 检测带内存顺序的 store(volatile value_type*, value_type, std::memory_order)
@@ -394,7 +394,7 @@ struct has_store_memory_order_method<T,
                                                                    std::declval<std::memory_order>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_store_memory_order_method_v = has_store_memory_order_method<T>::value;
+static constexpr bool has_store_memory_order_method_v = has_store_memory_order_method<T>::value;
 
 /**
  * @brief 检测带内存顺序的 add(volatile value_type*, value_type, std::memory_order)
@@ -408,7 +408,7 @@ struct has_add_memory_order_method<T,
                                                                std::declval<std::memory_order>()))>> : std::true_type {
 };
 template <typename T>
-inline constexpr bool has_add_memory_order_method_v = has_add_memory_order_method<T>::value;
+static constexpr bool has_add_memory_order_method_v = has_add_memory_order_method<T>::value;
 
 /**
  * @brief 检测带内存顺序的 sub(volatile value_type*, value_type, std::memory_order)
@@ -422,7 +422,7 @@ struct has_sub_memory_order_method<T,
                                                                std::declval<std::memory_order>()))>> : std::true_type {
 };
 template <typename T>
-inline constexpr bool has_sub_memory_order_method_v = has_sub_memory_order_method<T>::value;
+static constexpr bool has_sub_memory_order_method_v = has_sub_memory_order_method<T>::value;
 
 /**
  * @brief 检测带内存顺序的 compare_exchange(volatile value_type*, value_type&, value_type, std::memory_order)
@@ -437,7 +437,7 @@ struct has_compare_exchange_memory_order_method<
                                              std::declval<typename T::value_type>(),
                                              std::declval<std::memory_order>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_compare_exchange_memory_order_method_v = has_compare_exchange_memory_order_method<T>::value;
+static constexpr bool has_compare_exchange_memory_order_method_v = has_compare_exchange_memory_order_method<T>::value;
 
 /**
  * @brief 聚合检测策略是否支持所有基本原子操作的内存顺序版本
@@ -449,7 +449,7 @@ struct is_memory_order_capable : std::conjunction<has_load_memory_order_method<T
                                                   has_sub_memory_order_method<T>,
                                                   has_compare_exchange_memory_order_method<T>> {};
 template <typename T>
-inline constexpr bool is_memory_order_capable_v = is_memory_order_capable<T>::value;
+static constexpr bool is_memory_order_capable_v = is_memory_order_capable<T>::value;
 } // namespace strat_os::hal::traits
 
 namespace strat_os::hal

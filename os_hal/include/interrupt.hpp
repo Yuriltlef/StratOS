@@ -39,7 +39,7 @@ struct has_irqn_type : std::false_type {};
 template <typename T>
 struct has_irqn_type<T, std::void_t<typename T::IRQn_Type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_irqn_type_v = has_irqn_type<T>::value;
+static constexpr bool has_irqn_type_v = has_irqn_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 enable(IRQn_Type)
@@ -51,7 +51,7 @@ template <typename T>
 struct has_interrupt_enable_method<T, std::void_t<decltype(T::enable(std::declval<typename T::IRQn_Type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_interrupt_enable_method_v = has_interrupt_enable_method<T>::value;
+static constexpr bool has_interrupt_enable_method_v = has_interrupt_enable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 disable(IRQn_Type)
@@ -63,7 +63,7 @@ template <typename T>
 struct has_interrupt_disable_method<T, std::void_t<decltype(T::disable(std::declval<typename T::IRQn_Type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_interrupt_disable_method_v = has_interrupt_disable_method<T>::value;
+static constexpr bool has_interrupt_disable_method_v = has_interrupt_disable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 set_priority(IRQn_Type, T::priority_type)
@@ -77,7 +77,7 @@ struct has_set_priority_method<T,
                                                                     std::declval<typename T::priority_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_priority_method_v = has_set_priority_method<T>::value;
+static constexpr bool has_set_priority_method_v = has_set_priority_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 get_priority(IRQn_Type) -> T::priority_type
@@ -89,7 +89,7 @@ template <typename T>
 struct has_get_priority_method<T, std::void_t<decltype(T::get_priority(std::declval<typename T::IRQn_Type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_priority_method_v = has_get_priority_method<T>::value;
+static constexpr bool has_get_priority_method_v = has_get_priority_method<T>::value;
 
 /**
  * @brief 检测类型 T 的 get_priority(IRQn_Type) 返回类型是否为 priority_type
@@ -99,7 +99,7 @@ template <typename T>
 struct is_correct_get_priority_return_type
     : std::is_same<decltype(T::get_priority(std::declval<typename T::IRQn_Type>())), typename T::priority_type> {};
 template <typename T>
-inline constexpr bool is_correct_get_priority_return_type_v = is_correct_get_priority_return_type<T>::value;
+static constexpr bool is_correct_get_priority_return_type_v = is_correct_get_priority_return_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 trigger_software(IRQn_Type)
@@ -111,7 +111,7 @@ template <typename T>
 struct has_trigger_software_method<T, std::void_t<decltype(T::trigger_software(std::declval<typename T::IRQn_Type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_trigger_software_method_v = has_trigger_software_method<T>::value;
+static constexpr bool has_trigger_software_method_v = has_trigger_software_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 global_enable()
@@ -122,7 +122,7 @@ struct has_global_enable_method : std::false_type {};
 template <typename T>
 struct has_global_enable_method<T, std::void_t<decltype(T::global_enable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_global_enable_method_v = has_global_enable_method<T>::value;
+static constexpr bool has_global_enable_method_v = has_global_enable_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 global_disable()
@@ -133,7 +133,7 @@ struct has_global_disable_method : std::false_type {};
 template <typename T>
 struct has_global_disable_method<T, std::void_t<decltype(T::global_disable())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_global_disable_method_v = has_global_disable_method<T>::value;
+static constexpr bool has_global_disable_method_v = has_global_disable_method<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为有效的中断控制器策略
@@ -156,7 +156,7 @@ struct is_valid_interrupt_controller : std::conjunction<has_irqn_type<T>,
                                                         has_global_enable_method<T>,
                                                         has_global_disable_method<T>> {};
 template <typename T>
-inline constexpr bool is_valid_interrupt_controller_v = is_valid_interrupt_controller<T>::value;
+static constexpr bool is_valid_interrupt_controller_v = is_valid_interrupt_controller<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 in_isr()
@@ -227,7 +227,7 @@ struct is_enhanced_interrupt_controller : std::conjunction<has_in_isr_method<T>,
                                                            has_set_priority_grouping_method<T>,
                                                            has_get_priority_grouping_method<T>> {};
 template <typename T>
-inline constexpr bool is_enhanced_interrupt_controller_v = is_enhanced_interrupt_controller<T>::value;
+static constexpr bool is_enhanced_interrupt_controller_v = is_enhanced_interrupt_controller<T>::value;
 
 } // namespace strat_os::hal::traits
 

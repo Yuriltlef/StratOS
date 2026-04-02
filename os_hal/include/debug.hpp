@@ -45,7 +45,7 @@ struct has_cycle_counter_size_type : std::false_type {};
 template <typename T>
 struct has_cycle_counter_size_type<T, std::void_t<typename T::cycle_counter_size_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_cycle_counter_size_type_v = has_cycle_counter_size_type<T>::value;
+static constexpr bool has_cycle_counter_size_type_v = has_cycle_counter_size_type<T>::value;
 
 /**
  * @brief 检测 cycle_counter_size_type 是否为无符号整数类型
@@ -56,7 +56,7 @@ struct is_valid_cycle_counter_size_type : std::false_type {};
 template <typename T>
 struct is_valid_cycle_counter_size_type<T, std::void_t<typename T::cycle_counter_size_type>> : std::is_unsigned<typename T::cycle_counter_size_type> {};
 template <typename T>
-inline constexpr bool is_valid_cycle_counter_size_type_v = is_valid_cycle_counter_size_type<T>::value;
+static constexpr bool is_valid_cycle_counter_size_type_v = is_valid_cycle_counter_size_type<T>::value;
 
 // -----------------------------------------------------------------------------
 // 必需方法检测
@@ -70,7 +70,7 @@ struct has_bkpt_method : std::false_type {};
 template <typename T>
 struct has_bkpt_method<T, std::void_t<decltype(T::bkpt())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_bkpt_method_v = has_bkpt_method<T>::value;
+static constexpr bool has_bkpt_method_v = has_bkpt_method<T>::value;
 
 /**
  * @brief 检测静态方法 enable_cycle_counter()
@@ -80,7 +80,7 @@ struct has_enable_cycle_counter_method : std::false_type {};
 template <typename T>
 struct has_enable_cycle_counter_method<T, std::void_t<decltype(T::enable_cycle_counter())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_enable_cycle_counter_method_v = has_enable_cycle_counter_method<T>::value;
+static constexpr bool has_enable_cycle_counter_method_v = has_enable_cycle_counter_method<T>::value;
 
 /**
  * @brief 检测静态方法 disable_cycle_counter()
@@ -90,7 +90,7 @@ struct has_disable_cycle_counter_method : std::false_type {};
 template <typename T>
 struct has_disable_cycle_counter_method<T, std::void_t<decltype(T::disable_cycle_counter())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_disable_cycle_counter_method_v = has_disable_cycle_counter_method<T>::value;
+static constexpr bool has_disable_cycle_counter_method_v = has_disable_cycle_counter_method<T>::value;
 
 /**
  * @brief 检测静态方法 get_cycle_counter()
@@ -100,7 +100,7 @@ struct has_get_cycle_counter_method : std::false_type {};
 template <typename T>
 struct has_get_cycle_counter_method<T, std::void_t<decltype(T::get_cycle_counter())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_cycle_counter_method_v = has_get_cycle_counter_method<T>::value;
+static constexpr bool has_get_cycle_counter_method_v = has_get_cycle_counter_method<T>::value;
 
 /**
  * @brief 检测 get_cycle_counter() 的返回类型是否与 cycle_counter_size_type 严格一致
@@ -109,7 +109,7 @@ template <typename T>
 struct is_correct_cycle_counter_return_type
     : std::is_same<decltype(T::get_cycle_counter()), typename T::cycle_counter_size_type> {};
 template <typename T>
-inline constexpr bool is_correct_cycle_counter_return_type_v = is_correct_cycle_counter_return_type<T>::value;
+static constexpr bool is_correct_cycle_counter_return_type_v = is_correct_cycle_counter_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 is_cycle_counter_enabled()
@@ -119,7 +119,7 @@ struct has_is_cycle_counter_enabled_method : std::false_type {};
 template <typename T>
 struct has_is_cycle_counter_enabled_method<T, std::void_t<decltype(T::is_cycle_counter_enabled())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_is_cycle_counter_enabled_method_v = has_is_cycle_counter_enabled_method<T>::value;
+static constexpr bool has_is_cycle_counter_enabled_method_v = has_is_cycle_counter_enabled_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_cycle_counter_enabled() 的返回类型是否为 bool
@@ -127,7 +127,7 @@ inline constexpr bool has_is_cycle_counter_enabled_method_v = has_is_cycle_count
 template <typename T>
 struct is_correct_is_cycle_counter_enabled_return_type : std::is_same<decltype(T::is_cycle_counter_enabled()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_is_cycle_counter_enabled_return_type_v =
+static constexpr bool is_correct_is_cycle_counter_enabled_return_type_v =
     is_correct_is_cycle_counter_enabled_return_type<T>::value;
 
 // -----------------------------------------------------------------------------
@@ -158,7 +158,7 @@ struct is_valid_debug_policy : std::conjunction<has_bkpt_method<T>,
                                                 is_correct_is_cycle_counter_enabled_return_type<T>> {};
 
 template <typename T>
-inline constexpr bool is_valid_debug_policy_v = is_valid_debug_policy<T>::value;
+static constexpr bool is_valid_debug_policy_v = is_valid_debug_policy<T>::value;
 
 // -----------------------------------------------------------------------------
 // 可选功能检测
@@ -172,7 +172,7 @@ struct has_send_char_method : std::false_type {};
 template <typename T>
 struct has_send_char_method<T, std::void_t<decltype(T::send_char(std::declval<char>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_send_char_method_v = has_send_char_method<T>::value;
+static constexpr bool has_send_char_method_v = has_send_char_method<T>::value;
 
 /**
  * @brief 检测策略是否包含嵌套类型 size_type
@@ -182,7 +182,7 @@ struct has_size_type : std::false_type {};
 template <typename T>
 struct has_size_type<T, std::void_t<typename T::size_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_size_type_v = has_size_type<T>::value;
+static constexpr bool has_size_type_v = has_size_type<T>::value;
 
 /**
  * @brief 检测 size_type 是否为无符号整数且大小不小于 std::size_t
@@ -191,7 +191,7 @@ template <typename T>
 struct is_valid_size_type : std::bool_constant<std::is_unsigned_v<typename T::size_type> &&
                                                (sizeof(typename T::size_type) >= sizeof(std::size_t))> {};
 template <typename T>
-inline constexpr bool is_valid_size_type_v = is_valid_size_type<T>::value;
+static constexpr bool is_valid_size_type_v = is_valid_size_type<T>::value;
 
 /**
  * @brief 检测静态方法 send_block(const std::byte*, size_type)
@@ -204,7 +204,7 @@ struct has_send_block_method<
     std::void_t<decltype(T::send_block(std::declval<const std::byte*>(), std::declval<typename T::size_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_send_block_method_v = has_send_block_method<T>::value;
+static constexpr bool has_send_block_method_v = has_send_block_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_ready()
@@ -214,7 +214,7 @@ struct has_is_ready_method : std::false_type {};
 template <typename T>
 struct has_is_ready_method<T, std::void_t<decltype(T::is_ready())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_is_ready_method_v = has_is_ready_method<T>::value;
+static constexpr bool has_is_ready_method_v = has_is_ready_method<T>::value;
 
 /**
  * @brief 检测静态方法 is_ready() 的返回类型是否为 bool
@@ -222,7 +222,7 @@ inline constexpr bool has_is_ready_method_v = has_is_ready_method<T>::value;
 template <typename T>
 struct is_correct_is_ready_return_type : std::is_same<decltype(T::is_ready()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_is_ready_return_type_v = is_correct_is_ready_return_type<T>::value;
+static constexpr bool is_correct_is_ready_return_type_v = is_correct_is_ready_return_type<T>::value;
 
 } // namespace strat_os::hal::traits
 
