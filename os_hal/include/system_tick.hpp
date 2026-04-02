@@ -321,7 +321,7 @@ struct SystemTick {
      *       校准值可用于生成精确的延时（如 10ms）。
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_calibration_method_v<P>>>
-    inline static auto get_calibration() noexcept -> decltype(P::get_calibration()) {
+    inline static auto get_calibration() noexcept {
         return Policy::get_calibration();
     }
 };

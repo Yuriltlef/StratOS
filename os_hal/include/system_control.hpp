@@ -45,7 +45,6 @@
 #include <type_traits>                      // for std::false_type, std::true_type, etc.
 #include <utility>                          // for std::declval
 
-
 namespace strat_os::hal::traits
 {
 /**
@@ -75,7 +74,7 @@ static constexpr bool has_address_type_v = has_address_type<T>::value;
  * @tparam T 待检测的类型，仅当 T 包含 address_type 时使用
  */
 template <typename T, typename = void>
-struct is_valid_address_type : std::false_type {};  
+struct is_valid_address_type : std::false_type {};
 template <typename T>
 struct is_valid_address_type<T, std::void_t<typename T::address_type>> : std::is_unsigned<typename T::address_type> {};
 template <typename T>
@@ -99,7 +98,8 @@ static constexpr bool has_fault_mask_type_v = has_fault_mask_type<T>::value;
 template <typename T, typename = void>
 struct is_valid_fault_mask_type : std::false_type {};
 template <typename T>
-struct is_valid_fault_mask_type<T, std::void_t<typename T::fault_mask_type>> : std::is_unsigned<typename T::fault_mask_type> {};
+struct is_valid_fault_mask_type<T, std::void_t<typename T::fault_mask_type>>
+    : std::is_unsigned<typename T::fault_mask_type> {};
 template <typename T>
 static constexpr bool is_valid_fault_mask_type_v = is_valid_fault_mask_type<T>::value;
 
@@ -473,7 +473,7 @@ struct SystemControl {
      * @note 仅当策略提供 get_fault_info() 时可用。
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_fault_info_v<P>>>
-    [[nodiscard]] inline static auto get_fault_info() noexcept -> decltype(Policy::get_fault_info()) {
+    [[nodiscard]] inline static auto get_fault_info() noexcept {
         return Policy::get_fault_info();
     }
 };
