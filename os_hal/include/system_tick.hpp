@@ -118,16 +118,7 @@ template <typename T>
 static constexpr bool has_get_value_method_v = has_get_value_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_value() 返回类型是否为 reload_type
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_get_value_return_type : std::is_same<decltype(T::get_value()), typename T::reload_type> {};
-template <typename T>
-static constexpr bool is_correct_get_value_return_type_v = is_correct_get_value_return_type<T>::value;
-
-/**
- * @brief 检测类型 T 是否提供静态方法 is_overflow()（返回 bool）
+ * @brief 检测类型 T 是否提供静态方法 is_overflow() -> bool
  * @tparam T 待检测的类型
  */
 template <typename T, typename = void>
@@ -138,10 +129,25 @@ template <typename T>
 static constexpr bool has_is_overflow_method_v = has_is_overflow_method<T>::value;
 
 /**
+ * @brief 检测类型 T 的 get_value() 返回类型是否为 reload_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_get_value_return_type : std::false_type {};
+template <typename T>
+struct is_correct_get_value_return_type<T, std::void_t<decltype(T::get_value())>>
+    : std::is_same<decltype(T::get_value()), typename T::reload_type> {};
+template <typename T>
+static constexpr bool is_correct_get_value_return_type_v = is_correct_get_value_return_type<T>::value;
+
+/**
  * @brief 检测 is_overflow() 返回类型是否与 bool 一致
  */
+template <typename T, typename = void>
+struct is_correct_is_overflow_return_type : std::false_type {};
 template <typename T>
-struct is_correct_is_overflow_return_type : std::is_same<decltype(T::is_overflow()), bool> {};
+struct is_correct_is_overflow_return_type<T, std::void_t<decltype(T::is_overflow())>>
+    : std::is_same<decltype(T::is_overflow()), bool> {};
 template <typename T>
 static constexpr bool is_correct_is_overflow_return_type_v = is_correct_is_overflow_return_type<T>::value;
 
@@ -176,7 +182,7 @@ static constexpr bool is_valid_systick_policy_v = is_valid_systick_policy<T>::va
 
 /// 增强功能检测
 /**
- * @brief 检测类型 T 是否提供静态方法 get_calibration()（返回任意类型）
+ * @brief 检测类型 T 是否提供静态方法 get_calibration() -> auto
  * @tparam T 待检测的类型
  * @note 该方法是可选的，用于读取 SystemTick 校准值。
  */

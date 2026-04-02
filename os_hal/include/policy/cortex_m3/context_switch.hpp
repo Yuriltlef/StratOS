@@ -141,7 +141,7 @@ struct CortexM3ContextSwitchPolicy {
      */
     static word get_current_exception() noexcept {
         word ipsr;
-        __asm volatile("MRS %0, IPSR" : "=r"(ipsr));
+        __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
         return static_cast<word>(ipsr & 0xFF);
     }
 

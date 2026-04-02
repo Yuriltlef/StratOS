@@ -93,15 +93,6 @@ template <typename T>
 static constexpr bool has_get_psp_method_v = has_get_psp_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_psp() 返回类型是否为 word
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_get_psp_return_type : std::is_same<decltype(T::get_psp()), typename T::word> {};
-template <typename T>
-static constexpr bool is_correct_get_psp_return_type_v = is_correct_get_psp_return_type<T>::value;
-
-/**
  * @brief 检测静态方法 set_msp(word)
  */
 template <typename T, typename = void>
@@ -120,15 +111,6 @@ template <typename T>
 struct has_get_msp_method<T, std::void_t<decltype(T::get_msp())>> : std::true_type {};
 template <typename T>
 static constexpr bool has_get_msp_method_v = has_get_msp_method<T>::value;
-
-/**
- * @brief 检测类型 T 的 get_msp() 返回类型是否为 word
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_get_msp_return_type : std::is_same<decltype(T::get_msp()), typename T::word> {};
-template <typename T>
-static constexpr bool is_correct_get_msp_return_type_v = is_correct_get_msp_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 switch_to_unprivileged()
@@ -179,6 +161,30 @@ template <typename T>
 struct has_isb_method<T, std::void_t<decltype(T::isb())>> : std::true_type {};
 template <typename T>
 static constexpr bool has_isb_method_v = has_isb_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_psp() 返回类型是否为 word
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_get_psp_return_type : std::false_type {};
+template <typename T>
+struct is_correct_get_psp_return_type<T, std::void_t<decltype(T::get_psp())>>
+    : std::is_same<decltype(T::get_psp()), typename T::word> {};
+template <typename T>
+static constexpr bool is_correct_get_psp_return_type_v = is_correct_get_psp_return_type<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_msp() 返回类型是否为 word
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_get_msp_return_type : std::false_type {};
+template <typename T>
+struct is_correct_get_msp_return_type<T, std::void_t<decltype(T::get_msp())>>
+    : std::is_same<decltype(T::get_msp()), typename T::word> {};
+template <typename T>
+static constexpr bool is_correct_get_msp_return_type_v = is_correct_get_msp_return_type<T>::value;
 
 // 可选方法检测
 /**

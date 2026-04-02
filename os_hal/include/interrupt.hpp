@@ -92,16 +92,6 @@ template <typename T>
 static constexpr bool has_get_priority_method_v = has_get_priority_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_priority(IRQn_Type) 返回类型是否为 priority_type
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_get_priority_return_type
-    : std::is_same<decltype(T::get_priority(std::declval<typename T::IRQn_Type>())), typename T::priority_type> {};
-template <typename T>
-static constexpr bool is_correct_get_priority_return_type_v = is_correct_get_priority_return_type<T>::value;
-
-/**
  * @brief 检测类型 T 是否提供静态方法 trigger_software(IRQn_Type)
  * @tparam T 待检测的类型
  */
@@ -134,6 +124,20 @@ template <typename T>
 struct has_global_disable_method<T, std::void_t<decltype(T::global_disable())>> : std::true_type {};
 template <typename T>
 static constexpr bool has_global_disable_method_v = has_global_disable_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 get_priority(IRQn_Type) 返回类型是否为 priority_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_get_priority_return_type : std::false_type {};
+template <typename T>
+struct is_correct_get_priority_return_type<
+    T,
+    std::void_t<decltype(T::get_priority(std::declval<typename T::IRQn_Type>()))>>
+    : std::is_same<decltype(T::get_priority(std::declval<typename T::IRQn_Type>())), typename T::priority_type> {};
+template <typename T>
+static constexpr bool is_correct_get_priority_return_type_v = is_correct_get_priority_return_type<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为有效的中断控制器策略
@@ -170,15 +174,6 @@ template <typename T>
 inline constexpr bool has_in_isr_method_v = has_in_isr_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 in_isr() 方法返回类型是否为 bool
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_in_isr_return_type : std::is_same<decltype(T::in_isr()), bool> {};
-template <typename T>
-inline constexpr bool is_correct_in_isr_return_type_v = is_correct_in_isr_return_type<T>::value;
-
-/**
  * @brief 检测类型 T 是否提供静态方法 get_current_irq()
  * @tparam T 待检测的类型
  */
@@ -213,6 +208,18 @@ template <typename T>
 struct has_get_priority_grouping_method<T, std::void_t<decltype(T::get_priority_grouping())>> : std::true_type {};
 template <typename T>
 inline constexpr bool has_get_priority_grouping_method_v = has_get_priority_grouping_method<T>::value;
+
+/**
+ * @brief 检测类型 T 的 in_isr() 方法返回类型是否为 bool
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_in_isr_return_type : std::false_type {};
+template <typename T>
+struct is_correct_in_isr_return_type<T, std::void_t<decltype(T::in_isr())>>
+    : std::is_same<decltype(T::in_isr()), bool> {};
+template <typename T>
+inline constexpr bool is_correct_in_isr_return_type_v = is_correct_in_isr_return_type<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为增强的中断控制器策略

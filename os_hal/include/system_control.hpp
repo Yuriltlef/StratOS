@@ -153,17 +153,6 @@ template <typename T>
 static constexpr bool has_get_priority_grouping_v = has_get_priority_grouping<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_priority_grouping() 返回类型是否为 priority_group_type
- * @tparam T 待检测的类型
- */
-template <typename T>
-struct is_correct_get_priority_grouping_return_type
-    : std::is_same<decltype(T::get_priority_grouping()), typename T::priority_group_type> {};
-template <typename T>
-static constexpr bool is_correct_get_priority_grouping_return_type_v =
-    is_correct_get_priority_grouping_return_type<T>::value;
-
-/**
  * @brief 检测类型 T 是否包含方法 sleep()
  * @tparam T 待检测的类型
  */
@@ -225,11 +214,28 @@ template <typename T>
 static constexpr bool has_get_exception_priority_v = has_get_exception_priority<T>::value;
 
 /**
+ * @brief 检测类型 T 的 get_priority_grouping() 返回类型是否为 priority_group_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct is_correct_get_priority_grouping_return_type : std::false_type {};
+template <typename T>
+struct is_correct_get_priority_grouping_return_type<T, std::void_t<decltype(T::get_priority_grouping())>>
+    : std::is_same<decltype(T::get_priority_grouping()), typename T::priority_group_type> {};
+template <typename T>
+static constexpr bool is_correct_get_priority_grouping_return_type_v =
+    is_correct_get_priority_grouping_return_type<T>::value;
+
+/**
  * @brief 检测类型 T 的 get_exception_priority() 返回类型是否为 priority_type
  * @tparam T 待检测的类型
  */
+template <typename T, typename = void>
+struct is_correct_get_exception_priority_return_type : std::false_type {};
 template <typename T>
-struct is_correct_get_exception_priority_return_type
+struct is_correct_get_exception_priority_return_type<
+    T,
+    std::void_t<decltype(T::get_exception_priority(std::declval<typename T::exception_type>()))>>
     : std::is_same<decltype(T::get_exception_priority(std::declval<typename T::exception_type>())),
                    typename T::priority_type> {};
 template <typename T>
@@ -261,7 +267,10 @@ struct has_disable_faults<T, std::void_t<decltype(T::disable_faults(std::declval
 template <typename T>
 static constexpr bool has_disable_faults_v = has_disable_faults<T>::value;
 
-// 检测 get_fault_info() – 返回任意类型（通过 decltype 推断）
+/**
+ * @brief 检测类型 T 是否包含方法 has_get_fault_info()
+ * @tparam T 待检测的类型
+ */
 template <typename T, typename = void>
 struct has_get_fault_info : std::false_type {};
 template <typename T>
