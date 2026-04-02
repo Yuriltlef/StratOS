@@ -123,7 +123,7 @@ struct CortexM3InterruptControllerPolicy {
      */
     static bool in_isr() noexcept {
         uint32_t ipsr;
-        __asm volatile("MRS %0, IPSR" : "=r"(ipsr));
+        __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
         return (ipsr != 0);
     }
 
@@ -134,7 +134,7 @@ struct CortexM3InterruptControllerPolicy {
      */
     static IRQn_Type get_current_irq() noexcept {
         uint32_t ipsr;
-        __asm volatile("MRS %0, IPSR" : "=r"(ipsr));
+        __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
         return static_cast<IRQn_Type>(ipsr & 0xFF);
     }
 

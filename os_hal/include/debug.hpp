@@ -104,15 +104,6 @@ template <typename T>
 static constexpr bool has_get_cycle_counter_method_v = has_get_cycle_counter_method<T>::value;
 
 /**
- * @brief 检测 get_cycle_counter() 的返回类型是否与 cycle_counter_size_type 严格一致
- */
-template <typename T>
-struct is_correct_cycle_counter_return_type
-    : std::is_same<decltype(T::get_cycle_counter()), typename T::cycle_counter_size_type> {};
-template <typename T>
-static constexpr bool is_correct_cycle_counter_return_type_v = is_correct_cycle_counter_return_type<T>::value;
-
-/**
  * @brief 检测静态方法 is_cycle_counter_enabled()
  */
 template <typename T, typename = void>
@@ -123,10 +114,24 @@ template <typename T>
 static constexpr bool has_is_cycle_counter_enabled_method_v = has_is_cycle_counter_enabled_method<T>::value;
 
 /**
+ * @brief 检测 get_cycle_counter() 的返回类型是否与 cycle_counter_size_type 严格一致
+ */
+template <typename T, typename = void>
+struct is_correct_cycle_counter_return_type : std::false_type {};
+template <typename T>
+struct is_correct_cycle_counter_return_type<T, std::void_t<decltype(T::get_cycle_counter())>>
+    : std::is_same<decltype(T::get_cycle_counter()), typename T::cycle_counter_size_type> {};
+template <typename T>
+static constexpr bool is_correct_cycle_counter_return_type_v = is_correct_cycle_counter_return_type<T>::value;
+
+/**
  * @brief 检测静态方法 is_cycle_counter_enabled() 的返回类型是否为 bool
  */
+template <typename T, typename = void>
+struct is_correct_is_cycle_counter_enabled_return_type : std::false_type {};
 template <typename T>
-struct is_correct_is_cycle_counter_enabled_return_type : std::is_same<decltype(T::is_cycle_counter_enabled()), bool> {};
+struct is_correct_is_cycle_counter_enabled_return_type<T, std::void_t<decltype(T::is_cycle_counter_enabled())>>
+    : std::is_same<decltype(T::is_cycle_counter_enabled()), bool> {};
 template <typename T>
 static constexpr bool is_correct_is_cycle_counter_enabled_return_type_v =
     is_correct_is_cycle_counter_enabled_return_type<T>::value;
@@ -220,8 +225,11 @@ static constexpr bool has_is_ready_method_v = has_is_ready_method<T>::value;
 /**
  * @brief 检测静态方法 is_ready() 的返回类型是否为 bool
  */
+template <typename T, typename = void>
+struct is_correct_is_ready_return_type : std::false_type {};
 template <typename T>
-struct is_correct_is_ready_return_type : std::is_same<decltype(T::is_ready()), bool> {};
+struct is_correct_is_ready_return_type<T, std::void_t<decltype(T::is_ready())>>
+    : std::is_same<decltype(T::is_ready()), bool> {};
 template <typename T>
 static constexpr bool is_correct_is_ready_return_type_v = is_correct_is_ready_return_type<T>::value;
 

@@ -219,8 +219,10 @@ static constexpr bool has_test_and_set_method_v = has_test_and_set_method<T>::va
 /**
  * @brief 检测 load() 的返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_load_return_type : std::false_type {};
 template <typename T>
-struct is_correct_load_return_type
+struct is_correct_load_return_type<T, std::void_t<decltype(T::load(std::declval<volatile typename T::value_type*>()))>>
     : std::is_same<decltype(T::load(std::declval<volatile typename T::value_type*>())), typename T::value_type> {};
 template <typename T>
 static constexpr bool is_correct_load_return_type_v = is_correct_load_return_type<T>::value;
@@ -228,20 +230,30 @@ static constexpr bool is_correct_load_return_type_v = is_correct_load_return_typ
 /**
  * @brief 检测 add() 的返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_add_return_type : std::false_type {};
 template <typename T>
-struct is_correct_add_return_type : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
-                                                                 std::declval<typename T::value_type>())),
-                                                 typename T::value_type> {};
+struct is_correct_add_return_type<T,
+                                  std::void_t<decltype(T::add(std::declval<volatile typename T::value_type*>(),
+                                                              std::declval<typename T::value_type>()))>>
+    : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
+                                   std::declval<typename T::value_type>())),
+                   typename T::value_type> {};
 template <typename T>
 static constexpr bool is_correct_add_return_type_v = is_correct_add_return_type<T>::value;
 
 /**
  * @brief 检测 sub() 的返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_sub_return_type : std::false_type {};
 template <typename T>
-struct is_correct_sub_return_type : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
-                                                                 std::declval<typename T::value_type>())),
-                                                 typename T::value_type> {};
+struct is_correct_sub_return_type<T,
+                                  std::void_t<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
+                                                              std::declval<typename T::value_type>()))>>
+    : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
+                                   std::declval<typename T::value_type>())),
+                   typename T::value_type> {};
 template <typename T>
 static constexpr bool is_correct_sub_return_type_v = is_correct_sub_return_type<T>::value;
 
@@ -249,8 +261,12 @@ static constexpr bool is_correct_sub_return_type_v = is_correct_sub_return_type<
 /**
  * @brief 检测带内存顺序的 load() 返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_load_memory_order_return_type : std::false_type {};
 template <typename T>
-struct is_correct_load_memory_order_return_type
+struct is_correct_load_memory_order_return_type<
+    T,
+    std::void_t<decltype(T::load(std::declval<volatile typename T::value_type*>(), std::declval<std::memory_order>()))>>
     : std::is_same<decltype(T::load(std::declval<volatile typename T::value_type*>(),
                                     std::declval<std::memory_order>())),
                    typename T::value_type> {};
@@ -260,8 +276,14 @@ static constexpr bool is_correct_load_memory_order_return_type_v = is_correct_lo
 /**
  * @brief 检测带内存顺序的 add() 返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_add_memory_order_return_type : std::false_type {};
 template <typename T>
-struct is_correct_add_memory_order_return_type
+struct is_correct_add_memory_order_return_type<
+    T,
+    std::void_t<decltype(T::add(std::declval<volatile typename T::value_type*>(),
+                                std::declval<typename T::value_type>(),
+                                std::declval<std::memory_order>()))>>
     : std::is_same<decltype(T::add(std::declval<volatile typename T::value_type*>(),
                                    std::declval<typename T::value_type>(),
                                    std::declval<std::memory_order>())),
@@ -272,8 +294,14 @@ static constexpr bool is_correct_add_memory_order_return_type_v = is_correct_add
 /**
  * @brief 检测带内存顺序的 sub() 返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_sub_memory_order_return_type : std::false_type {};
 template <typename T>
-struct is_correct_sub_memory_order_return_type
+struct is_correct_sub_memory_order_return_type<
+    T,
+    std::void_t<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
+                                std::declval<typename T::value_type>(),
+                                std::declval<std::memory_order>()))>>
     : std::is_same<decltype(T::sub(std::declval<volatile typename T::value_type*>(),
                                    std::declval<typename T::value_type>(),
                                    std::declval<std::memory_order>())),
@@ -284,8 +312,14 @@ static constexpr bool is_correct_sub_memory_order_return_type_v = is_correct_sub
 /**
  * @brief 检测不带内存顺序的 compare_exchange() 返回类型是否与 bool 一致
  */
+template <typename T, typename = void>
+struct is_correct_compare_exchange_return_type : std::false_type {};
 template <typename T>
-struct is_correct_compare_exchange_return_type
+struct is_correct_compare_exchange_return_type<
+    T,
+    std::void_t<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
+                                             std::declval<typename T::value_type&>(),
+                                             std::declval<typename T::value_type>()))>>
     : std::is_same<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
                                                 std::declval<typename T::value_type&>(),
                                                 std::declval<typename T::value_type>())),
@@ -296,8 +330,15 @@ static constexpr bool is_correct_compare_exchange_return_type_v = is_correct_com
 /**
  * @brief 检测带内存顺序的 compare_exchange() 返回类型是否与 value_type 一致
  */
+template <typename T, typename = void>
+struct is_correct_compare_exchange_memory_order_return_type : std::false_type {};
 template <typename T>
-struct is_correct_compare_exchange_memory_order_return_type
+struct is_correct_compare_exchange_memory_order_return_type<
+    T,
+    std::void_t<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
+                                             std::declval<typename T::value_type&>(),
+                                             std::declval<typename T::value_type>(),
+                                             std::declval<std::memory_order>()))>>
     : std::is_same<decltype(T::compare_exchange(std::declval<volatile typename T::value_type*>(),
                                                 std::declval<typename T::value_type&>(),
                                                 std::declval<typename T::value_type>(),
@@ -310,8 +351,12 @@ static constexpr bool is_correct_compare_exchange_memory_order_return_type_v =
 /**
  * @brief 检测 test_and_set() 返回类型是否与 bool 一致
  */
+template <typename T, typename = void>
+struct is_correct_test_and_set_return_type : std::false_type {};
 template <typename T>
-struct is_correct_test_and_set_return_type
+struct is_correct_test_and_set_return_type<
+    T,
+    std::void_t<decltype(T::test_and_set(std::declval<volatile typename T::value_type*>()))>>
     : std::is_same<decltype(T::test_and_set(std::declval<volatile typename T::value_type*>())), bool> {};
 template <typename T>
 static constexpr bool is_correct_test_and_set_return_type_v = is_correct_test_and_set_return_type<T>::value;
@@ -319,8 +364,13 @@ static constexpr bool is_correct_test_and_set_return_type_v = is_correct_test_an
 /**
  * @brief 检测 test_and_set_bit() 返回类型是否与 bool 一致
  */
+template <typename T, typename = void>
+struct is_correct_test_and_set_bit_return_type : std::false_type {};
 template <typename T>
-struct is_correct_test_and_set_bit_return_type
+struct is_correct_test_and_set_bit_return_type<
+    T,
+    std::void_t<decltype(T::test_and_set_bit(std::declval<volatile typename T::value_type*>(),
+                                             std::declval<typename T::bit_index_type>()))>>
     : std::is_same<decltype(T::test_and_set_bit(std::declval<volatile typename T::value_type*>(),
                                                 std::declval<typename T::bit_index_type>())),
                    bool> {};
