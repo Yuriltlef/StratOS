@@ -854,7 +854,7 @@ struct Mpu {
      * @note 仅当策略提供 get_fault_access_type() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_mpu_get_fault_access_type_method_v<P>>>
-    [[nodiscard]] inline static auto get_fault_access_type() noexcept -> decltype(P::get_fault_access_type()) {
+    [[nodiscard]] inline static auto get_fault_access_type() noexcept {
         return P::get_fault_access_type();
     }
 
@@ -901,8 +901,7 @@ struct Mpu {
      * @note 仅当策略提供 get_subregion_mask() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_mpu_get_subregion_mask_method_v<P>>>
-    [[nodiscard]] inline static auto get_subregion_mask(typename P::region_index_type region_idx) noexcept
-        -> decltype(P::get_subregion_mask(region_idx)) {
+    [[nodiscard]] inline static auto get_subregion_mask(typename P::region_index_type region_idx) noexcept {
         return P::get_subregion_mask(region_idx);
     }
 
@@ -926,7 +925,7 @@ struct Mpu {
      * @note 仅当策略提供 region_priority_by_number() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_mpu_region_priority_by_number_method_v<P>>>
-    [[nodiscard]] inline static auto region_priority_by_number() noexcept -> decltype(P::region_priority_by_number()) {
+    [[nodiscard]] inline static auto region_priority_by_number() noexcept {
         return P::region_priority_by_number();
     }
 };

@@ -352,7 +352,7 @@ struct InterruptController {
      * @note 仅当策略类提供 get_current_irq() 方法时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_current_irq_method_v<P>>>
-    [[nodiscard]] static auto get_current_irq() noexcept -> decltype(P::get_current_irq()) {
+    [[nodiscard]] static auto get_current_irq() noexcept {
         return P::get_current_irq();
     }
 
@@ -372,7 +372,7 @@ struct InterruptController {
      * @note 仅当策略类提供 get_priority_grouping() 方法时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_priority_grouping_method_v<P>>>
-    [[nodiscard]] static auto get_priority_grouping() noexcept -> decltype(P::get_priority_grouping()) {
+    [[nodiscard]] static auto get_priority_grouping() noexcept {
         return P::get_priority_grouping();
     }
 };

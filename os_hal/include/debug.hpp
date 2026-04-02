@@ -54,7 +54,8 @@ static constexpr bool has_cycle_counter_size_type_v = has_cycle_counter_size_typ
 template <typename T, typename = void>
 struct is_valid_cycle_counter_size_type : std::false_type {};
 template <typename T>
-struct is_valid_cycle_counter_size_type<T, std::void_t<typename T::cycle_counter_size_type>> : std::is_unsigned<typename T::cycle_counter_size_type> {};
+struct is_valid_cycle_counter_size_type<T, std::void_t<typename T::cycle_counter_size_type>>
+    : std::is_unsigned<typename T::cycle_counter_size_type> {};
 template <typename T>
 static constexpr bool is_valid_cycle_counter_size_type_v = is_valid_cycle_counter_size_type<T>::value;
 

@@ -397,7 +397,7 @@ struct ContextSwitch {
      * @note 仅当策略类提供 get_current_exception() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_get_current_exception_method_v<P>>>
-    [[nodiscard]] inline static auto get_current_exception() noexcept -> decltype(Policy::get_current_exception()) {
+    [[nodiscard]] inline static auto get_current_exception() noexcept {
         return Policy::get_current_exception();
     }
 
@@ -407,7 +407,7 @@ struct ContextSwitch {
      * @note 仅当策略类提供 core_id() 时可用
      */
     template <typename P = Policy, typename = std::enable_if_t<traits::has_core_id_method_v<P>>>
-    [[nodiscard]] inline static auto core_id() noexcept -> decltype(Policy::core_id()) {
+    [[nodiscard]] inline static auto core_id() noexcept {
         return Policy::core_id();
     }
 

@@ -46,5 +46,6 @@ int main() {
         MyInterruptController::global_disable();
         MyInterruptController::global_disable();
         auto _ = MyAtomic::add(&i, 1);
+        auto _p = MyContextSwitch::get_msp();
     }
 }
