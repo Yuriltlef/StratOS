@@ -48,10 +48,10 @@ struct has_word_type : std::false_type {};
 template <typename T>
 struct has_word_type<T, std::void_t<typename T::word>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_word_type_v = has_word_type<T>::value;
+static constexpr bool has_word_type_v = has_word_type<T>::value;
 
 /**
- * @brief 检测 word 类型是否为有效的栈指针类型
+ * @brief 检测 word 类型是否为有效的栈指针指向的地址类型(本身就是地址数值)
  * @tparam T word 类型
  *
  * 要求 word 为无符号整数类型，且大小等于指针大小（通常为 32 位）。
@@ -60,7 +60,7 @@ template <typename T>
 struct is_valid_word_type
     : std::conjunction<std::is_unsigned<T>, std::integral_constant<bool, sizeof(T) == sizeof(nullptr)>> {};
 template <typename T>
-inline constexpr bool is_valid_word_type_v = is_valid_word_type<T>::value;
+static constexpr bool is_valid_word_type_v = is_valid_word_type<T>::value;
 
 /**
  * @brief 检测静态方法 trigger_pendsv()
@@ -70,65 +70,65 @@ struct has_trigger_pendsv_method : std::false_type {};
 template <typename T>
 struct has_trigger_pendsv_method<T, std::void_t<decltype(T::trigger_pendsv())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_trigger_pendsv_method_v = has_trigger_pendsv_method<T>::value;
+static constexpr bool has_trigger_pendsv_method_v = has_trigger_pendsv_method<T>::value;
 
 /**
- * @brief 检测静态方法 set_psp(word*)
+ * @brief 检测静态方法 set_psp(word)
  */
 template <typename T, typename = void>
 struct has_set_psp_method : std::false_type {};
 template <typename T>
-struct has_set_psp_method<T, std::void_t<decltype(T::set_psp(std::declval<typename T::word*>()))>> : std::true_type {};
+struct has_set_psp_method<T, std::void_t<decltype(T::set_psp(std::declval<typename T::word>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_psp_method_v = has_set_psp_method<T>::value;
+static constexpr bool has_set_psp_method_v = has_set_psp_method<T>::value;
 
 /**
- * @brief 检测静态方法 get_psp() -> word*
+ * @brief 检测静态方法 get_psp() -> word
  */
 template <typename T, typename = void>
 struct has_get_psp_method : std::false_type {};
 template <typename T>
 struct has_get_psp_method<T, std::void_t<decltype(T::get_psp())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_psp_method_v = has_get_psp_method<T>::value;
+static constexpr bool has_get_psp_method_v = has_get_psp_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_psp() 返回类型是否为 word*
+ * @brief 检测类型 T 的 get_psp() 返回类型是否为 word
  * @tparam T 待检测的类型
  */
 template <typename T>
-struct is_correct_get_psp_return_type : std::is_same<decltype(T::get_psp()), typename T::word*> {};
+struct is_correct_get_psp_return_type : std::is_same<decltype(T::get_psp()), typename T::word> {};
 template <typename T>
-inline constexpr bool is_correct_get_psp_return_type_v = is_correct_get_psp_return_type<T>::value;
+static constexpr bool is_correct_get_psp_return_type_v = is_correct_get_psp_return_type<T>::value;
 
 /**
- * @brief 检测静态方法 set_msp(word*)
+ * @brief 检测静态方法 set_msp(word)
  */
 template <typename T, typename = void>
 struct has_set_msp_method : std::false_type {};
 template <typename T>
-struct has_set_msp_method<T, std::void_t<decltype(T::set_msp(std::declval<typename T::word*>()))>> : std::true_type {};
+struct has_set_msp_method<T, std::void_t<decltype(T::set_msp(std::declval<typename T::word>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_msp_method_v = has_set_msp_method<T>::value;
+static constexpr bool has_set_msp_method_v = has_set_msp_method<T>::value;
 
 /**
- * @brief 检测静态方法 get_msp() -> word*
+ * @brief 检测静态方法 get_msp() -> word
  */
 template <typename T, typename = void>
 struct has_get_msp_method : std::false_type {};
 template <typename T>
 struct has_get_msp_method<T, std::void_t<decltype(T::get_msp())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_msp_method_v = has_get_msp_method<T>::value;
+static constexpr bool has_get_msp_method_v = has_get_msp_method<T>::value;
 
 /**
- * @brief 检测类型 T 的 get_msp() 返回类型是否为 word*
+ * @brief 检测类型 T 的 get_msp() 返回类型是否为 word
  * @tparam T 待检测的类型
  */
 template <typename T>
-struct is_correct_get_msp_return_type : std::is_same<decltype(T::get_msp()), typename T::word*> {};
+struct is_correct_get_msp_return_type : std::is_same<decltype(T::get_msp()), typename T::word> {};
 template <typename T>
-inline constexpr bool is_correct_get_msp_return_type_v = is_correct_get_msp_return_type<T>::value;
+static constexpr bool is_correct_get_msp_return_type_v = is_correct_get_msp_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 switch_to_unprivileged()
@@ -138,7 +138,7 @@ struct has_switch_to_unprivileged_method : std::false_type {};
 template <typename T>
 struct has_switch_to_unprivileged_method<T, std::void_t<decltype(T::switch_to_unprivileged())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_switch_to_unprivileged_method_v = has_switch_to_unprivileged_method<T>::value;
+static constexpr bool has_switch_to_unprivileged_method_v = has_switch_to_unprivileged_method<T>::value;
 
 /**
  * @brief 检测静态方法 switch_to_privileged()
@@ -148,7 +148,7 @@ struct has_switch_to_privileged_method : std::false_type {};
 template <typename T>
 struct has_switch_to_privileged_method<T, std::void_t<decltype(T::switch_to_privileged())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_switch_to_privileged_method_v = has_switch_to_privileged_method<T>::value;
+static constexpr bool has_switch_to_privileged_method_v = has_switch_to_privileged_method<T>::value;
 
 /**
  * @brief 检测静态方法 dmb()
@@ -158,7 +158,7 @@ struct has_dmb_method : std::false_type {};
 template <typename T>
 struct has_dmb_method<T, std::void_t<decltype(T::dmb())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_dmb_method_v = has_dmb_method<T>::value;
+static constexpr bool has_dmb_method_v = has_dmb_method<T>::value;
 
 /**
  * @brief 检测静态方法 dsb()
@@ -168,7 +168,7 @@ struct has_dsb_method : std::false_type {};
 template <typename T>
 struct has_dsb_method<T, std::void_t<decltype(T::dsb())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_dsb_method_v = has_dsb_method<T>::value;
+static constexpr bool has_dsb_method_v = has_dsb_method<T>::value;
 
 /**
  * @brief 检测静态方法 isb()
@@ -178,7 +178,7 @@ struct has_isb_method : std::false_type {};
 template <typename T>
 struct has_isb_method<T, std::void_t<decltype(T::isb())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_isb_method_v = has_isb_method<T>::value;
+static constexpr bool has_isb_method_v = has_isb_method<T>::value;
 
 // 可选方法检测
 /**
@@ -190,7 +190,7 @@ struct has_get_current_exception_method : std::false_type {};
 template <typename T>
 struct has_get_current_exception_method<T, std::void_t<decltype(T::get_current_exception())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_current_exception_method_v = has_get_current_exception_method<T>::value;
+static constexpr bool has_get_current_exception_method_v = has_get_current_exception_method<T>::value;
 
 /**
  * @brief 检测静态方法 core_id()
@@ -201,7 +201,7 @@ struct has_core_id_method : std::false_type {};
 template <typename T>
 struct has_core_id_method<T, std::void_t<decltype(T::core_id())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_core_id_method_v = has_core_id_method<T>::value;
+static constexpr bool has_core_id_method_v = has_core_id_method<T>::value;
 
 /**
  * @brief 检测静态方法 send_ipi(word)
@@ -212,7 +212,7 @@ struct has_send_ipi_method : std::false_type {};
 template <typename T>
 struct has_send_ipi_method<T, std::void_t<decltype(T::send_ipi(std::declval<typename T::word>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_send_ipi_method_v = has_send_ipi_method<T>::value;
+static constexpr bool has_send_ipi_method_v = has_send_ipi_method<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为有效的上下文切换策略
@@ -236,7 +236,7 @@ struct is_valid_context_switch_policy : std::conjunction<has_word_type<T>,
                                                          is_correct_get_psp_return_type<T>,
                                                          is_correct_get_msp_return_type<T>> {};
 template <typename T>
-inline constexpr bool is_valid_context_switch_policy_v = is_valid_context_switch_policy<T>::value;
+static constexpr bool is_valid_context_switch_policy_v = is_valid_context_switch_policy<T>::value;
 
 /**
  * @brief 组合检测：策略是否支持多核（同时提供 core_id 和 send_ipi）
@@ -244,7 +244,7 @@ inline constexpr bool is_valid_context_switch_policy_v = is_valid_context_switch
 template <typename T>
 struct has_multicore_support : std::conjunction<has_core_id_method<T>, has_send_ipi_method<T>> {};
 template <typename T>
-inline constexpr bool has_multicore_support_v = has_multicore_support<T>::value;
+static constexpr bool has_multicore_support_v = has_multicore_support<T>::value;
 
 } // namespace strat_os::hal::traits
 
@@ -293,9 +293,9 @@ struct ContextSwitch {
     static_assert(traits::is_valid_word_type_v<typename Policy::word>,
                   "word must be an unsigned integer of pointer size");
     static_assert(traits::has_trigger_pendsv_method_v<Policy>, "ContextSwitch policy must provide trigger_pendsv()");
-    static_assert(traits::has_set_psp_method_v<Policy>, "ContextSwitch policy must provide set_psp(word*)");
+    static_assert(traits::has_set_psp_method_v<Policy>, "ContextSwitch policy must provide set_psp(word)");
     static_assert(traits::has_get_psp_method_v<Policy>, "ContextSwitch policy must provide get_psp()");
-    static_assert(traits::has_set_msp_method_v<Policy>, "ContextSwitch policy must provide set_msp(word*)");
+    static_assert(traits::has_set_msp_method_v<Policy>, "ContextSwitch policy must provide set_msp(word)");
     static_assert(traits::has_get_msp_method_v<Policy>, "ContextSwitch policy must provide get_msp()");
     static_assert(traits::has_switch_to_unprivileged_method_v<Policy>,
                   "ContextSwitch policy must provide switch_to_unprivileged()");
@@ -305,9 +305,9 @@ struct ContextSwitch {
     static_assert(traits::has_dsb_method_v<Policy>, "ContextSwitch policy must provide dsb()");
     static_assert(traits::has_isb_method_v<Policy>, "ContextSwitch policy must provide isb()");
     static_assert(traits::is_correct_get_psp_return_type_v<Policy>,
-                  "ContextSwitch policy's get_psp() must return word*");
+                  "ContextSwitch policy's get_psp() must return word");
     static_assert(traits::is_correct_get_msp_return_type_v<Policy>,
-                  "ContextSwitch policy's get_msp() must return word*");
+                  "ContextSwitch policy's get_msp() must return word");
 
     /// 栈指针基本类型（通常为 uint32_t）
     using word = typename Policy::word;
@@ -326,7 +326,7 @@ struct ContextSwitch {
      * @brief 设置进程栈指针（PSP）
      * @param sp 栈指针值
      */
-    inline static void set_psp(word* sp) noexcept {
+    inline static void set_psp(word sp) noexcept {
         Policy::set_psp(sp);
     }
 
@@ -334,7 +334,7 @@ struct ContextSwitch {
      * @brief 获取进程栈指针（PSP）
      * @return 当前 PSP 值
      */
-    [[nodiscard]] inline static word* get_psp() noexcept {
+    [[nodiscard]] inline static word get_psp() noexcept {
         return Policy::get_psp();
     }
 
@@ -342,7 +342,7 @@ struct ContextSwitch {
      * @brief 设置主栈指针（MSP）
      * @param sp 栈指针值
      */
-    inline static void set_msp(word* sp) noexcept {
+    inline static void set_msp(word sp) noexcept {
         Policy::set_msp(sp);
     }
 
@@ -350,7 +350,7 @@ struct ContextSwitch {
      * @brief 获取主栈指针（MSP）
      * @return 当前 MSP 值
      */
-    [[nodiscard]] inline static word* get_msp() noexcept {
+    [[nodiscard]] inline static word get_msp() noexcept {
         return Policy::get_msp();
     }
 

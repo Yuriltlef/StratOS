@@ -19,16 +19,32 @@
  ******************************************************************************
  */
 
-#include "mu_sstl/containers/static_array.hpp"
+#include "os_hal/include/atomic.hpp"
+#include "os_hal/include/context_switch.hpp"
+#include "os_hal/include/interrupt.hpp"
+#include "os_hal/include/policy/cortex_m3/atomic.hpp"
+#include "os_hal/include/policy/cortex_m3/context_switch.hpp"
+#include "os_hal/include/policy/cortex_m3/interrupt.hpp"
 #include <cstdint>
 
-constexpr static mu_sstl::StaticArray<mu_sstl::StaticAllocPolicy<std::uint32_t, std::uint32_t, 1000>> arr{};
+
+namespace os_builtins                     = strat_os::hal::policy::builtin;
+namespace os_kernel_hal                   = strat_os::hal;
+
+using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3InterruptControllerPolicy;
+using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
+
+using MyCortexM3AtomicPolicy              = os_builtins::CortexM3AtomicPolicy;
+using MyAtomic                            = os_kernel_hal::Atomic<MyCortexM3AtomicPolicy>;
+
+using MyCortexM3ContextSwitchPolicy       = os_builtins::CortexM3ContextSwitchPolicy;
+using MyContextSwitch                     = os_kernel_hal::ContextSwitch<MyCortexM3ContextSwitchPolicy>;
 
 int main() {
-    auto i = arr.max_size();
+    volatile uint32_t i{0};
     while (true) {
-        for (auto i_ : arr) {
-            i = i_;
-        }
+        MyInterruptController::global_disable();
+        MyInterruptController::global_disable();
+        auto _ = MyAtomic::add(&i, 1);
     }
 }

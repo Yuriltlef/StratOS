@@ -68,7 +68,7 @@ struct has_address_type : std::false_type {};
 template <typename T>
 struct has_address_type<T, std::void_t<typename T::address_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_address_type_v = has_address_type<T>::value;
+static constexpr bool has_address_type_v = has_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 address_type 是否为无符号整数类型
@@ -79,7 +79,7 @@ struct is_valid_address_type : std::false_type {};
 template <typename T>
 struct is_valid_address_type<T, std::void_t<typename T::address_type>> : std::is_unsigned<typename T::address_type> {};
 template <typename T>
-inline constexpr bool is_valid_address_type_v = is_valid_address_type<T>::value;
+static constexpr bool is_valid_address_type_v = is_valid_address_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 fault_mask_type
@@ -90,7 +90,7 @@ struct has_fault_mask_type : std::false_type {};
 template <typename T>
 struct has_fault_mask_type<T, std::void_t<typename T::fault_mask_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_fault_mask_type_v = has_fault_mask_type<T>::value;
+static constexpr bool has_fault_mask_type_v = has_fault_mask_type<T>::value;
 
 /**
  * @brief 检测类型 T 的 fault_mask_type 是否为无符号整数类型
@@ -101,7 +101,7 @@ struct is_valid_fault_mask_type : std::false_type {};
 template <typename T>
 struct is_valid_fault_mask_type<T, std::void_t<typename T::fault_mask_type>> : std::is_unsigned<typename T::fault_mask_type> {};
 template <typename T>
-inline constexpr bool is_valid_fault_mask_type_v = is_valid_fault_mask_type<T>::value;
+static constexpr bool is_valid_fault_mask_type_v = is_valid_fault_mask_type<T>::value;
 
 // ---------- 必需方法检测 ----------
 /**
@@ -113,7 +113,7 @@ struct has_system_reset : std::false_type {};
 template <typename T>
 struct has_system_reset<T, std::void_t<decltype(T::system_reset())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_system_reset_v = has_system_reset<T>::value;
+static constexpr bool has_system_reset_v = has_system_reset<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 set_vector_table(T::address_type)
@@ -125,7 +125,7 @@ template <typename T>
 struct has_set_vector_table<T, std::void_t<decltype(T::set_vector_table(std::declval<typename T::address_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_vector_table_v = has_set_vector_table<T>::value;
+static constexpr bool has_set_vector_table_v = has_set_vector_table<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 set_priority_grouping(T::priority_group_type)
@@ -139,7 +139,7 @@ struct has_set_priority_grouping<
     std::void_t<decltype(T::set_priority_grouping(std::declval<typename T::priority_group_type>()))>> : std::true_type {
 };
 template <typename T>
-inline constexpr bool has_set_priority_grouping_v = has_set_priority_grouping<T>::value;
+static constexpr bool has_set_priority_grouping_v = has_set_priority_grouping<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 get_priority_grouping() -> T::priority_group_type
@@ -150,7 +150,7 @@ struct has_get_priority_grouping : std::false_type {};
 template <typename T>
 struct has_get_priority_grouping<T, std::void_t<decltype(T::get_priority_grouping())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_priority_grouping_v = has_get_priority_grouping<T>::value;
+static constexpr bool has_get_priority_grouping_v = has_get_priority_grouping<T>::value;
 
 /**
  * @brief 检测类型 T 的 get_priority_grouping() 返回类型是否为 priority_group_type
@@ -160,7 +160,7 @@ template <typename T>
 struct is_correct_get_priority_grouping_return_type
     : std::is_same<decltype(T::get_priority_grouping()), typename T::priority_group_type> {};
 template <typename T>
-inline constexpr bool is_correct_get_priority_grouping_return_type_v =
+static constexpr bool is_correct_get_priority_grouping_return_type_v =
     is_correct_get_priority_grouping_return_type<T>::value;
 
 /**
@@ -172,7 +172,7 @@ struct has_sleep : std::false_type {};
 template <typename T>
 struct has_sleep<T, std::void_t<decltype(T::sleep())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_sleep_v = has_sleep<T>::value;
+static constexpr bool has_sleep_v = has_sleep<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 deep_sleep()
@@ -183,7 +183,7 @@ struct has_deep_sleep : std::false_type {};
 template <typename T>
 struct has_deep_sleep<T, std::void_t<decltype(T::deep_sleep())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_deep_sleep_v = has_deep_sleep<T>::value;
+static constexpr bool has_deep_sleep_v = has_deep_sleep<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 set_sleep_on_exit(bool)
@@ -194,7 +194,7 @@ struct has_set_sleep_on_exit : std::false_type {};
 template <typename T>
 struct has_set_sleep_on_exit<T, std::void_t<decltype(T::set_sleep_on_exit(std::declval<bool>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_sleep_on_exit_v = has_set_sleep_on_exit<T>::value;
+static constexpr bool has_set_sleep_on_exit_v = has_set_sleep_on_exit<T>::value;
 
 // 异常优先级相关方法（使用策略定义的 exception_type 和 priority_type）
 /**
@@ -209,7 +209,7 @@ struct has_set_exception_priority<
     std::void_t<decltype(T::set_exception_priority(std::declval<typename T::exception_type>(),
                                                    std::declval<typename T::priority_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_set_exception_priority_v = has_set_exception_priority<T>::value;
+static constexpr bool has_set_exception_priority_v = has_set_exception_priority<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 get_exception_priority(T::exception_type) -> T::priority_type
@@ -222,7 +222,7 @@ struct has_get_exception_priority<
     T,
     std::void_t<decltype(T::get_exception_priority(std::declval<typename T::exception_type>()))>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_exception_priority_v = has_get_exception_priority<T>::value;
+static constexpr bool has_get_exception_priority_v = has_get_exception_priority<T>::value;
 
 /**
  * @brief 检测类型 T 的 get_exception_priority() 返回类型是否为 priority_type
@@ -233,7 +233,7 @@ struct is_correct_get_exception_priority_return_type
     : std::is_same<decltype(T::get_exception_priority(std::declval<typename T::exception_type>())),
                    typename T::priority_type> {};
 template <typename T>
-inline constexpr bool is_correct_get_exception_priority_return_type_v =
+static constexpr bool is_correct_get_exception_priority_return_type_v =
     is_correct_get_exception_priority_return_type<T>::value;
 
 // ---------- 可选方法检测 ----------
@@ -247,7 +247,7 @@ template <typename T>
 struct has_enable_faults<T, std::void_t<decltype(T::enable_faults(std::declval<typename T::fault_mask_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_enable_faults_v = has_enable_faults<T>::value;
+static constexpr bool has_enable_faults_v = has_enable_faults<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含方法 disable_faults(T::fault_mask_type)
@@ -259,7 +259,7 @@ template <typename T>
 struct has_disable_faults<T, std::void_t<decltype(T::disable_faults(std::declval<typename T::fault_mask_type>()))>>
     : std::true_type {};
 template <typename T>
-inline constexpr bool has_disable_faults_v = has_disable_faults<T>::value;
+static constexpr bool has_disable_faults_v = has_disable_faults<T>::value;
 
 // 检测 get_fault_info() – 返回任意类型（通过 decltype 推断）
 template <typename T, typename = void>
@@ -267,7 +267,7 @@ struct has_get_fault_info : std::false_type {};
 template <typename T>
 struct has_get_fault_info<T, std::void_t<decltype(T::get_fault_info())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_fault_info_v = has_get_fault_info<T>::value;
+static constexpr bool has_get_fault_info_v = has_get_fault_info<T>::value;
 
 // ---------- 组合检测：是否为有效的系统控制策略 ----------
 template <typename T>
@@ -293,7 +293,7 @@ struct is_valid_system_control_policy : std::conjunction<has_exception_type<T>,
                                                          is_correct_get_exception_priority_return_type<T>> {};
 
 template <typename T>
-inline constexpr bool is_valid_system_control_policy_v = is_valid_system_control_policy<T>::value;
+static constexpr bool is_valid_system_control_policy_v = is_valid_system_control_policy<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为增强型系统控制策略
@@ -306,7 +306,7 @@ struct is_enhanced_fault_controller
     : std::conjunction<has_enable_faults<T>, has_disable_faults<T>, has_get_fault_info<T>> {};
 
 template <typename T>
-inline constexpr bool is_enhanced_fault_controller_v = is_enhanced_fault_controller<T>::value;
+static constexpr bool is_enhanced_fault_controller_v = is_enhanced_fault_controller<T>::value;
 
 } // namespace strat_os::hal::traits
 
