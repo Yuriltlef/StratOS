@@ -22,8 +22,8 @@
  */
 #pragma once
 
-#ifndef STRATOS_HAL_POLICY_CORTEX_M3_ATOMIC_HPP
-#define STRATOS_HAL_POLICY_CORTEX_M3_ATOMIC_HPP
+#ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_ATOMIC_HPP
+#define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_ATOMIC_HPP
 
 #include "stm32f10x.h" // for IRQn_Type (not used directly, but required by CMSIS)
 #include <atomic>      // for std::memory_order
@@ -61,7 +61,7 @@ struct CortexM3AtomicPolicy {
      * @param ptr 指向 volatile 内存的指针
      * @return 当前值
      */
-    static value_type load(volatile value_type* ptr) noexcept {
+    inline static value_type load(volatile value_type* ptr) noexcept {
         return __atomic_load_n(ptr, __ATOMIC_SEQ_CST);
     }
 
@@ -70,7 +70,7 @@ struct CortexM3AtomicPolicy {
      * @param ptr   指向 volatile 内存的指针
      * @param value 要存储的值
      */
-    static void store(volatile value_type* ptr, value_type value) noexcept {
+    inline static void store(volatile value_type* ptr, value_type value) noexcept {
         __atomic_store_n(ptr, value, __ATOMIC_RELAXED);
     }
 
@@ -80,7 +80,7 @@ struct CortexM3AtomicPolicy {
      * @param value 要增加的值
      * @return 加后的新值
      */
-    static value_type add(volatile value_type* ptr, value_type value) noexcept {
+    inline static value_type add(volatile value_type* ptr, value_type value) noexcept {
         return __atomic_add_fetch(ptr, value, __ATOMIC_RELAXED);
     }
 
@@ -90,7 +90,7 @@ struct CortexM3AtomicPolicy {
      * @param value 要减少的值
      * @return 减后的新值
      */
-    static value_type sub(volatile value_type* ptr, value_type value) noexcept {
+    inline static value_type sub(volatile value_type* ptr, value_type value) noexcept {
         return __atomic_sub_fetch(ptr, value, __ATOMIC_RELAXED);
     }
 
@@ -102,7 +102,7 @@ struct CortexM3AtomicPolicy {
      * @return true  如果成功写入
      * @return false 如果期望值不匹配（此时 *ptr 的值会写入 expected）
      */
-    static bool compare_exchange(volatile value_type* ptr,
+    inline static bool compare_exchange(volatile value_type* ptr,
                                  value_type& expected,
                                  value_type desired) noexcept {
         return __atomic_compare_exchange_n(ptr,
@@ -118,7 +118,7 @@ struct CortexM3AtomicPolicy {
      * @param ptr 指向 volatile 内存的指针
      * @param bit 位索引
      */
-    static void set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
+    inline static void set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         __atomic_fetch_or(ptr, static_cast<value_type>(1) << bit, __ATOMIC_RELAXED);
     }
 
@@ -127,7 +127,7 @@ struct CortexM3AtomicPolicy {
      * @param ptr 指向 volatile 内存的指针
      * @param bit 位索引
      */
-    static void clear_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
+    inline static void clear_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         __atomic_fetch_and(ptr, ~(static_cast<value_type>(1) << bit), __ATOMIC_RELAXED);
     }
 
@@ -138,7 +138,7 @@ struct CortexM3AtomicPolicy {
      * @return true  原值为 1
      * @return false 原值为 0
      */
-    static bool test_and_set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
+    inline static bool test_and_set_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         value_type old = __atomic_fetch_or(ptr, static_cast<value_type>(1) << bit, __ATOMIC_RELAXED);
         return static_cast<bool>((old >> bit) & 1);
     }
@@ -148,7 +148,7 @@ struct CortexM3AtomicPolicy {
      * @param ptr 指向 volatile 内存的指针
      * @param bit 位索引
      */
-    static void flip_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
+    inline static void flip_bit(volatile value_type* ptr, bit_index_type bit) noexcept {
         __atomic_fetch_xor(ptr, static_cast<value_type>(1) << bit, __ATOMIC_RELAXED);
     }
 
@@ -159,7 +159,7 @@ struct CortexM3AtomicPolicy {
      * @return false 原值为 0
      * @note 常用于自旋锁的实现。
      */
-    static bool test_and_set(volatile value_type* ptr) noexcept {
+    inline static bool test_and_set(volatile value_type* ptr) noexcept {
         value_type old = __atomic_exchange_n(ptr, 1, __ATOMIC_RELAXED);
         return old != 0;
     }
@@ -172,7 +172,7 @@ struct CortexM3AtomicPolicy {
      * @param order 内存顺序（如 std::memory_order_acquire）
      * @return 当前值
      */
-    static value_type load(volatile value_type* ptr, std::memory_order order) noexcept {
+    inline static value_type load(volatile value_type* ptr, std::memory_order order) noexcept {
         return __atomic_load_n(ptr, order);
     }
 
@@ -182,7 +182,7 @@ struct CortexM3AtomicPolicy {
      * @param value 要存储的值
      * @param order 内存顺序（如 std::memory_order_release）
      */
-    static void store(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
+    inline static void store(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
         __atomic_store_n(ptr, value, order);
     }
 
@@ -193,7 +193,7 @@ struct CortexM3AtomicPolicy {
      * @param order 内存顺序
      * @return 加后的新值
      */
-    static value_type add(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
+    inline static value_type add(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
         return __atomic_add_fetch(ptr, value, order);
     }
 
@@ -204,7 +204,7 @@ struct CortexM3AtomicPolicy {
      * @param order 内存顺序
      * @return 减后的新值
      */
-    static value_type sub(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
+    inline static value_type sub(volatile value_type* ptr, value_type value, std::memory_order order) noexcept {
         return __atomic_sub_fetch(ptr, value, order);
     }
 
@@ -217,7 +217,7 @@ struct CortexM3AtomicPolicy {
      * @return true  如果成功写入
      * @return false 如果期望值不匹配
      */
-    static bool compare_exchange(volatile value_type* ptr,
+    inline static bool compare_exchange(volatile value_type* ptr,
                                  value_type& expected,
                                  value_type desired,
                                  std::memory_order order) noexcept {
@@ -227,4 +227,4 @@ struct CortexM3AtomicPolicy {
 
 } // namespace strat_os::hal::policy::builtin
 
-#endif // STRATOS_HAL_POLICY_CORTEX_M3_ATOMIC_HPP
+#endif // STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_ATOMIC_HPP

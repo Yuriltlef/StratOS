@@ -23,10 +23,10 @@
 #include "os_hal/include/context_switch.hpp"
 #include "os_hal/include/interrupt.hpp"
 #include "os_hal/include/mpu.hpp"
-#include "os_hal/include/policy/cortex_m3/atomic.hpp"
-#include "os_hal/include/policy/cortex_m3/context_switch.hpp"
-#include "os_hal/include/policy/cortex_m3/interrupt.hpp"
-#include "os_hal/include/policy/cortex_m3/mpu.hpp"
+#include "platform/cortex_m3/stm32f1/interrupt.hpp"
+#include "platform/cortex_m3/stm32f1/context_switch.hpp"
+#include "platform/cortex_m3/stm32f1/mpu.hpp"
+#include "platform/cortex_m3/stm32f1/atomic.hpp"
 #include <assert.h>
 #include <cstdint>
 
@@ -49,10 +49,11 @@ int main() {
     volatile uint32_t i{0};
     while (true) {
         MyInterruptController::global_disable();
-        MyInterruptController::global_disable();
-        auto _  = MyAtomic::add(&i, 1);
+        auto _ = MyAtomic::add(&i, 1);
+        MyContextSwitch::switch_to_privileged();
         auto _p = MyContextSwitch::get_msp();
+        MyContextSwitch::switch_to_unprivileged();
         using xyz = MyMPU::region_index_type;
-        
+        MyInterruptController::global_enable();
     }
 }
