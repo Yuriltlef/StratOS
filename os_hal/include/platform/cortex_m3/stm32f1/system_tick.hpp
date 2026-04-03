@@ -20,7 +20,7 @@
 #ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_SYSTEM_TICK_HPP
 #define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_SYSTEM_TICK_HPP
 
-#include "stm32f10x.h" // 包含 CMSIS 及 SysTick 寄存器定义
+#include "stm32f10x.h" // for CMSIS
 #include <cstdint>     // for uint32_t
 
 #ifndef __CM3_CORE_H__
@@ -43,7 +43,7 @@ namespace strat_os::hal::policy::builtin
  * - AHBClock：处理器时钟（AHB 时钟频率）
  * - AHBDiv8：处理器时钟的 8 分频（AHB/8）
  */
-enum class CortexM3SystemTickClockSource : std::uint8_t {
+enum class CortexM3Stm32F1SystemTickClockSource : std::uint8_t {
     AHBClock = 1, ///< AHB 时钟（对应 CLKSOURCE 位置 1）
     AHBDiv8  = 0  ///< AHB/8 时钟（对应 CLKSOURCE 位清 0）
 };
@@ -55,11 +55,11 @@ enum class CortexM3SystemTickClockSource : std::uint8_t {
  * 提供与 strat_os::hal::SystemTick 适配器完全兼容的静态接口。
  * 所有方法均为内联且 noexcept，保证零开销抽象。
  */
-struct CortexM3SystemTickPolicy {
+struct CortexM3Stm32F1SystemTickPolicy {
     /// 重装载值类型（24 位有效，使用 uint32_t 存储）
     using reload_type = std::uint32_t;
     /// 时钟源类型（使用上述枚举）
-    using clock_source_type = CortexM3SystemTickClockSource;
+    using clock_source_type = CortexM3Stm32F1SystemTickClockSource;
 
     /**
      * @brief 初始化 SysTick 定时器
