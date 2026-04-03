@@ -69,7 +69,7 @@ StratOS 重点关注三个方面：
 git clone https://github.com/Yuriltlef/StratOS.git my_project
 ```
 
-#### ② 创建 `clangd_config.json`（用于 clangd）
+#### ② 配置 clangd 插件
 
 在项目**根目录**下创建 `clangd_config.json`，模板如下（请根据目标平台修改 `project_definitions`）：
 
@@ -77,7 +77,7 @@ git clone https://github.com/Yuriltlef/StratOS.git my_project
 {
     "version": "0.1.2",
     "clangd": {
-        "g++_compiler_path": "path/to/your/g++_compiler/executable_file",
+        "g++_compiler_path": "path/to/your/g++_compiler_executable_file.exe", // 注意需要包含编译器全称（比如： xxx/xxx/arm-none-eabi-g++.exe）
         "toolchain_root_path": "path/to/your/tool-chain/root",
         "project_root": "path/to/your/project/root",
         "project_definitions": [
@@ -89,7 +89,13 @@ git clone https://github.com/Yuriltlef/StratOS.git my_project
 ```
 
 > 💡 **示例（Cortex-M3）**：  
-> `["USE_STDPERIPH_DRIVER","STM32F10X_MD","OS_STM_RAM_SIZE=0x5000","__CORTEX_M3","__thumb2__=1","__THUMBEL__=1"]`
+> `"project_definitions": ["USE_STDPERIPH_DRIVER","STM32F10X_MD","OS_STM_RAM_SIZE=0x5000","__CORTEX_M3","__thumb2__=1","__THUMBEL__=1"]`
+
+随后，进入 Clangd 插件设置界面，在 `Clangd:Arguments` 选项内，添加一项：
+```text
+--query-driver={g++_compiler_path}
+```
+> 💡 注意，这里的 `{g++_compiler_path}` 应该同  `clangd_config.json` 的 `g++_compiler_path` 一样且包含 g++ 可执行文件全称，且可执行文件路径不需要带引号。
 
 完成上述配置后，**请按照 ③ 继续配置 CMake**。项目主 `CMakeLists.txt` 会自动执行 `{root}/scripts/cfg_clangd.py` 脚本，生成：
 
