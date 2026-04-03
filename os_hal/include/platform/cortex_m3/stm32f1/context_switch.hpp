@@ -24,8 +24,8 @@
  */
 #pragma once
 
-#ifndef STRATOS_HAL_POLICY_CORTEX_M3_CONTEXT_SWITCH_HPP
-#define STRATOS_HAL_POLICY_CORTEX_M3_CONTEXT_SWITCH_HPP
+#ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_CONTEXT_SWITCH_HPP
+#define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_CONTEXT_SWITCH_HPP
 
 #include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
 #include "core_cm3.h"  // for __get_IPSR(), __get_MSP, __set_MSP, etc.
@@ -56,7 +56,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 触发 PendSV 异常，用于延迟任务切换
      * @note 通过写 SCB->ICSR 的 PENDSVSET 位实现。
      */
-    static void trigger_pendsv() noexcept {
+    inline static void trigger_pendsv() noexcept {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
     }
 
@@ -64,7 +64,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 设置进程栈指针（PSP）
      * @param psp 栈指针值
      */
-    static void set_psp(word psp) noexcept {
+    inline static void set_psp(word psp) noexcept {
         __set_PSP(psp);
     }
 
@@ -72,7 +72,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 获取当前进程栈指针（PSP）
      * @return 当前 PSP 值
      */
-    static word get_psp() noexcept {
+    inline static word get_psp() noexcept {
         return __get_PSP();
     }
 
@@ -80,7 +80,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 设置主栈指针（MSP）
      * @param msp 栈指针值
      */
-    static void set_msp(word msp) noexcept {
+    inline static void set_msp(word msp) noexcept {
         __set_MSP(msp);
     }
 
@@ -88,7 +88,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 获取当前主栈指针（MSP）
      * @return 当前 MSP 值
      */
-    static word get_msp() noexcept {
+    inline static word get_msp() noexcept {
         return __get_MSP();
     }
 
@@ -96,7 +96,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 切换到用户模式（非特权级）
      * @note 设置 CONTROL 寄存器的第 0 位，并执行 ISB 指令同步。
      */
-    static void switch_to_unprivileged() noexcept {
+    inline static void switch_to_unprivileged() noexcept {
         __set_CONTROL(__get_CONTROL() | 0x1);
         __ISB();
     }
@@ -105,7 +105,7 @@ struct CortexM3ContextSwitchPolicy {
      * @brief 切换到特权模式
      * @note 清除 CONTROL 寄存器的第 0 位，并执行 ISB 指令同步。
      */
-    static void switch_to_privileged() noexcept {
+    inline static void switch_to_privileged() noexcept {
         __set_CONTROL(__get_CONTROL() & ~0x1);
         __ISB();
     }
@@ -113,21 +113,21 @@ struct CortexM3ContextSwitchPolicy {
     /**
      * @brief 数据内存屏障（DMB）
      */
-    static void dmb() noexcept {
+    inline static void dmb() noexcept {
         __DMB();
     }
 
     /**
      * @brief 数据同步屏障（DSB）
      */
-    static void dsb() noexcept {
+    inline static void dsb() noexcept {
         __DSB();
     }
 
     /**
      * @brief 指令同步屏障（ISB）
      */
-    static void isb() noexcept {
+    inline static void isb() noexcept {
         __ISB();
     }
 
@@ -139,7 +139,7 @@ struct CortexM3ContextSwitchPolicy {
      * @note 通过读取 IPSR 寄存器实现，仅低 8 位有效。
      *       此方法可用于判断当前是否在中断服务程序中。
      */
-    static word get_current_exception() noexcept {
+    inline static word get_current_exception() noexcept {
         word ipsr;
         __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
         return static_cast<word>(ipsr & 0xFF);
@@ -151,4 +151,4 @@ struct CortexM3ContextSwitchPolicy {
 
 } // namespace strat_os::hal::policy::builtin
 
-#endif // STRATOS_HAL_POLICY_CORTEX_M3_CONTEXT_SWITCH_HPP
+#endif // STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_CONTEXT_SWITCH_HPP

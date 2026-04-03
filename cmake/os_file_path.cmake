@@ -30,6 +30,7 @@ set(OS_STARTUP
 # ====================== StratOS系统目录 ======================
 set(OS_INC
     "${CMAKE_SOURCE_DIR}/"
+    "${CMAKE_SOURCE_DIR}/os_hal/include/"
 )
 # ====================== CMSIS 内核文件 ======================
 file(GLOB_RECURSE OS_CMSIS_SRC
