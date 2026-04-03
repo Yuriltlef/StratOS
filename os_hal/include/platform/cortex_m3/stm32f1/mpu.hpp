@@ -21,7 +21,7 @@
 #ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_MPU_HPP
 #define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_MPU_HPP
 
-#include <cstdint> // for uint32_t, uintptr_t
+#include <cstdint> // for std::uint32_t, std::uintptr_t
 
 namespace strat_os::hal::policy::builtin
 {
@@ -33,7 +33,7 @@ namespace strat_os::hal::policy::builtin
  * 因此将 is_available 设为 false。适配器将据此隐藏所有 MPU 操作方法，
  * 但提供类型别名以便编译期类型查询。
  */
-struct CortexM3MPUPolicy {
+struct CortexM3Stm32F1MPUPolicy {
     /// 表示该平台不支持 MPU（编译期常量）
     static constexpr bool is_available = false;
 

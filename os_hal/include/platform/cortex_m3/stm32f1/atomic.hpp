@@ -48,7 +48,7 @@ namespace strat_os::hal::policy::builtin {
  * 提供与 strat_os::hal::Atomic 适配器完全兼容的静态接口。
  * 所有方法均为内联且 noexcept，保证零开销抽象。
  */
-struct CortexM3AtomicPolicy {
+struct CortexM3Stm32F1AtomicPolicy {
     /// 原子操作的基本类型（无符号 32 位整数）
     using value_type = std::uint32_t;
     /// 位索引类型（无符号 8 位整数）

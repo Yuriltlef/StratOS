@@ -46,7 +46,7 @@ namespace strat_os::hal::policy::builtin {
  * 包括触发 PendSV、栈指针管理、特权级切换和内存屏障。
  * 所有方法均为内联且 noexcept，保证零开销抽象。
  */
-struct CortexM3ContextSwitchPolicy {
+struct CortexM3Stm32F1ContextSwitchPolicy {
     /// 栈指针基本类型（32 位无符号整数）
     using word = std::uint32_t;
 

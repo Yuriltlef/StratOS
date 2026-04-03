@@ -56,7 +56,7 @@ struct has_exception_type : std::false_type {};
 template <typename T>
 struct has_exception_type<T, std::void_t<typename T::exception_type>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_exception_type_v = has_exception_type<T>::value;
+static constexpr bool has_exception_type_v = has_exception_type<T>::value;
 
 /**
  * @brief 检测类型 T 是否包含嵌套类型 address_type

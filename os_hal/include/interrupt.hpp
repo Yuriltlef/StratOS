@@ -171,7 +171,7 @@ struct has_in_isr_method : std::false_type {};
 template <typename T>
 struct has_in_isr_method<T, std::void_t<decltype(T::in_isr())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_in_isr_method_v = has_in_isr_method<T>::value;
+static constexpr bool has_in_isr_method_v = has_in_isr_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 get_current_irq()
@@ -182,7 +182,7 @@ struct has_get_current_irq_method : std::false_type {};
 template <typename T>
 struct has_get_current_irq_method<T, std::void_t<decltype(T::get_current_irq())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_current_irq_method_v = has_get_current_irq_method<T>::value;
+static constexpr bool has_get_current_irq_method_v = has_get_current_irq_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 set_priority_grouping(T::priority_group_type)
@@ -196,7 +196,7 @@ struct has_set_priority_grouping_method<
     std::void_t<decltype(T::set_priority_grouping(std::declval<typename T::priority_group_type>()))>> : std::true_type {
 };
 template <typename T>
-inline constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
+static constexpr bool has_set_priority_grouping_method_v = has_set_priority_grouping_method<T>::value;
 
 /**
  * @brief 检测类型 T 是否提供静态方法 get_priority_grouping()
@@ -207,7 +207,7 @@ struct has_get_priority_grouping_method : std::false_type {};
 template <typename T>
 struct has_get_priority_grouping_method<T, std::void_t<decltype(T::get_priority_grouping())>> : std::true_type {};
 template <typename T>
-inline constexpr bool has_get_priority_grouping_method_v = has_get_priority_grouping_method<T>::value;
+static constexpr bool has_get_priority_grouping_method_v = has_get_priority_grouping_method<T>::value;
 
 /**
  * @brief 检测类型 T 的 in_isr() 方法返回类型是否为 bool
@@ -219,7 +219,7 @@ template <typename T>
 struct is_correct_in_isr_return_type<T, std::void_t<decltype(T::in_isr())>>
     : std::is_same<decltype(T::in_isr()), bool> {};
 template <typename T>
-inline constexpr bool is_correct_in_isr_return_type_v = is_correct_in_isr_return_type<T>::value;
+static constexpr bool is_correct_in_isr_return_type_v = is_correct_in_isr_return_type<T>::value;
 
 /**
  * @brief 组合检测：判断类型 T 是否为增强的中断控制器策略

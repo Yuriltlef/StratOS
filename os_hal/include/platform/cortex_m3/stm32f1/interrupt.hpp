@@ -24,8 +24,8 @@
 #ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_INTERRUPT_HPP
 #define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_INTERRUPT_HPP
 
-#include "stm32f10x.h" // CMSIS 及外设定义
-#include <cstdint>     // 标准整数类型
+#include "stm32f10x.h" // for CMSIS
+#include <cstdint>     // for std::uint32_t, std::uint8_t, std::int32_t
 
 #ifndef __CM3_CORE_H__
 #include "core_cm3.h" // Cortex-M3 内核支持（通常已由 stm32f10x.h 包含）
@@ -41,7 +41,7 @@ namespace strat_os::hal::policy::builtin
  * 提供与 strat_os::hal::InterruptController 适配器完全兼容的静态接口。
  * 所有方法均为内联且 noexcept，保证零开销抽象。
  */
-struct CortexM3InterruptControllerPolicy {
+struct CortexM3Stm32F1InterruptControllerPolicy {
     /// 中断号类型，直接使用 CMSIS 定义的 IRQn_Type 枚举
     using IRQn_Type = ::IRQn_Type;
     /// 优先级分组类型（写入 SCB->AIRCR 的值）
@@ -85,7 +85,7 @@ struct CortexM3InterruptControllerPolicy {
      * @return 当前优先级值（仅低 4 位有效）
      */
     inline static priority_type get_priority(IRQn_Type irq) noexcept {
-        return NVIC_GetPriority(irq);
+        return static_cast<priority_type>(NVIC_GetPriority(irq));
     }
 
     /**
@@ -122,7 +122,7 @@ struct CortexM3InterruptControllerPolicy {
      * @note 通过读取 IPSR（中断状态寄存器）实现，非零值表示处于异常状态。
      */
     inline static bool in_isr() noexcept {
-        uint32_t ipsr;
+        std::uint32_t ipsr;
         __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
         return (ipsr != 0);
     }
@@ -130,12 +130,12 @@ struct CortexM3InterruptControllerPolicy {
     /**
      * @brief 获取当前正在执行的中断号
      * @return 当前异常编号（若为 0 表示线程模式，非 0 表示正在处理的异常/中断号）
-     * @note 返回值与 CMSIS 的 IRQn_Type 兼容，可用于调试或中断嵌套管理。
+     * @warning 返回值不与 CMSIS 的 IRQn_Type 兼容。
      */
-    inline static IRQn_Type get_current_irq() noexcept {
-        uint32_t ipsr;
+    inline static std::uint32_t get_current_irq() noexcept {
+        std::uint32_t ipsr;
         __asm volatile("mrs %0, ipsr" : "=r"(ipsr));
-        return static_cast<IRQn_Type>(ipsr & 0xFF);
+        return ipsr & 0xFF;
     }
 
     /**
@@ -153,7 +153,7 @@ struct CortexM3InterruptControllerPolicy {
      * @return 当前的优先级分组值（0-7）
      */
     inline static priority_group_type get_priority_grouping() noexcept {
-        return NVIC_GetPriorityGrouping();
+        return static_cast<priority_group_type>(NVIC_GetPriorityGrouping());
     }
 };
 

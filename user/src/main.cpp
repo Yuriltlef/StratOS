@@ -33,16 +33,16 @@
 namespace os_builtins                     = strat_os::hal::policy::builtin;
 namespace os_kernel_hal                   = strat_os::hal;
 
-using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3InterruptControllerPolicy;
+using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3Stm32F1InterruptControllerPolicy;
 using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
 
-using MyCortexM3AtomicPolicy              = os_builtins::CortexM3AtomicPolicy;
+using MyCortexM3AtomicPolicy              = os_builtins::CortexM3Stm32F1AtomicPolicy;
 using MyAtomic                            = os_kernel_hal::Atomic<MyCortexM3AtomicPolicy>;
 
-using MyCortexM3ContextSwitchPolicy       = os_builtins::CortexM3ContextSwitchPolicy;
+using MyCortexM3ContextSwitchPolicy       = os_builtins::CortexM3Stm32F1ContextSwitchPolicy;
 using MyContextSwitch                     = os_kernel_hal::ContextSwitch<MyCortexM3ContextSwitchPolicy>;
 
-using MyCortexM3MPUPolicy                 = os_builtins::CortexM3MPUPolicy;
+using MyCortexM3MPUPolicy                 = os_builtins::CortexM3Stm32F1MPUPolicy;
 using MyMPU                               = os_kernel_hal::Mpu<MyCortexM3MPUPolicy>;
 
 int main() {
@@ -55,5 +55,6 @@ int main() {
         MyContextSwitch::switch_to_unprivileged();
         using xyz = MyMPU::region_index_type;
         MyInterruptController::global_enable();
+        auto _g = MyInterruptController::get_current_irq();
     }
 }
