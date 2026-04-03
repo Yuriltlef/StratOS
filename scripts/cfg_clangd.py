@@ -311,7 +311,7 @@ def main():
 
     config_file = project_root / "clangd_config.json"
     template_file = project_root / ".clangd.template.yml"
-    output_file = project_root / ".clangd.test"   # change to .clangd when ready
+    output_file = project_root / ".clangd"   # change to .clangd when ready
 
     # Allow overrides via environment variables
     if "CLANGD_CONFIG" in os.environ:

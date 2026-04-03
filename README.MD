@@ -91,7 +91,7 @@ git clone https://github.com/Yuriltlef/StratOS.git my_project
 > 💡 **示例（Cortex-M3）**：  
 > `["USE_STDPERIPH_DRIVER","STM32F10X_MD","OS_STM_RAM_SIZE=0x5000","__CORTEX_M3","__thumb2__=1","__THUMBEL__=1"]`
 
-完成上述配置后，**配置 CMake**。项目主 `CMakeLists.txt` 会自动执行 `{root}/scripts/cfg_clangd.py` 脚本，生成：
+完成上述配置后，**请按照 ③ 继续配置 CMake**。项目主 `CMakeLists.txt` 会自动执行 `{root}/scripts/cfg_clangd.py` 脚本，生成：
 
 - `.clangd` 文件
 - `clangd_fallback_flags.json` 文件
@@ -99,6 +99,14 @@ git clone https://github.com/Yuriltlef/StratOS.git my_project
 你只需要将 `clangd_fallback_flags.json` 的内容复制到 VS Code 的 clangd 扩展的 `fallbackFlags` 设置中即可。
 
 #### ③ 配置 CMake 构建系统
+
+在项目的 **`cmake/`** 目录下，创建 **`private.cmake`** 文件，内部应该创建一个名为 **`__ARM_TOOLCHAIN_PATH__`** 的变量，此变量为指向你的工具链根目录的字符串。一个文件可能长这样：
+```cmake
+set(__ARM_TOOLCHAIN_PATH__ "F:/arm/mingw-w64-arm-none-eabi-15.2/")
+```
+> ⚠️ **注意**：此路径应该全局统一，也必须和 `clangd_config.json` 文件内的工具链路径保持一致。  
+
+之后就可以开始正常配置了：
 
 - 若使用 **VS Code**：只需设置根目录并选择工具链。
 - 其他平台：遵循常规 CMake 构建流程。
