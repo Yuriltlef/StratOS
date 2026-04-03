@@ -13,3 +13,4 @@ bin/StratOS_test.elf
 bin/StratOS_test.hex
 ./bin
 clangd_config.json
+clangd_fallback_flags.json
