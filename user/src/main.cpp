@@ -21,12 +21,20 @@
 
 #include "os_hal/include/atomic.hpp"
 #include "os_hal/include/context_switch.hpp"
+#include "os_hal/include/debug.hpp"
 #include "os_hal/include/interrupt.hpp"
 #include "os_hal/include/mpu.hpp"
-#include "platform/cortex_m3/stm32f1/interrupt.hpp"
-#include "platform/cortex_m3/stm32f1/context_switch.hpp"
-#include "platform/cortex_m3/stm32f1/mpu.hpp"
+#include "os_hal/include/system_control.hpp"
+#include "os_hal/include/system_tick.hpp"
+
 #include "platform/cortex_m3/stm32f1/atomic.hpp"
+#include "platform/cortex_m3/stm32f1/context_switch.hpp"
+#include "platform/cortex_m3/stm32f1/debug.hpp"
+#include "platform/cortex_m3/stm32f1/interrupt.hpp"
+#include "platform/cortex_m3/stm32f1/mpu.hpp"
+#include "platform/cortex_m3/stm32f1/system_control.hpp"
+#include "platform/cortex_m3/stm32f1/system_tick.hpp"
+
 #include <assert.h>
 #include <cstdint>
 
@@ -45,15 +53,39 @@ using MyContextSwitch                     = os_kernel_hal::ContextSwitch<MyCorte
 using MyCortexM3MPUPolicy                 = os_builtins::CortexM3Stm32F1MPUPolicy;
 using MyMPU                               = os_kernel_hal::Mpu<MyCortexM3MPUPolicy>;
 
+using MyCortexM3SystemControlPolicy       = os_builtins::CortexM3Stm32F1SystemControlPolicy;
+using MySystemControl                     = os_kernel_hal::SystemControl<MyCortexM3SystemControlPolicy>;
+
+using MyCortexM3SystickPolicy             = os_builtins::CortexM3Stm32F1SystemTickPolicy;
+using MySystemTick                        = os_kernel_hal::SystemTick<MyCortexM3SystickPolicy>;
+using MySystemTickSource                  = MySystemTick::clock_source_type;
+
+using MyCortexM3DebugPolicy               = os_builtins::CortexM3Stm32F1DebugPolicy;
+using MyDebug                             = os_kernel_hal::Debug<MyCortexM3DebugPolicy>;
+
 int main() {
+    MyDebug::enable_cycle_counter();
     volatile uint32_t i{0};
     while (true) {
         MyInterruptController::global_disable();
+
         auto _ = MyAtomic::add(&i, 1);
         MyContextSwitch::switch_to_privileged();
         auto _p = MyContextSwitch::get_msp();
         MyContextSwitch::switch_to_unprivileged();
+
         using xyz = MyMPU::region_index_type;
+
+        MySystemControl::set_sleep_on_exit(true);
+        static_assert(os_kernel_hal::traits::is_enhanced_fault_controller_v<MyCortexM3SystemControlPolicy>,
+                      "Not an enhanced fault controller policy");
+
+        MySystemTick::init(0xffffff, MySystemTickSource::AHBClock);
+        MySystemTick::enable_irq();
+        MySystemTick::enable();
+
+        MyDebug::bkpt();
+
         MyInterruptController::global_enable();
         auto _g = MyInterruptController::get_current_irq();
     }
