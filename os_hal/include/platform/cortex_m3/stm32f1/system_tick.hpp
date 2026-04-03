@@ -68,7 +68,7 @@ struct CortexM3Stm32F1SystemTickPolicy {
      * @note 此函数配置重装载寄存器和时钟源，并清零当前计数器，
      *       但不使能定时器或中断，需单独调用 enable() 和 enable_irq()。
      */
-    inline static void init(reload_type reload_value, clock_source_type clock_source) noexcept {
+    static void init(reload_type reload_value, clock_source_type clock_source) noexcept {
         /// 先禁用定时器和中断（清除 ENABLE 和 TICKINT 位）
         SysTick->CTRL &= ~(SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
         /// 配置时钟源
