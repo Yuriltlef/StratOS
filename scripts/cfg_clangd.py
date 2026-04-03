@@ -1,422 +1,264 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
-Automatically generate .clang-tidy and .clangd configuration files
-Adapt configuration based on different development environments
+generate_clangd.py
+
+This script generates a .clangd configuration file for the StratOS project
+based on a user-supplied JSON configuration and a YAML template.
+
+It replaces placeholders in the template:
+- {your_compiler_path}      -> path to arm-none-eabi-g++
+- {your_toolchain_path}     -> toolchain root directory
+- {project_root}            -> absolute project root path (converted to forward slashes)
+- {project_definitions}     -> list of -D macros from the JSON
+- {g++_predefines}          -> all predefined macros from the actual compiler
+
+The output is written to .clangd.test in the project root directory.
+
+Usage:
+    python scripts/generate_clangd.py
 """
 
-import os
-import sys
+import json
 import subprocess
+import sys
+import os
+import re
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Optional
 
 
-class ClangConfigGenerator:
-    def __init__(self, toolchain_path: str, target_mcu: str = "cortex-m3"):
-        self.toolchain_path = Path(toolchain_path)
-        self.target_mcu = target_mcu
-        self.config = self._build_config()
+class ClangdConfigGenerator:
+    """Generates a .clangd configuration file from a template and a JSON config."""
 
-    def _build_config(self) -> Dict[str, Any]:
-        """Build configuration dictionary"""
-        # Suppressed warnings list
-        suppress_list = [
-        'unknown-argument',
-        'drv_argument_not_allowed_with',
-        'asm_naked_parm_ref',
-        'non_asm_stmt_in_naked_function',
-        'embedded_include_in_asm',
-        'expected_string_literal_in_asm'
-    ]
-    
-        # 获取查询驱动路径
-        query_driver = self._get_query_driver_path()
-    
-        return {
-        # Toolchain related
-        "TOOLCHAIN_PATH": str(self.toolchain_path),
-        "TARGET_MCU": self.target_mcu,
-        "COMPILER_PATH": query_driver,  # 修改键名为 COMPILER_PATH
-        
-        # Naming conventions
-        "STRUCT_CASE": "camelBack",
-        "CLASS_CASE": "CamelCase", 
-        "FUNCTION_CASE": "camelBack",
-        "VARIABLE_CASE": "camelBack",
-        "MEMBER_CASE": "camelBack",
-        "CONSTANT_CASE": "UPPER_CASE",
-        
-        # Suppressed warnings list (formatted string)
-        "SUPPRESS_LIST_TIDY": self._format_suppress_list(suppress_list, 2),
-        "SUPPRESS_LIST_CLANGD": self._format_suppress_list(suppress_list, 4),
-        
-        # Compilation database
-        "COMPILATION_DATABASE": "build",
-        
-        # Index settings
-        "INDEX_BACKGROUND": "Build",
-        
-        # Hover settings
-        "SHOW_AKA": "false",
-        
-        # Compilation flags (formatted string)
-        "COMPILE_FLAGS": self._get_compile_flags_string(),
-        
-        # Removed flags (formatted string)
-        "REMOVE_FLAGS": self._get_remove_flags_string()
-    }
+    def __init__(self, config_path: Path, template_path: Path, output_path: Path) -> None:
+        """
+        Initialize the generator.
 
-    def _get_query_driver_path(self) -> str:
-        """获取查询驱动路径"""
-        # 尝试查找编译器路径
-        gcc_path = self.toolchain_path / "bin" / "arm-none-eabi-gcc"
-        if not gcc_path.exists():
-            # 尝试 Windows 扩展名
-            gcc_path = self.toolchain_path / "bin" / "arm-none-eabi-gcc.exe"
-            if not gcc_path.exists():
-                # 如果找不到，返回空字符串
-                return ""
+        Args:
+            config_path: Path to the JSON configuration file.
+            template_path: Path to the YAML template file.
+            output_path: Path where the generated .clangd file will be written.
+        """
+        self.config_path = config_path
+        self.template_path = template_path
+        self.output_path = output_path
+        self.config: Dict = {}
+        self.template_lines: List[str] = []
 
-        # 返回规范化路径（使用正斜杠）
-        return str(gcc_path.resolve()).replace('\\', '/')
-
-    def _format_suppress_list(self, suppress_list: List[str], indent: int) -> str:
-        """Format suppress list"""
-        indent_str = " " * indent
-        return "\n".join([f'{indent_str}- "{item}"' for item in suppress_list])
-    
-    def _get_project_include_dirs(self) -> List[str]:
-        """检测常见的项目头文件目录"""
-        dirs = []
-        # 项目自身的 include 目录
-        proj_include = Path.cwd() / "include"
-        if proj_include.exists():
-            dirs.append(str(proj_include.resolve()))
-        # MUSSTL 的安装头文件目录（根据你的实际路径调整）
-        musstl_include = Path.cwd() / "libraries" / "MUSSTL" / "install" / "include"
-        if musstl_include.exists():
-            dirs.append(str(musstl_include.resolve()))
-        # 可根据需要添加更多路径
-        return dirs
-
-    def _get_compile_flags(self) -> List[str]:
-        """Get compilation flags list"""
-        flags = [
-            "--target=arm-none-eabi",
-            "-mthumb",
-            f"-mcpu={self.target_mcu}",
-            "-std=c++17",  # 添加 C++17 标准
-
-            # C++ feature restrictions
-            "-fno-exceptions",
-            "-fno-unwind-tables",
-            "-fno-rtti",
-            "-fno-use-cxa-atexit",
-            "-fno-threadsafe-statics",
-            "-fno-sized-deallocation",
-
-            # C++ header
-            "-xc++",
-
-            # Optimization and linking options
-            "-fdata-sections",
-            "-ffunction-sections",
-            "-fstack-usage",
-
-            # Project definitions
-            "-DUSE_STDPERIPH_DRIVER",
-            "-DSTM32F10X_MD",
-            "-DOS_STM_RAM_SIZE=0x5000",
-            "-D__CORTEX_M3",
-            "-D__CPLUSPLUS",
-            "-D__cplusplus=201709L",
-            "-DNO_EXCEPTIONS",
-            "-DNO_RTTI",
-
-            # ARM architecture definitions
-            "-D__ARM_ARCH=7",
-            "-D__thumb2__=1",
-            "-D__THUMBEL__=1",
-
-            # Disable standard library
-            "-nostdinc",
-            "-nostdinc++",
-
-            # Force include main header
-            "-include",
-            "stm32f10x.h"
-        ]
-
-            # 添加项目头文件路径
-        for inc in self._get_project_include_dirs():
-            flags.extend(["-I", inc])
-
-        # Add toolchain header paths from compiler
-        flags.extend(self._get_toolchain_include_paths())
-
-        return flags
-
-    def _get_compile_flags_string(self) -> str:
-        """Get formatted compilation flags string"""
-        flags = self._get_compile_flags()
-        result = []
-        i = 0
-        while i < len(flags):
-            if flags[i].startswith(('-isystem', '-include')) and i + 1 < len(flags):
-                # Handle flags with parameters
-                result.append(f"    - {flags[i]}")
-                result.append(f"    - {flags[i + 1]}")
-                i += 2
-            else:
-                # Handle single flags
-                result.append(f"    - {flags[i]}")
-                i += 1
-        return "\n".join(result)
-
-    def _get_remove_flags_string(self) -> str:
-        """Get formatted remove flags string"""
-        remove_flags = [
-            "-m32",
-            "-m64",
-            "-stdlib=libc++",
-            "-specs=*",
-            "-fno-weak",
-            "-std=*"
-        ]
-        return "\n".join([f"    - {flag}" for flag in remove_flags])
-
-    def _query_compiler_for_paths(self) -> List[str]:
-        """Query compiler for system include paths and convert to absolute paths"""
+    def run(self) -> None:
+        """Execute the generation process."""
         try:
-            # Find GCC compiler in toolchain path
-            gcc_path = self.toolchain_path / "bin" / "arm-none-eabi-gcc"
-            if not gcc_path.exists():
-                # Try with .exe extension on Windows
-                gcc_path = self.toolchain_path / "bin" / "arm-none-eabi-gcc.exe"
-                if not gcc_path.exists():
-                    raise FileNotFoundError(f"Compiler not found: {gcc_path}")
+            self.load_config()
+            self.load_template()
+            processed_lines = self.process_template()
+            self.write_output(processed_lines)
+            print(f"Successfully generated {self.output_path}")
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
-            # Use compiler to get system include paths
-            cmd = [
-                str(gcc_path),
-                "-mcpu=cortex-m3",
-                "-mthumb",
-                "-E",
-                "-Wp,-v",
-                "-"
-            ]
+    def load_config(self) -> None:
+        """Load and validate the JSON configuration file."""
+        if not self.config_path.is_file():
+            raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
 
-            # Run the command with empty input
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                self.config = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in {self.config_path}: {e}")
+
+        # Validate required fields
+        clangd = self.config.get("clangd")
+        if not clangd:
+            raise KeyError("Missing top-level 'clangd' key in configuration")
+
+        required = ["g++_compiler_path", "toolchain_root_path", "project_root", "project_definitions"]
+        for field in required:
+            if field not in clangd:
+                raise KeyError(f"Missing required field 'clangd.{field}' in configuration")
+
+        # Ensure project_definitions is a list
+        if not isinstance(clangd["project_definitions"], list):
+            raise TypeError("'clangd.project_definitions' must be a list of strings")
+
+    def load_template(self) -> None:
+        """Read the YAML template file into a list of lines."""
+        if not self.template_path.is_file():
+            raise FileNotFoundError(f"Template file not found: {self.template_path}")
+
+        with open(self.template_path, 'r', encoding='utf-8') as f:
+            self.template_lines = f.readlines()
+
+    def get_gcc_predefines(self) -> List[str]:
+        """
+        Execute the compiler to obtain all predefined macros.
+
+        Returns:
+            A list of strings, each representing a compiler flag: '-DNAME=VALUE' or '-DNAME'.
+        """
+        compiler = self.config["clangd"]["g++_compiler_path"]
+        if not os.path.isfile(compiler):
+            raise FileNotFoundError(f"Compiler not found: {compiler}")
+
+        # Build command: use -E -dM -x c++ -std=c++17 and read from null device
+        cmd = [compiler, "-E", "-dM", "-x", "c++", "-std=c++17", "-"]
+        try:
+            # Use subprocess with no input (reading from /dev/null or nul)
             result = subprocess.run(
                 cmd,
-                input="",
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                capture_output=True,
-                timeout=30
+                check=True
             )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to run compiler {compiler}: {e.stderr}") from e
 
-            # Parse output to find include paths
-            include_paths = []
-            in_include_section = False
-
-            for line in result.stderr.split('\n'):
-                line = line.strip()
-
-                # Look for start of include section
-                if "#include <...> search starts here:" in line:
-                    in_include_section = True
-                    continue
-
-                # Look for end of include section
-                if "End of search list." in line:
-                    break
-
-                # Collect paths in the include section
-                if in_include_section and line:
-                    # Convert path to absolute and resolve any relative components
-                    raw_path = Path(line)
-
-                    # Handle relative paths by making them absolute relative to toolchain
-                    if not raw_path.is_absolute():
-                        # If path is relative, assume it's relative to toolchain directory
-                        abs_path = (self.toolchain_path / raw_path).resolve()
-                    else:
-                        # If path is absolute but contains relative components, resolve them
-                        abs_path = raw_path.resolve()
-
-                    # Convert to string with forward slashes for consistency
-                    path_str = str(abs_path).replace('\\', '/')
-                    include_paths.append(path_str)
-
-            if not include_paths:
-                raise RuntimeError("Compiler did not return any include paths, please check toolchain configuration")
-
-            return include_paths
-
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("Compiler query timeout, please check if toolchain is correctly installed")
-        except Exception as e:
-            raise RuntimeError(f"Failed to query compiler for include paths: {e}")
-
-    def _find_all_subdirectories(self, base_paths: List[str]) -> List[str]:
-        """Recursively find all subdirectories"""
-        all_dirs = []
-
-        for base_path_str in base_paths:
-            base_path = Path(base_path_str)
-            if not base_path.exists():
-                print(f"Warning: Base path does not exist, skipping: {base_path}")
-                continue
-
-            if not base_path.is_dir():
-                print(f"Warning: Path is not a directory, skipping: {base_path}")
-                continue
-
-            # Add base path itself
-            all_dirs.append(str(base_path).replace('\\', '/'))
-
-            # Recursively traverse all subdirectories
-            try:
-                for item in base_path.rglob('*'):
-                    if item.is_dir():
-                        dir_path = str(item).replace('\\', '/')
-                        all_dirs.append(dir_path)
-            except PermissionError as e:
-                print(f"Warning: No permission to access subdirectories of {base_path}: {e}")
-            except Exception as e:
-                print(f"Warning: Error while traversing {base_path}: {e}")
-
-        return all_dirs
-
-    def _normalize_paths(self, paths: List[str]) -> List[str]:
-        """Normalize paths - resolve relative components and use forward slashes"""
-        normalized = []
-        for path_str in paths:
-            try:
-                path = Path(path_str)
-                # Resolve the path to eliminate any relative components (.., etc.)
-                if path.exists():
-                    resolved_path = path.resolve()
+        flags = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("#define "):
+                parts = line[8:].split(maxsplit=1)
+                macro = parts[0]
+                value = parts[1] if len(parts) > 1 else ""
+                if value:
+                    flags.append(f"-D{macro}={value}")
                 else:
-                    # If path doesn't exist, try to resolve relative to toolchain
-                    if not path.is_absolute():
-                        resolved_path = (self.toolchain_path / path).resolve()
-                    else:
-                        resolved_path = path
+                    flags.append(f"-D{macro}")
+        return flags
 
-                # Convert to string with forward slashes
-                normalized_path = str(resolved_path).replace('\\', '/')
-                normalized.append(normalized_path)
-            except Exception as e:
-                print(f"Warning: Could not normalize path {path_str}: {e}")
-                # Fallback: just use the original path with forward slashes
-                normalized.append(path_str.replace('\\', '/'))
+    def process_template(self) -> List[str]:
+        """
+        Replace placeholders in the template line by line.
 
-        return normalized
+        Returns:
+            A list of lines with all placeholders replaced.
+        """
+        processed_lines = []
+        # Cache for multiline replacements
+        proj_defs_lines: Optional[List[str]] = None
+        gcc_predef_lines: Optional[List[str]] = None
 
-    def _get_toolchain_include_paths(self) -> List[str]:
-        """Get toolchain include paths by querying compiler and finding all subdirectories"""
-        # Get base include paths from compiler
-        base_include_paths = self._query_compiler_for_paths()
+        # Precompute simple replacements
+        simple_replacements = {
+            "{your_compiler_path}": self.normalize_path(self.config["clangd"]["g++_compiler_path"]),
+            "{your_toolchain_path}": self.normalize_path(self.config["clangd"]["toolchain_root_path"]),
+            # Convert backslashes to forward slashes for YAML compatibility
+            "{project_root}": self.normalize_path(self.config["clangd"]["project_root"].replace("\\", "/")),
+        }
 
-        # Normalize base paths
-        normalized_base_paths = self._normalize_paths(base_include_paths)
+        for line in self.template_lines:
+            # Check for multiline placeholders
+            if "{project_definitions}" in line:
+                if proj_defs_lines is None:
+                    proj_defs_lines = self._generate_project_definitions(line)
+                processed_lines.extend(proj_defs_lines)
+                continue
 
-        print(f"Found {len(normalized_base_paths)} base include paths:")
-        for path in normalized_base_paths:
-            print(f"  - {path}")
+            if "{g++_predefines}" in line:
+                if gcc_predef_lines is None:
+                    gcc_predef_lines = self._generate_gcc_predefines(line)
+                processed_lines.extend(gcc_predef_lines)
+                continue
 
-        # Recursively find all subdirectories
-        all_directories = self._find_all_subdirectories(normalized_base_paths)
+            # Simple placeholder replacement
+            for placeholder, value in simple_replacements.items():
+                if placeholder in line:
+                    line = line.replace(placeholder, value)
+            processed_lines.append(line)
 
-        # Remove duplicate paths
-        seen = set()
-        unique_paths = []
-        for path in all_directories:
-            if path not in seen:
-                seen.add(path)
-                unique_paths.append(path)
+        return processed_lines
 
-        print(f"Total found {len(unique_paths)} unique directory paths")
+    def _generate_project_definitions(self, template_line: str) -> List[str]:
+        """
+        Generate lines for project-specific preprocessor definitions.
 
-        # Limit output to avoid console flooding
-        if len(unique_paths) > 50:
-            print("Displaying first 50 directory paths:")
-            for path in unique_paths[:50]:
-                print(f"  - {path}")
-            print(f"... and {len(unique_paths) - 50} more directories")
-        else:
-            print("All directory paths:")
-            for path in unique_paths:
-                print(f"  - {path}")
+        Args:
+            template_line: The line from the template that contains the placeholder.
 
-        # Add all paths to compilation flags
-        compile_flags = []
-        for path in unique_paths:
-            compile_flags.extend(["-isystem", path])
+        Returns:
+            A list of lines, each with proper indentation and a '-D' flag.
+        """
+        indent = self._get_indent(template_line)
+        definitions = self.config["clangd"]["project_definitions"]
+        lines = []
+        for macro in definitions:
+            lines.append(f"{indent}- -D{macro}\n")
+        # If no definitions, output a comment line (optional)
+        if not lines:
+            lines.append(f"{indent}# No project definitions provided\n")
+        return lines
 
-        return compile_flags
+    def _generate_gcc_predefines(self, template_line: str) -> List[str]:
+        """
+        Generate lines for compiler predefined macros.
 
-    def _render_template(self, template_file: Path, output_file: Path) -> None:
-        """Render template file"""
-        if not template_file.exists():
-            raise FileNotFoundError(f"Template file does not exist: {template_file}")
+        Args:
+            template_line: The line from the template that contains the placeholder.
 
-        with open(template_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+        Returns:
+            A list of lines, each with proper indentation and a '-D' flag.
+        """
+        indent = self._get_indent(template_line)
+        try:
+            predefines = self.get_gcc_predefines()
+        except Exception as e:
+            # Fallback: add a comment line indicating failure
+            print(f"Warning: Could not obtain predefined macros: {e}", file=sys.stderr)
+            return [f"{indent}# Failed to obtain compiler predefines: {e}\n"]
 
-        # Replace placeholders
-        for key, value in self.config.items():
-            placeholder = f"{{{key}}}"
-            content = content.replace(placeholder, str(value))
+        lines = []
+        for flag in predefines:
+            lines.append(f"{indent}- {flag}\n")
+        # Limit output size to avoid huge files? Usually acceptable.
+        return lines
 
-        # Write output file
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w', encoding='utf-8', newline='\n') as f:
-            f.write(content)
+    @staticmethod
+    def _get_indent(line: str) -> str:
+        """Extract the leading whitespace from a line."""
+        match = re.match(r"^\s*", line)
+        return match.group(0) if match else ""
 
-        print(f"Generated file: {output_file}")
-
-    def generate(self) -> None:
-        """Generate all configuration files"""
-        current_dir = Path(__file__).parent
-
-        # Generate .clang-tidy
-        tidy_template = current_dir / "../.clang-tidy.template"
-        tidy_output = current_dir / "../.clang-tidy"
-        self._render_template(tidy_template, tidy_output)
-
-        # Generate .clangd
-        clangd_template = current_dir / "../.clangd.template"
-        clangd_output = current_dir / "../.clangd"
-        self._render_template(clangd_template, clangd_output)
+    def write_output(self, lines: List[str]) -> None:
+        """Write the processed lines to the output file."""
+        # Ensure output directory exists (in case output path is nested)
+        self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.output_path, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+    
+    @staticmethod
+    def normalize_path(path: str) -> str:
+        """Convert to forward slashes and remove trailing slash (except root)."""
+        path = path.replace("\\", "/")
+        if path.endswith("/") and not path == "/":
+            path = path.rstrip("/")
+        return path
 
 
 def main():
-    """Main function"""
-    # Check command line arguments
-    if len(sys.argv) < 2:
-        print("Usage: python generate_clang_config.py <toolchain_path> [target_mcu]")
-        print("  toolchain_path: ARM GCC toolchain path")
-        print("  target_mcu: Target MCU (default: cortex-m3)")
-        sys.exit(1)
+    # Determine project root: script is in root/scripts/, so root is parent of parent
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parent
 
-    # Get toolchain path from command line
-    toolchain_path = sys.argv[1]
+    # Default file locations
+    config_file = project_root / "clangd_config.json"
+    template_file = project_root / ".clangd.template.yml"
+    output_file = project_root / ".clangd"
 
-    # Get target MCU from command line (optional)
-    target_mcu = sys.argv[2] if len(sys.argv) > 2 else "cortex-m3"
+    # Allow overriding via environment variables (optional)
+    if "CLANGD_CONFIG" in os.environ:
+        config_file = Path(os.environ["CLANGD_CONFIG"])
+    if "CLANGD_TEMPLATE" in os.environ:
+        template_file = Path(os.environ["CLANGD_TEMPLATE"])
+    if "CLANGD_OUTPUT" in os.environ:
+        output_file = Path(os.environ["CLANGD_OUTPUT"])
 
-    # Validate toolchain path
-    toolchain_path_obj = Path(toolchain_path)
-    if not toolchain_path_obj.exists():
-        raise FileNotFoundError(f"Toolchain path does not exist: {toolchain_path}")
-
-    # Generate configuration
-    print("Generating Clang configuration files...")
-    generator = ClangConfigGenerator(toolchain_path, target_mcu)
-    generator.generate()
-    print("Configuration files generated successfully!")
+    generator = ClangdConfigGenerator(config_file, template_file, output_file)
+    generator.run()
 
 
 if __name__ == "__main__":

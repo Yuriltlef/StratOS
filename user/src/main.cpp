@@ -77,7 +77,7 @@ int main() {
         using xyz = MyMPU::region_index_type;
 
         MySystemControl::set_sleep_on_exit(true);
-        static_assert(os_kernel_hal::traits::is_enhanced_fault_controller_v<MyCortexM3SystemControlPolicy>,
+        static_assert(os_kernel_hal::traits::is_enhanced_fault_controller_v<MySystemControl>,
                       "Not an enhanced fault controller policy");
 
         MySystemTick::init(0xffffff, MySystemTickSource::AHBClock);

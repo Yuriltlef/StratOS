@@ -12,3 +12,4 @@ bin/StratOS_test.bin
 bin/StratOS_test.elf
 bin/StratOS_test.hex
 ./bin
+clangd_config.json

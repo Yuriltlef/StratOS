@@ -1,3 +1,4 @@
+# 已弃用
 #!/usr/bin/env python3
 """
 File Comment Auto-Update Script
