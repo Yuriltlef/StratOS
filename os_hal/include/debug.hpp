@@ -254,7 +254,6 @@ namespace strat_os::hal
  * MyDebug::enable_cycle_counter();
  * auto cycles = MyDebug::get_cycle_counter();
  * MyDebug::send_char('A');
- * MyDebug::send(42);  // 发送整数
  * @endcode
  */
 template <typename DebugPolicy, typename = std::enable_if_t<traits::is_valid_debug_policy_v<DebugPolicy>>>

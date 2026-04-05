@@ -83,7 +83,6 @@ target_include_directories(OS_INTERNAL_INC INTERFACE
 
 # 对象库
 add_library(OS_INTERNAL_SRC OBJECT 
-    ${OS_STARTUP}
     ${OS_CMSIS_SRC}
     ${OS_STDPERIPH_DRIVER_SRC}
 )
@@ -91,6 +90,11 @@ target_include_directories(OS_INTERNAL_SRC PRIVATE
     ${OS_INC}
     ${OS_CMSIS_INC}
     ${OS_STDPERIPH_DRIVER_INC}
+)
+
+# 启动文件
+add_library(OS_BOOST_SRC OBJECT 
+    ${OS_STARTUP}
 )
 
 list(APPEND CMAKE_PREFIX_PATH "${MUSSTL_INSTALL_DIR}")
@@ -104,3 +108,5 @@ configure_target(OS_INTERNAL_SRC)
 disable_cmsis_warnings()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/user)
+
+filter_compile_commands()

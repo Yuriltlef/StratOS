@@ -35,11 +35,14 @@
 #include "platform/cortex_m3/stm32f1/system_control.hpp"
 #include "platform/cortex_m3/stm32f1/system_tick.hpp"
 
-#include <assert.h>
+#include "os_kernel\include\core\types.hpp"
+
 #include <cstdint>
 
 namespace os_builtins                     = strat_os::hal::policy::builtin;
 namespace os_kernel_hal                   = strat_os::hal;
+
+using MyKernelConfig                      = strat_os::kernel::KernelTypes<>;
 
 using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3Stm32F1InterruptControllerPolicy;
 using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
