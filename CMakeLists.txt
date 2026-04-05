@@ -63,16 +63,6 @@ log_info("Color output is enabled")
 
 configure_mutual_marco(${OS_STM_LIB_TYPE_FLAG} ${OS_STM_MODEL} ${OS_CONFING})
 
-# 配置clangd
-generate_clang_config(TOOLCHAIN_PATH ${ARM_TOOLCHAIN_PATH})
-
-# 配置StratOS构建测试
-add_executable(${OS_ELF_TARGET}
-    ${OS_STARTUP}
-)
-
-configure_target(${OS_ELF_TARGET})
-
 # 创建接口库
 add_library(OS_INTERNAL_INC INTERFACE)
 target_include_directories(OS_INTERNAL_INC INTERFACE 
@@ -105,8 +95,13 @@ log_info("MUSSTL found: ${MUSSTL_FOUND}")
 
 configure_target(OS_INTERNAL_SRC)
 
+configure_target(OS_BOOST_SRC)
+
 disable_cmsis_warnings()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/user)
 
 filter_compile_commands()
+
+# 配置clangd
+generate_clang_config(TOOLCHAIN_PATH ${ARM_TOOLCHAIN_PATH})
