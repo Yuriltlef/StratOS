@@ -395,10 +395,15 @@ function(target_use_os_internal target_name)
     if(NOT TARGET OS_INTERNAL_SRC)
         log_error("OS_INTERNAL_SRC target not found" FATAL)
     endif()
+    # 检查BOOST内部库是否存在
+    if(NOT TARGET OS_BOOST_SRC)
+        log_error("OS_BOOST_SRC target not found" FATAL)
+    endif()
     # 链接必要的库
     target_link_libraries(${target_name} 
         PRIVATE 
         OS_INTERNAL_SRC
+        OS_BOOST_SRC
         MUSSTL::MUSSTL
     )
     log_info("${target_name} successfully configured with OS internal libraries:")
@@ -491,8 +496,6 @@ function(generate_clang_config)
             COMMAND 
                 ${Python3_EXECUTABLE} 
                 "${CLANG_CFG_PY_SCRIPT}"
-                "${CLANG_CONFIG_TOOLCHAIN_PATH}"
-                "${CLANG_CONFIG_TARGET_MCU}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             RESULT_VARIABLE result_code
             OUTPUT_VARIABLE output_text
@@ -514,6 +517,64 @@ function(generate_clang_config)
             if(output_text)
                 log_error("${output_text}" FATAL)
             endif()
+        endif()
+    endif()
+endfunction()
+
+# 过滤 compile_commands.json 中的汇编文件条目
+function(filter_compile_commands)
+    # 查找 Python 解释器
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(NOT Python3_FOUND)
+        log_error("filter_compile_commands: can not find Python3")
+        return()
+    endif()
+
+    # 检查过滤脚本是否存在（固定位于 scripts 目录下）
+    set(FILTER_SCRIPT ${CLANG_FILTER_PY_SCRIPT})
+    if(NOT EXISTS "${FILTER_SCRIPT}")
+        log_error("filter_compile_commands: can not find script ${FILTER_SCRIPT}")
+        return()
+    endif()
+
+    # 检查编译数据库是否存在
+    set(COMPILE_COMMANDS "${CMAKE_BINARY_DIR}/compile_commands.json")
+    if(NOT EXISTS "${COMPILE_COMMANDS}")
+        log_error("filter_compile_commands: ${COMPILE_COMMANDS} not found")
+        return()
+    endif()
+
+    set(FILTERED_OUTPUT_DIR "${CLANG_FILTER_JSON_PATH}")
+    log_info("filter_compile_commands: filtering assembler entries from ${SOURCE_DB}")
+    log_info("  - Output directory: ${FILTERED_OUTPUT_DIR}")
+
+    log_info("filter_compile_commands: filtering assembler entries from ${COMPILE_COMMANDS}")
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} 
+                "${FILTER_SCRIPT}" 
+                "--output-dir"
+                "${FILTERED_OUTPUT_DIR}"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        RESULT_VARIABLE result_code
+        OUTPUT_VARIABLE output_text
+        ERROR_VARIABLE error_text
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_STRIP_TRAILING_WHITESPACE
+    )
+    if(result_code EQUAL 0)
+        log_info("filter_compile_commands: success")
+        if(output_text)
+            string(REGEX REPLACE "\n" "\n${log_head_padding}- " output_indented "  ${output_text}")
+            log_info("${output_indented}")
+        endif()
+    else()
+        log_error("filter_compile_commands: failed")
+        if(error_text)
+            log_error("  - ${error_text}")
+        endif()
+        if(output_text)
+            string(REGEX REPLACE "\n" "\n${log_head_padding}- " output_indented "  ${output_text}")
+            log_info("${output_indented}")
         endif()
     endif()
 endfunction()
