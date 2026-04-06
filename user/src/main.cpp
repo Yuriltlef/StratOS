@@ -35,14 +35,17 @@
 #include "platform/cortex_m3/stm32f1/system_control.hpp"
 #include "platform/cortex_m3/stm32f1/system_tick.hpp"
 
-#include "os_kernel\include\core\types.hpp"
+#include "os_kernel/config/kernel_config.hpp"
+#include "os_kernel/include/core/types.hpp"
 
 #include <cstdint>
 
 namespace os_builtins                     = strat_os::hal::policy::builtin;
 namespace os_kernel_hal                   = strat_os::hal;
 
-using MyKernelConfig                      = strat_os::kernel::KernelTypes<>;
+using MyKernelConfigPolicy                = strat_os::kernel::config::DefaultKernelConfigPolicy;
+using MyKernelConfig                      = strat_os::kernel::KernelTypes<MyKernelConfigPolicy>;
+using MyTaskState                         = MyKernelConfig::task_state;
 
 using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3Stm32F1InterruptControllerPolicy;
 using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
@@ -71,7 +74,7 @@ int main() {
     volatile uint32_t i{0};
     while (true) {
         MyInterruptController::global_disable();
-
+        auto i_ = MyTaskState::Terminated;
         auto _ = MyAtomic::add(&i, 1);
         MyContextSwitch::switch_to_privileged();
         auto _p = MyContextSwitch::get_msp();
