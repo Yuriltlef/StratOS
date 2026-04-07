@@ -46,7 +46,6 @@
 #ifndef STRATOS_KERNEL_TYPES_HPP
 #define STRATOS_KERNEL_TYPES_HPP
 
-#include "os_kernel/config/kernel_config.hpp"
 #include <cstdint>     // for std::uint32_t, std::uint16_t, std::uint8_t
 #include <type_traits> // for std::false_type, std::true_type, std::conjunction
 
@@ -318,8 +317,8 @@ namespace strat_os::kernel
  * @warning 策略类中的类型必须满足内核各组件对取值范围、算术运算等隐式要求，
  *          否则可能导致编译错误或运行时未定义行为。
  */
-template <typename KernelConfigPolicy = config::DefaultKernelConfigPolicy,
-          typename                    = std::enable_if_t<traits::is_valid_kernel_config_policy_v<KernelConfigPolicy>>>
+template <typename KernelConfigPolicy,
+          typename = std::enable_if_t<traits::is_valid_kernel_config_policy_v<KernelConfigPolicy>>>
 struct KernelTypes {
     /// 策略类别名
     using Policy = KernelConfigPolicy;
@@ -358,6 +357,92 @@ struct KernelTypes {
     using task_state_type = typename Policy::task_state_type;
     /// 任务状态枚举类别名（便于使用）
     using task_state = task_state_type;
+};
+
+/**
+ * @brief 空基类，用于拓展。
+ */
+struct EmptyBase {};
+
+} // namespace strat_os::kernel
+
+namespace strat_os::kernel::traits
+{
+// ----------------------------------------------------------------------------
+// 用户数据类型检测
+// ----------------------------------------------------------------------------
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 user_data_type
+ * @tparam T 待检测的策略类型
+ */
+template <typename T, typename = void>
+struct has_user_data_type : std::false_type {};
+template <typename T>
+struct has_user_data_type<T, std::void_t<typename T::user_data_type>> : std::true_type {};
+template <typename T>
+static constexpr bool has_user_data_type_v = has_user_data_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含静态常量 supports_user_data
+ * @tparam T 待检测的策略类型
+ */
+template <typename T, typename = void>
+struct has_supports_user_data : std::false_type {};
+template <typename T>
+struct has_supports_user_data<T, std::void_t<decltype(T::supports_user_data)>> : std::true_type {};
+template <typename T>
+static constexpr bool has_supports_user_data_v = has_supports_user_data<T>::value;
+
+/**
+ * @brief 检测 supports_user_data 是否为 const bool 类型
+ * @tparam T 待检测的策略类型
+ */
+template <typename T, typename = void>
+struct is_valid_supports_user_data : std::false_type {};
+template <typename T>
+struct is_valid_supports_user_data<T, std::void_t<decltype(T::supports_user_data)>>
+    : std::is_same<decltype(T::supports_user_data), const bool> {};
+template <typename T>
+static constexpr bool is_valid_supports_user_data_v = is_valid_supports_user_data<T>::value;
+
+/**
+ * @brief 组合检测，判断类型 T 是否为合法用户拓展tcb策略
+ * @tparam T 待检测的策略类型
+ *
+ * @note 要求：
+ * - 必须定义 supports_user_data 常量（const bool）
+ * - 必须定义 user_data_type 类型，
+ * - supports_user_data 为 false，user_data_type 为空类
+ *
+ */
+template <typename T>
+static constexpr bool is_valid_user_data_policy_v =
+    has_supports_user_data_v<T> && is_valid_supports_user_data_v<T> &&
+    (!T::supports_user_data && std::is_empty_v<T> || T::supports_user_data);
+
+} // namespace strat_os::kernel::traits
+
+namespace strat_os::kernel
+{
+/**
+ * @brief 用户扩展TCB类型适配器模板
+ * @tparam UserTcbDataPolicy 具体的策略类，必须满足 UserTcbDataPolicy 接口（提供所有必需嵌套类型）
+ *
+ * 该类将策略类包装为统一的内核类型集，并进行编译期验证。
+ * 所有类型别名直接转发到策略类，不引入任何额外开销。
+ * @note 当supports_user_data为false，user_data_type必须为空类。
+ */
+template <typename UserTcbDataPolicy,
+          typename = std::enable_if_t<traits::is_valid_user_data_policy_v<UserTcbDataPolicy>>>
+struct UserTcbData {
+    using Policy = UserTcbDataPolicy;
+    static_assert(traits::has_user_data_type_v<Policy>, "UserTcbDataPolicy must define 'user_data_type'");
+
+    /// 是否支持用户数据（编译期常量）
+    static constexpr bool supports_user_data = Policy::supports_user_data;
+    /// 用户拓展类型别名
+    using user_data_type = typename UserTcbDataPolicy::user_data_type;
 };
 
 } // namespace strat_os::kernel

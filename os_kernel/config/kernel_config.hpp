@@ -47,7 +47,10 @@
 #ifndef STRATOS_KERNEL_KERNEL_CONFIG_HPP
 #define STRATOS_KERNEL_KERNEL_CONFIG_HPP
 
-#include <cstdint> // for std::uint8_t, std::uint32_t etc.
+#include "os_kernel/include/core/types.hpp"                // for KernelTypes
+#include "os_kernel/include/policy/types/kernel_types.hpp" // for KernelTypesPolicy
+#include "os_kernel/include/policy/types/tcb.hpp"          // for UserTcbDataPolicy
+
 
 namespace strat_os::kernel::config
 {
@@ -64,31 +67,11 @@ namespace strat_os::kernel::config
  *
  * 用户可以直接使用此默认策略，或通过自定义策略类覆盖这些类型。
  */
-struct DefaultKernelConfigPolicy {
-    /// 优先级类型（数值越小优先级越高，默认 8 位无符号整数）
-    using priority_type = std::uint8_t;
-    /// 系统节拍计数类型（默认 32 位无符号整数）
-    using tick_type = std::uint32_t;
-    /// 任务 ID 类型（默认 16 位无符号整数）
-    using task_id_type = std::uint16_t;
-    /// 任务状态枚举的底层存储类型（默认 8 位无符号整数）
-    using task_state_size_type = std::uint8_t;
+using DefaultKernelConfigPolicy = strat_os::kernel::policy::builtin::KernelTypesPolicy;
 
-    /**
-     * @brief 默认任务状态枚举
-     * @note 必须包含五个标准状态项：Ready, Running, Blocked, Suspended, Terminated
-     *       用户可以扩展此枚举，添加自定义状态，但必须保留这五个标准项。
-     */
-    enum class TaskState : task_state_size_type {
-        Ready,     ///< 任务就绪，可被调度
-        Running,   ///< 任务正在执行
-        Blocked,   ///< 任务被阻塞（等待事件、信号量等）
-        Suspended, ///< 任务被挂起（不会参与调度）
-        Terminated ///< 任务已终止，等待回收
-    };
-    /// 任务状态枚举类型别名
-    using task_state_type = TaskState;
-};
+using DefaultKernelConfig       = strat_os::kernel::KernelTypes<DefaultKernelConfigPolicy>;
+
+using DefaultUserTcbDataPolicy  = strat_os::kernel::policy::builtin::UserTcbDataPolicy;
 
 } // namespace strat_os::kernel::config
 
