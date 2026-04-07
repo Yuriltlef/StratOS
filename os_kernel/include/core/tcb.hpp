@@ -58,7 +58,6 @@ struct TcbStandard {
     /// 任务入口函数指针（无参数）
     void (*entry)(){nullptr};
 
-
     /// 任务唯一标识符
     task_id_type id{};
 
@@ -143,8 +142,8 @@ struct Tcb : public TcbStandard<KernelConfigPolicy>,
      * @note 仅当用户数据扩展为空或用户不需要传递初始化参数时使用。
      */
     explicit Tcb(void (*entry_func)(), priority_type prio, task_id_type task_id)
-        : st_tcb_type{entry_func, prio, task_id} {}
-
+        : st_tcb_type{entry_func, prio, task_id}
+        , platform_context_type{} {}
     /**
      * @brief 构造函数（带用户数据扩展参数）
      * @tparam ExtArgs 用户数据扩展类型的构造参数类型包
@@ -159,6 +158,7 @@ struct Tcb : public TcbStandard<KernelConfigPolicy>,
               typename       = std::enable_if_t<UserP::supports_user_data>>
     explicit Tcb(void (*entry_func)(), priority_type prio, task_id_type task_id, ExtArgs&&... ext_args)
         : st_tcb_type{entry_func, prio, task_id}
+        , platform_context_type{}
         , user_data_type(std::forward<ExtArgs>(ext_args)...) {
         static_assert(std::is_constructible_v<user_data_type, ExtArgs...>,
                       "user_data_type must be constructible from the provided arguments");
