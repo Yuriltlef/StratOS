@@ -41,23 +41,22 @@
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
 
-
 #include <cstdint>
 
-namespace os_builtins                     = strat_os::hal::policy::builtin;
-namespace os_kernel_hal                   = strat_os::hal;
+namespace os_builtins         = strat_os::hal::policy::builtin;
+namespace os_kernel_hal       = strat_os::hal;
 
-using MyPlatformContextPolicy             = os_builtins::CortexM3Stm32F1PlatformContextPolicy;
-using MyPlatformContext                   = strat_os::hal::PlatformContext<MyPlatformContextPolicy>;
+using MyPlatformContextPolicy = os_builtins::CortexM3Stm32F1PlatformContextPolicy;
+using MyPlatformContext       = strat_os::hal::PlatformContext<MyPlatformContextPolicy>;
 
-using MyUserTcbDataPolicy                 = strat_os::kernel::config::DefaultUserTcbDataPolicy;
+using MyUserTcbDataPolicy     = strat_os::kernel::config::DefaultUserTcbDataPolicy;
 
-using MyKernelConfigPolicy                = strat_os::kernel::config::DefaultKernelConfigPolicy;
+using MyKernelConfigPolicy    = strat_os::kernel::config::DefaultKernelConfigPolicy;
 
-using MyTcb                               = strat_os::kernel::Tcb<MyKernelConfigPolicy, MyPlatformContextPolicy, MyUserTcbDataPolicy>;
+using MyTcb          = strat_os::kernel::Tcb<MyKernelConfigPolicy, MyPlatformContextPolicy, MyUserTcbDataPolicy>;
 
-using MyKernelConfig                      = strat_os::kernel::config::DefaultKernelConfig;
-using MyTaskState                         = MyKernelConfig::task_state;
+using MyKernelConfig = strat_os::kernel::config::DefaultKernelConfig;
+using MyTaskState    = MyKernelConfig::task_state;
 
 using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3Stm32F1InterruptControllerPolicy;
 using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
@@ -84,8 +83,14 @@ using MyDebug                             = os_kernel_hal::Debug<MyCortexM3Debug
 int main() {
     MyDebug::enable_cycle_counter();
     volatile uint32_t i{0};
+
+    volatile MyTcb myTcb(nullptr, 0x11, 10);
+    myTcb.sp    = static_cast<MyTcb::sp_type>(0x20000000);
+    myTcb.state = MyTcb::task_state_type::Blocked;
+
+    constexpr auto size_info = sizeof(myTcb);
+
     while (true) {
-        auto __ = (true && false);
         MyInterruptController::global_disable();
         auto i_ = MyTaskState::Terminated;
         auto _  = MyAtomic::add(&i, 1);
@@ -103,10 +108,7 @@ int main() {
         MySystemTick::enable_irq();
         MySystemTick::enable();
 
-        MyTcb myTcb(nullptr, 0x11, 10);
-        myTcb.sp = static_cast<MyTcb::sp_type>(0x20000000);
-        
-        myTcb.state = MyTcb::task_state_type::Blocked;
+        myTcb.state = MyTcb::task_state_type::Ready;
 
         MyDebug::bkpt();
 

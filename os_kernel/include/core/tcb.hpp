@@ -58,17 +58,15 @@ struct TcbStandard {
     /// 任务入口函数指针（无参数）
     void (*entry)(){nullptr};
 
-    /// 任务优先级（数值越小优先级越高，具体解释由调度策略决定）
-    priority_type priority{};
 
     /// 任务唯一标识符
     task_id_type id{};
 
-    /// 任务当前状态（就绪、运行、阻塞等）
-    task_state_type state{};
+    /// 任务优先级（数值越小优先级越高，具体解释由调度策略决定）
+    priority_type priority{};
 
-    /// 链表指针（用于就绪队列或阻塞队列；若使用位图或数组可省略）
-    TcbStandard* next{nullptr};
+    /// 任务当前状态（就绪、运行、阻塞等）
+    task_state_type state{task_state_type::Ready};
 
     /**
      * @brief 默认构造函数，零初始化所有成员
@@ -85,10 +83,9 @@ struct TcbStandard {
     constexpr TcbStandard(void (*entry_func)(), priority_type prio, task_id_type task_id) noexcept
         : sp(static_cast<std::uintptr_t>(0))
         , entry(entry_func)
-        , priority(prio)
         , id(task_id)
-        , state(task_state_type::Ready)
-        , next(nullptr) {}
+        , priority(prio)
+        , state(task_state_type::Ready) {}
 
     // 禁止拷贝和移动（任务不应被复制或转移所有权）
     TcbStandard(const TcbStandard&)            = delete;
