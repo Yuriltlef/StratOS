@@ -85,7 +85,8 @@ int main() {
     volatile uint32_t i{0};
 
     volatile MyTcb myTcb(nullptr, 0x11, 10);
-    myTcb.sp    = static_cast<MyTcb::sp_type>(0x20000000);
+    myTcb.sp = static_cast<MyTcb::sp_type>(0x20000000);
+    
     myTcb.state = MyTcb::task_state_type::Blocked;
 
     constexpr auto size_info = sizeof(myTcb);
