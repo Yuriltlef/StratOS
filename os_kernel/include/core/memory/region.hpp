@@ -44,6 +44,7 @@
 #ifndef STRATOS_KERNEL_REGION_HPP
 #define STRATOS_KERNEL_REGION_HPP
 
+#include "os_kernel/include/core/common_traits.hpp"
 #include "os_kernel/include/core/memory/layout.hpp"
 #include "os_kernel/include/core/memory/mode.hpp"
 
@@ -67,6 +68,17 @@ struct MemoryRegion {
     using layout_policy = LayoutPolicy;
     /// 模式策略
     using mode_policy = ModePolicy;
+
+    static_assert(traits::has_layout_base_v<layout_policy>, "MemoryLayoutPolicy must provide 'base' constant");
+    static_assert(traits::is_valid_layout_base_type_v<layout_policy>,
+                  "MemoryLayoutPolicy::base must be of type std::uintptr_t");
+    static_assert(traits::has_layout_size_v<layout_policy>, "MemoryLayoutPolicy must provide 'size' constant");
+    static_assert(traits::is_valid_layout_size_type_v<layout_policy>,
+                  "MemoryLayoutPolicy::size must be of type std::size_t");
+
+    static_assert(traits::has_is_dynamic_v<mode_policy>, "MemoryModePolicy must provide 'is_dynamic' constant");
+    static_assert(traits::is_valid_is_dynamic_type_v<mode_policy>, "MemoryModePolicy::is_dynamic must be of type bool");
+
     /// 布局
     using layout = MemoryLayout<LayoutPolicy>;
     /// 模式

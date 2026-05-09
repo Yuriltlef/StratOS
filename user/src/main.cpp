@@ -40,6 +40,10 @@
 #include "os_kernel/config/kernel_config.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
+#include "os_kernel/include/policy/memory/global_pool.hpp"
+
+using asx = strat_os::kernel::policy::builtin::GlobalRegion<0x20000000, 0x1000>;
+using xxx = asx::layout;
 
 #include <cstdint>
 

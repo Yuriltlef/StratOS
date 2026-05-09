@@ -15,12 +15,14 @@
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uintptr_t
+#include "os_kernel/include/core/common_traits.hpp"
 
 namespace strat_os::kernel::policy::builtin
 {
 
 template <typename ParentRegion, std::uintptr_t offset, std::size_t mem_size>
 struct RelativeLayoutPolicy {
+    static_assert(::strat_os::kernel::traits::is_region_v<ParentRegion>, "ParentRegion must be a valid MemoryRegion");
     using parent_layout = typename ParentRegion::layout;
     static constexpr std::uintptr_t base = parent_layout::base + offset;
     static constexpr std::size_t size    = mem_size;
