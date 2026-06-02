@@ -33,6 +33,7 @@ set(OS_INC
     "${CMAKE_SOURCE_DIR}/os_hal/include/"
     "${CMAKE_SOURCE_DIR}/os_kernel/include/"
     "${CMAKE_SOURCE_DIR}/os_service/"
+    "${CMAKE_SOURCE_DIR}/os_config/include/"
 )
 # ====================== CMSIS 内核文件 ======================
 file(GLOB_RECURSE OS_CMSIS_SRC

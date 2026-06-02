@@ -101,6 +101,8 @@ disable_cmsis_warnings()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/user)
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/os_config)
+
 filter_compile_commands()
 
 # 配置clangd
