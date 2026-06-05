@@ -47,10 +47,11 @@
 #ifndef STRATOS_KERNEL_KERNEL_CONFIG_HPP
 #define STRATOS_KERNEL_KERNEL_CONFIG_HPP
 
+#include "os_config/include/memory_layout.hpp"             // for MemoryLayoutPolicy
+#include "os_config/include/memory_layout_type.hpp"        // for MemoryLayoutType
 #include "os_kernel/include/core/types.hpp"                // for KernelTypes
 #include "os_kernel/include/policy/types/kernel_types.hpp" // for KernelTypesPolicy
 #include "os_kernel/include/policy/types/tcb.hpp"          // for UserTcbDataPolicy
-
 
 namespace strat_os::kernel::config
 {
@@ -72,6 +73,8 @@ using DefaultKernelConfigPolicy = strat_os::kernel::policy::builtin::KernelTypes
 using DefaultKernelConfig       = strat_os::kernel::KernelTypes<DefaultKernelConfigPolicy>;
 
 using DefaultUserTcbDataPolicy  = strat_os::kernel::policy::builtin::UserTcbDataPolicy;
+
+constexpr ::strat_os::config::MemoryLayoutType memory_layout = ::strat_os::config::MemoryLayoutConfig::LAYOUT_TYPE;
 
 } // namespace strat_os::kernel::config
 
