@@ -60,7 +60,8 @@ struct Kernel {
         scheduler::start();
     }
 
-    static void create_task(void*(void), priority_type priority, task_id_type task_id) noexcept {}
+    template <typename TaskObj>
+    static void create_task(TaskObj&& task_obj, priority_type priority, task_id_type task_id) noexcept {}
 
     static void delete_task(task_id_type task_id) noexcept {}
 };

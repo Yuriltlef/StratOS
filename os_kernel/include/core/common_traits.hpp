@@ -22,6 +22,7 @@
 #ifndef STRATOS_KERNEL_COMMON_TRAITS_HPP
 #define STRATOS_KERNEL_COMMON_TRAITS_HPP
 
+#include "os_kernel/include/core/tcb.hpp"
 #include <cstddef>     // for std::size_t
 #include <cstdint>     // for std::uintptr_t
 #include <type_traits> // for std::false_type, std::true_type, std::void_t
@@ -230,6 +231,82 @@ struct is_region : std::conjunction<has_layout_policy<T>,
 
 template <typename T>
 static constexpr bool is_region_v = is_region<T>::value;
+
+/**
+ * @brief 检测策略的 tcb_type 是否与 Tcb<...> 匹配
+ * @tparam T 待检测的调度器策略类型
+ * @details 要求 T 必须包含嵌套类型 tcb_type, user_tcb_policy, platform_context_policy,
+ *          kernel_types_policy，且 tcb_type 是由这些策略实例化的 Tcb。
+ */
+template <typename T, typename = void, typename = void, typename = void, typename = void>
+struct is_valid_tcb_type : std::false_type {};
+template <typename T>
+struct is_valid_tcb_type<T,
+                         std::void_t<typename T::tcb_type>,
+                         std::void_t<typename T::user_tcb_policy>,
+                         std::void_t<typename T::platform_context_policy>,
+                         std::void_t<typename T::kernel_types_policy>>
+    : std::is_same<
+          typename T::tcb_type,
+          Tcb<typename T::kernel_types_policy, typename T::platform_context_policy, typename T::user_tcb_policy>> {};
+template <typename T>
+static constexpr bool is_valid_tcb_type_v = is_valid_tcb_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 tcb_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_tcb_type : std::false_type {};
+template <typename T>
+struct has_tcb_type<T, std::void_t<typename T::tcb_type>> : std::true_type {};
+template <typename T>
+static constexpr bool has_tcb_type_v = has_tcb_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 scheduler_state_type
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_scheduler_state_type : std::false_type {};
+template <typename T>
+struct has_scheduler_state_type<T, std::void_t<typename T::scheduler_state_type>> : std::true_type {};
+template <typename T>
+static constexpr bool has_scheduler_state_type_v = has_scheduler_state_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 user_tcb_policy
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_user_tcb_policy_type : std::false_type {};
+template <typename T>
+struct has_user_tcb_policy_type<T, std::void_t<typename T::user_tcb_policy>> : std::true_type {};
+template <typename T>
+static constexpr bool has_user_tcb_policy_type_v = has_user_tcb_policy_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 platform_context_policy
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_platform_context_policy_type : std::false_type {};
+template <typename T>
+struct has_platform_context_policy_type<T, std::void_t<typename T::platform_context_policy>> : std::true_type {};
+template <typename T>
+static constexpr bool has_platform_context_policy_type_v = has_platform_context_policy_type<T>::value;
+
+/**
+ * @brief 检测类型 T 是否包含嵌套类型 kernel_types_policy
+ * @tparam T 待检测的类型
+ */
+template <typename T, typename = void>
+struct has_kernel_types_policy_type : std::false_type {};
+template <typename T>
+struct has_kernel_types_policy_type<T, std::void_t<typename T::kernel_types_policy>> : std::true_type {};
+template <typename T>
+static constexpr bool has_kernel_types_policy_type_v = has_kernel_types_policy_type<T>::value;
+
 
 } // namespace strat_os::kernel::traits
 

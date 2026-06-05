@@ -88,7 +88,7 @@ int main() {
     MyDebug::enable_cycle_counter();
     volatile uint32_t i{0};
 
-    volatile MyTcb myTcb(nullptr, 0x11, 10);
+    volatile MyTcb myTcb(nullptr, nullptr, 0x11, 10);
     myTcb.sp                 = static_cast<MyTcb::sp_type>(0x20000000);
 
     myTcb.state              = MyTcb::task_state_type::Blocked;

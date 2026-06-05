@@ -55,8 +55,11 @@ struct TcbStandard {
     /// 栈指针（由汇编代码读写，指向当前任务栈顶）
     std::uintptr_t sp{};
 
-    /// 任务入口函数指针（无参数）
-    void (*entry)(){nullptr};
+    /// 任务入口函数指针
+    void (*entry)(void*){nullptr};
+
+    /// 任务对象指针
+    void* task{nullptr};
 
     /// 任务唯一标识符
     task_id_type id{};
@@ -76,12 +79,14 @@ struct TcbStandard {
     /**
      * @brief 构造函数，便于创建任务时初始化标准字段
      * @param entry_func 任务入口函数
+     * @param task_obj   任务对象指针
      * @param prio       优先级
      * @param task_id    任务 ID
      */
-    constexpr TcbStandard(void (*entry_func)(), priority_type prio, task_id_type task_id) noexcept
+    constexpr TcbStandard(void (*entry_func)(void*), void* task_obj, priority_type prio, task_id_type task_id) noexcept
         : sp(static_cast<std::uintptr_t>(0))
         , entry(entry_func)
+        , task(task_obj)
         , id(task_id)
         , priority(prio)
         , state(task_state_type::Ready) {}
@@ -139,16 +144,18 @@ struct Tcb : public TcbStandard<KernelConfigPolicy>,
      * @brief 构造函数（无用户数据扩展）
      * @param sp   栈指针
      * @param prio 优先级
+     * @param task_obj   任务对象指针
      * @note 仅当用户数据扩展为空或用户不需要传递初始化参数时使用。
      */
-    explicit Tcb(void (*entry_func)(), priority_type prio, task_id_type task_id)
-        : st_tcb_type{entry_func, prio, task_id}
+    explicit Tcb(void (*entry_func)(void*), void* task_obj, priority_type prio, task_id_type task_id)
+        : st_tcb_type{entry_func, task_obj, prio, task_id}
         , platform_context_type{} {}
     /**
      * @brief 构造函数（带用户数据扩展参数）
      * @tparam ExtArgs 用户数据扩展类型的构造参数类型包
      * @param sp       栈指针
      * @param prio     优先级
+     * @param task_obj   任务对象指针
      * @param ext_args 传递给 user_data_type 构造函数的参数
      * @note 仅当用户数据策略支持扩展（`supports_user_data == true`）时此构造函数可用。
      *       编译期检查 user_data_type 是否可从给定的参数类型构造。
@@ -156,7 +163,11 @@ struct Tcb : public TcbStandard<KernelConfigPolicy>,
     template <typename... ExtArgs,
               typename UserP = UserTcbDataPolicy,
               typename       = std::enable_if_t<UserP::supports_user_data>>
-    explicit Tcb(void (*entry_func)(), priority_type prio, task_id_type task_id, ExtArgs&&... ext_args)
+    explicit Tcb(void (*entry_func)(void*),
+                 void* task_obj,
+                 priority_type prio,
+                 task_id_type task_id,
+                 ExtArgs&&... ext_args)
         : st_tcb_type{entry_func, prio, task_id}
         , platform_context_type{}
         , user_data_type(std::forward<ExtArgs>(ext_args)...) {
