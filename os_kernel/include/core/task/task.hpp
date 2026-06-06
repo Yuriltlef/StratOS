@@ -44,6 +44,7 @@
 #define STRATOS_KERNEL_TASK_HPP
 
 #include "os_kernel/include/core/common_traits.hpp"
+#include "os_kernel/include/core/types.hpp" // for KernelTypes
 #include <cstddef>
 #include <type_traits>
 
@@ -308,14 +309,16 @@ struct Task {
     /// TCB 类型别名
     using tcb_type = typename Policy::tcb_type;
 
+    /// 内核数据类型
+    using kernel_types = KernelTypes<kernel_types_policy>;
     /// 优先级类型别名
-    using priority_type = typename kernel_types_policy::priority_type;
+    using priority_type = typename kernel_types::priority_type;
     /// 时钟滴答类型别名
-    using tick_type = typename kernel_types_policy::tick_type;
+    using tick_type = typename kernel_types::tick_type;
     /// 任务 ID 类型别名
-    using task_id_type = typename kernel_types_policy::task_id_type;
+    using task_id_type = typename kernel_types::task_id_type;
     /// 任务状态类型别名
-    using task_state_type = typename kernel_types_policy::task_state_type;
+    using task_state_type = typename kernel_types::task_state_type;
 
     // ----- 细粒度静态断言，提供清晰的错误信息 -----
     static_assert(traits::has_kernel_types_policy_type_v<Policy>,

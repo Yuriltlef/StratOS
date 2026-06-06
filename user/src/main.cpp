@@ -41,6 +41,7 @@
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
 #include "os_kernel/include/policy/memory/global_pool.hpp"
+#include "os_kernel/include/policy/task/task_lists.hpp"
 
 using asx = strat_os::kernel::policy::builtin::GlobalRegion<0x20000000, 0x1000>;
 using xxx = asx::layout;
@@ -84,9 +85,17 @@ using MySystemTickSource                  = MySystemTick::clock_source_type;
 using MyCortexM3DebugPolicy               = os_builtins::CortexM3Stm32F1DebugPolicy;
 using MyDebug                             = os_kernel_hal::Debug<MyCortexM3DebugPolicy>;
 
+using teststs                             = strat_os::kernel::policy::builtin::details::
+    TaskLists<MyKernelConfigPolicy, MyPlatformContextPolicy, MyUserTcbDataPolicy>;
+
 int main() {
     MyDebug::enable_cycle_counter();
     volatile uint32_t i{0};
+
+    teststs::ready_list.clear();
+
+    auto ____ = teststs::ready_list.capacity;
+    auto ___  = sizeof(teststs::ready_list);
 
     volatile MyTcb myTcb(nullptr, nullptr, 0x11, 10);
     myTcb.sp                 = static_cast<MyTcb::sp_type>(0x20000000);

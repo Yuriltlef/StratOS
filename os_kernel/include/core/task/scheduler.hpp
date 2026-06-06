@@ -54,6 +54,7 @@
 #define STRATOS_KERNEL_SCHEDULER_HPP
 
 #include "os_kernel/include/core/common_traits.hpp" // for has_init, has_init_v
+#include "os_kernel/include/core/types.hpp"         // for KernelTypes
 #include <type_traits>                              // for false_type, true_type, void_t, is_same
 #include <utility>                                  // for declval
 
@@ -385,10 +386,12 @@ struct Scheduler {
     /// 调度器状态类型别名
     using scheduler_state_type = typename Policy::scheduler_state_type;
 
+    /// 内核数据类型
+    using kernel_types = KernelTypes<kernel_types_policy>;
     /// 优先级类型别名（来自内核类型策略）
-    using priority_type = typename kernel_types_policy::priority_type;
+    using priority_type = typename kernel_types::priority_type;
     /// 时钟滴答类型别名（来自内核类型策略）
-    using tick_type = typename kernel_types_policy::tick_type;
+    using tick_type = typename kernel_types::tick_type;
 
     // ----- 细粒度静态断言，提供清晰的错误信息 -----
     static_assert(traits::has_tcb_type_v<Policy>, "Policy must provide nested type 'tcb_type'");

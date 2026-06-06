@@ -70,26 +70,29 @@ using UserDynamicMode = KernelDynamicMode;
 /// 内核池布局（最高地址）
 struct KernelPoolStaticLayout {
     static constexpr std::uintptr_t base =
-        config::MemoryLayoutConfig::RAM_END - config::MemoryLayoutConfig::KERNEL_POOL_SIZE + 1;
-    static constexpr std::size_t size = config::MemoryLayoutConfig::KERNEL_POOL_SIZE;
+        strat_os::config::MemoryLayoutConfig::RAM_END - strat_os::config::MemoryLayoutConfig::KERNEL_POOL_SIZE + 1;
+    static constexpr std::size_t size = strat_os::config::MemoryLayoutConfig::KERNEL_POOL_SIZE;
 };
 
 /// 内核栈布局（位于内核池下方）
 struct KernelStackStaticLayout {
-    static constexpr std::uintptr_t base = KernelPoolStaticLayout::base - config::MemoryLayoutConfig::KERNEL_STACK_SIZE;
-    static constexpr std::size_t size    = config::MemoryLayoutConfig::KERNEL_STACK_SIZE;
+    static constexpr std::uintptr_t base =
+        KernelPoolStaticLayout::base - strat_os::config::MemoryLayoutConfig::KERNEL_STACK_SIZE;
+    static constexpr std::size_t size = strat_os::config::MemoryLayoutConfig::KERNEL_STACK_SIZE;
 };
 
 /// 用户池布局（位于内核栈下方）
 struct UserPoolStaticLayout {
-    static constexpr std::uintptr_t base = KernelStackStaticLayout::base - config::MemoryLayoutConfig::USER_POOL_SIZE;
-    static constexpr std::size_t size    = config::MemoryLayoutConfig::USER_POOL_SIZE;
+    static constexpr std::uintptr_t base =
+        KernelStackStaticLayout::base - strat_os::config::MemoryLayoutConfig::USER_POOL_SIZE;
+    static constexpr std::size_t size = strat_os::config::MemoryLayoutConfig::USER_POOL_SIZE;
 };
 
 /// 用户栈布局（最低地址）
 struct UserStackStaticLayout {
-    static constexpr std::uintptr_t base = UserPoolStaticLayout::base - config::MemoryLayoutConfig::USER_STACK_SIZE;
-    static constexpr std::size_t size    = config::MemoryLayoutConfig::USER_STACK_SIZE;
+    static constexpr std::uintptr_t base =
+        UserPoolStaticLayout::base - strat_os::config::MemoryLayoutConfig::USER_STACK_SIZE;
+    static constexpr std::size_t size = strat_os::config::MemoryLayoutConfig::USER_STACK_SIZE;
 };
 
 // ==================== 内存区域实例化 ====================

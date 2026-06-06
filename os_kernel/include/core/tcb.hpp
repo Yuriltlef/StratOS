@@ -141,6 +141,12 @@ struct Tcb : public TcbStandard<KernelConfigPolicy>,
     using task_state_type = typename st_tcb_type::task_state_type;
 
     /**
+     * @brief 默认构造函数，零初始化所有成员
+     * @note 静态分配时编译器自动零初始化；动态分配时需配合值初始化。
+     */
+    Tcb() = default;
+
+    /**
      * @brief 构造函数（无用户数据扩展）
      * @param sp   栈指针
      * @param prio 优先级
