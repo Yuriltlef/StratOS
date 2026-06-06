@@ -28,6 +28,7 @@
 #ifndef STRATOS_POLICY_KERNEL_TASK_HPP
 #define STRATOS_POLICY_KERNEL_TASK_HPP
 
+#include "os_kernel/include/core/task/scheduler.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
 #include <cstddef>
@@ -53,12 +54,18 @@ namespace strat_os::kernel::policy::builtin
  * @note 当前版本依赖 `TaskLists` 中定义的 `ready_list`（`IntrusiveList<tcb>`）
  *       和 `user_stack`（线性栈分配器）。
  */
-template <typename KernelConfigPolicy, typename PlatformContextPolicy, typename UserTcbDataPolicy>
+template <typename KernelConfigPolicy,
+          typename PlatformContextPolicy,
+          typename UserTcbDataPolicy,
+          typename SchedulerPolicy>
 struct TaskPolicy {
     // ==================== 类型别名 ====================
     /// 任务列表数据结构（包含就绪队列和栈分配器）
     using task_lists = strat_os::kernel::policy::builtin::details::
         TaskLists<KernelConfigPolicy, PlatformContextPolicy, UserTcbDataPolicy>;
+
+    /// 调度器接口
+    using scheduler = strat_os::kernel::Scheduler<SchedulerPolicy>;
 
     /// 内核类型策略（直接透传）
     using kernel_types_policy = KernelConfigPolicy;
@@ -81,6 +88,9 @@ struct TaskPolicy {
     using task_id_type = typename kernel_types::task_id_type;
     /// 任务状态枚举类型
     using task_state_type = typename kernel_types::task_state_type;
+
+    /// id计数器
+    inline static task_id_type tid{};
 
     // ==================== 必需方法 ====================
 
@@ -115,15 +125,13 @@ struct TaskPolicy {
         std::uintptr_t stack_top = reinterpret_cast<std::uintptr_t>(stack_mem);
 
         // 构造临时 TCB 对象（使用当前就绪队列长度作为临时 ID）
-        tcb_type new_tcb(entry, task_obj, prio, task_lists::ready_list.size());
+        tcb_type new_tcb(entry, task_obj, prio, tid);
         new_tcb.state = tcb_type::task_state_type::Ready;
         new_tcb.sp    = stack_top; // 直接赋值栈顶地址
+        tid++;
 
-        // 将 TCB 加入就绪队列（链表内部自动复制到节点池）
-        task_lists::ready_list.push_back(new_tcb);
-
-        // 返回链表尾部元素的地址（即持久 TCB 指针）
-        return &task_lists::ready_list.back();
+        // 将 TCB 加入就绪队列，返回链表尾部元素的地址（即持久 TCB 指针）
+        return scheduler::add_task(new_tcb);
     }
 
     /**

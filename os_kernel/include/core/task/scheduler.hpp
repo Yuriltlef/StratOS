@@ -2,8 +2,8 @@
  * @file scheduler.hpp
  * @author StratOS Team
  * @brief 调度器策略接口与适配器
- * @version 1.0.0
- * @date 2026-04-09
+ * @version 1.2.0
+ * @date 2026-06-07
  *
  * @copyright Copyright (c) 2026 StratOS
  *
@@ -39,8 +39,9 @@
  *   且解锁次数需与锁定次数匹配，以防止调度器意外解锁。
  *
  * @attention
- * - 策略类的 `add_task` 和 `remove_task` 必须正确维护就绪队列的内部状态，
- *   特别是当任务被删除时，需确保没有悬空指针残留。
+ * - 策略类的 `add_task` 接受 `const tcb_type&` 并返回持久化 TCB 指针（失败返回 nullptr）。
+ * - `remove_task` 接受 `tcb_type*` 并从就绪队列中移除。
+ * - `schedule()` 返回下一个要运行的任务的 TCB 指针（不可为 nullptr，若无任务则返回空闲任务）。
  * - `block_current` 和 `unblock_task` 必须与同步原语（信号量、事件标志等）协同工作，
  *   避免在阻塞期间丢失唤醒信号。
  * - `get_current` 和 `set_current` 必须保持一致性，`set_current` 通常仅由调度器内部调用，
@@ -85,23 +86,24 @@ template <typename T>
 static constexpr bool has_yield_method_v = has_yield_method<T>::value;
 
 /**
- * @brief 检测静态方法 schedule()
+ * @brief 检测静态方法 schedule() -> tcb_type*
  */
 template <typename T, typename = void>
 struct has_schedule_method : std::false_type {};
 template <typename T>
-struct has_schedule_method<T, std::void_t<decltype(T::schedule())>> : std::true_type {};
+struct has_schedule_method<T, std::void_t<decltype(T::schedule())>>
+    : std::is_same<decltype(T::schedule()), typename T::tcb_type*> {};
 template <typename T>
 static constexpr bool has_schedule_method_v = has_schedule_method<T>::value;
 
 /**
- * @brief 检测静态方法 add_task(tcb_type*)
+ * @brief 检测静态方法 add_task(const tcb_type&) -> tcb_type*
  */
 template <typename T, typename = void>
 struct has_add_task_method : std::false_type {};
 template <typename T>
-struct has_add_task_method<T, std::void_t<decltype(T::add_task(std::declval<typename T::tcb_type*>()))>>
-    : std::true_type {};
+struct has_add_task_method<T, std::void_t<decltype(T::add_task(std::declval<const typename T::tcb_type&>()))>>
+    : std::is_same<decltype(T::add_task(std::declval<const typename T::tcb_type&>())), typename T::tcb_type*> {};
 template <typename T>
 static constexpr bool has_add_task_method_v = has_add_task_method<T>::value;
 
@@ -148,6 +150,17 @@ template <typename T>
 static constexpr bool has_get_current_method_v = has_get_current_method<T>::value;
 
 /**
+ * @brief 检测 get_current() 的返回类型是否为 tcb_type*
+ */
+template <typename T, typename = void>
+struct is_get_current_return_type : std::false_type {};
+template <typename T>
+struct is_get_current_return_type<T, std::void_t<decltype(T::get_current())>>
+    : std::is_same<decltype(T::get_current()), typename T::tcb_type*> {};
+template <typename T>
+static constexpr bool is_get_current_return_type_v = is_get_current_return_type<T>::value;
+
+/**
  * @brief 检测静态方法 set_current(tcb_type*)
  */
 template <typename T, typename = void>
@@ -169,21 +182,6 @@ template <typename T>
 static constexpr bool has_tick_method_v = has_tick_method<T>::value;
 
 // -----------------------------------------------------------------------------
-// 返回类型正确性检测
-// -----------------------------------------------------------------------------
-
-/**
- * @brief 检测 get_current() 的返回类型是否为 tcb_type*
- */
-template <typename T, typename = void>
-struct is_get_current_return_type : std::false_type {};
-template <typename T>
-struct is_get_current_return_type<T, std::void_t<decltype(T::get_current())>>
-    : std::is_same<decltype(T::get_current()), typename T::tcb_type*> {};
-template <typename T>
-static constexpr bool is_get_current_return_type_v = is_get_current_return_type<T>::value;
-
-// -----------------------------------------------------------------------------
 // 完整策略有效性组合检测
 // -----------------------------------------------------------------------------
 
@@ -196,7 +194,9 @@ static constexpr bool is_get_current_return_type_v = is_get_current_return_type<
  *   platform_context_policy, user_tcb_policy
  * - 静态方法 init(), start(), yield(), schedule(), add_task(), remove_task(),
  *   block_current(), unblock_task(), get_current(), set_current(), tick()
- * - get_current() 返回类型为 tcb_type*
+ * - schedule() 返回 tcb_type*
+ * - add_task() 返回 tcb_type*
+ * - get_current() 返回 tcb_type*
  * - tcb_type 必须是有效的 Tcb 实例化
  */
 template <typename T>
@@ -319,12 +319,12 @@ static constexpr bool has_get_idle_task_method_v = has_get_idle_task_method<T>::
  * @brief 检测 get_idle_task() 的返回类型是否为 tcb_type*
  */
 template <typename T, typename = void>
-struct is_correct_has_get_idle_task_return_type : std::false_type {};
+struct is_correct_get_idle_task_return_type : std::false_type {};
 template <typename T>
-struct is_correct_has_get_idle_task_return_type<T, std::void_t<decltype(T::has_get_idle_task())>>
-    : std::is_same<typename T::tcb_type*, decltype(T::has_get_idle_task())> {};
+struct is_correct_get_idle_task_return_type<T, std::void_t<decltype(T::get_idle_task())>>
+    : std::is_same<typename T::tcb_type*, decltype(T::get_idle_task())> {};
 template <typename T>
-static constexpr bool is_correct_has_get_idle_task_return_type_v = is_correct_has_get_idle_task_return_type<T>::value;
+static constexpr bool is_correct_get_idle_task_return_type_v = is_correct_get_idle_task_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 get_statistics()
@@ -404,8 +404,8 @@ struct Scheduler {
     static_assert(traits::has_init_method_v<Policy>, "Policy must provide init()");
     static_assert(traits::has_start_method_v<Policy>, "Policy must provide start()");
     static_assert(traits::has_yield_method_v<Policy>, "Policy must provide yield()");
-    static_assert(traits::has_schedule_method_v<Policy>, "Policy must provide schedule()");
-    static_assert(traits::has_add_task_method_v<Policy>, "Policy must provide add_task(tcb_type*)");
+    static_assert(traits::has_schedule_method_v<Policy>, "Policy must provide schedule() returning tcb_type*");
+    static_assert(traits::has_add_task_method_v<Policy>, "Policy must provide add_task(const tcb_type&) -> tcb_type*");
     static_assert(traits::has_remove_task_method_v<Policy>, "Policy must provide remove_task(tcb_type*)");
     static_assert(traits::has_block_current_method_v<Policy>, "Policy must provide block_current()");
     static_assert(traits::has_unblock_task_method_v<Policy>, "Policy must provide unblock_task(tcb_type*)");
@@ -441,17 +441,19 @@ struct Scheduler {
 
     /**
      * @brief 执行调度算法，选择下一个要运行的任务
+     * @return 下一个任务的 TCB 指针（必须有效，若就绪队列空则返回空闲任务）
      */
-    inline static void schedule() noexcept {
-        Policy::schedule();
+    [[nodiscard]] inline static tcb_type* schedule() noexcept {
+        return Policy::schedule();
     }
 
     /**
      * @brief 将任务添加到就绪队列
-     * @param task 指向 TCB 的指针
+     * @param task 对 TCB 的常量引用（临时对象）
+     * @return 指向就绪队列中持久化 TCB 对象的指针，失败返回 nullptr
      */
-    inline static void add_task(tcb_type* task) noexcept {
-        Policy::add_task(task);
+    [[nodiscard]] inline static tcb_type* add_task(const tcb_type& task) noexcept {
+        return Policy::add_task(task);
     }
 
     /**
@@ -576,10 +578,9 @@ struct Scheduler {
      */
     template <typename P = Policy,
               typename   = std::enable_if_t<traits::has_get_idle_task_method_v<P> &&
-                                            traits::is_correct_has_get_idle_task_return_type_v<P>>>
-    inline static tcb_type* get_idle_task() noexcept {
-        static_assert(traits::is_correct_has_get_idle_task_return_type_v<P>,
-                      "is_scheduler_locked() method must return tcb_type*");
+                                            traits::is_correct_get_idle_task_return_type_v<P>>>
+    [[nodiscard]] inline static tcb_type* get_idle_task() noexcept {
+        static_assert(traits::is_correct_get_idle_task_return_type_v<P>, "get_idle_task() must return tcb_type*");
         return P::get_idle_task();
     }
 
@@ -593,9 +594,9 @@ struct Scheduler {
     template <typename P = Policy,
               typename   = std::enable_if_t<traits::has_get_statistics_method_v<P> &&
                                             traits::is_correct_get_statistics_return_type_v<P>>>
-    inline static scheduler_state_type get_statistics() noexcept {
+    [[nodiscard]] inline static scheduler_state_type get_statistics() noexcept {
         static_assert(traits::is_correct_get_statistics_return_type_v<P>,
-                      "is_scheduler_locked() method must return scheduler_state_type");
+                      "get_statistics() must return scheduler_state_type");
         return P::get_statistics();
     }
 };
