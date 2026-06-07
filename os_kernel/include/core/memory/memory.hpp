@@ -29,8 +29,10 @@
 #include "os_config/include/memory_layout_type.hpp"
 #include "os_kernel/include/core/memory/memory_pool.hpp"
 #include "os_kernel/include/core/memory/region.hpp"
+#include "user/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
+
 
 // 链接脚本导出的符号（用于地址一致性验证，保留以备后用）
 extern "C" {
@@ -139,9 +141,13 @@ struct PoolLinearAllocatorPolicy {
      * @return 分配的内存起始地址，空间不足返回 nullptr
      */
     [[nodiscard]] static pointer allocate(std::size_t alloc_size) noexcept {
-        alloc_size              = align_up(alloc_size);
+        dprint("Pool allocate start...\n");
+        dxprintf("base: 0x%x, start from :%x\n", base, free_list);
+        alloc_size = align_up(alloc_size);
+        dxprintf("alloc_size: %d\n", alloc_size);
         std::uintptr_t new_free = free_list + static_cast<std::uintptr_t>(alloc_size);
         if (new_free > base + size) {
+            dxprintf("alloc fault: 0x%x\n", base);
             return nullptr;
         }
         free_list = new_free;
@@ -199,12 +205,15 @@ struct StackLinearAllocatorPolicy {
      * @return 栈顶地址（高地址），空间不足返回 nullptr
      */
     [[nodiscard]] static pointer allocate(std::size_t stack_size) noexcept {
-        std::size_t aligned_stack    = align_up(stack_size);
-        std::size_t total_size       = aligned_stack + canary_size;
+        std::size_t aligned_stack  = align_up(stack_size);
+        std::size_t total_size     = aligned_stack + canary_size;
 
-        std::uintptr_t block_start   = next_free;
-        std::uintptr_t new_next_free = block_start + total_size;
-        if (new_next_free > base + size) {
+        std::uintptr_t block_start = next_free;
+        std::uintptr_t raw_top     = block_start + total_size;
+        // 向上对齐到 8 字节边界（ARM Cortex-M 异常返回要求）
+        std::uintptr_t aligned_top = (raw_top + 7) & ~7;
+        
+        if (aligned_top > base + size) {
             return nullptr; // 空间不足
         }
 
@@ -213,9 +222,9 @@ struct StackLinearAllocatorPolicy {
             *reinterpret_cast<std::uint32_t*>(block_start) = 0xDEADBEEF;
         }
 
-        next_free = new_next_free;
+        next_free = aligned_top;
         // 返回栈顶地址（块起始 + 总大小）
-        return reinterpret_cast<pointer>(block_start + total_size);
+        return reinterpret_cast<pointer>(aligned_top);
     }
 
     /// 释放（线性分配器不支持单个栈释放）

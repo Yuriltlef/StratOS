@@ -131,7 +131,7 @@ set(OS_CPP_DEBUG_FLAGS
 )
 set(OS_CPP_RELEASE_FLAGS
     -O3
-    -flto
+
     -fomit-frame-pointer
 )
 set(OS_CPP_MINSIZEREL_FLAGS
@@ -174,7 +174,7 @@ set(OS_LD_DEBUG_FLAGS
     -Wl,--warn-once
 )
 set(OS_LD_RELEASE_FLAGS
-    -Wl,--strip-debug
+    -Wl,--strip-debug,-fno-lto
 )
 set(OS_LD_MINSIZEREL_FLAGS
     -Wl,--strip-debug

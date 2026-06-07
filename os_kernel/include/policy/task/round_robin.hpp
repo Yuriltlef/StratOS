@@ -33,10 +33,13 @@
 #ifndef STRATOS_POLICY_KERNEL_ROUND_ROBIN_HPP
 #define STRATOS_POLICY_KERNEL_ROUND_ROBIN_HPP
 
+#include "os_config/include/memory_layout_type.hpp"
 #include "os_hal/include/context_switch.hpp"
 #include "os_hal/include/system_tick.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
+#include "user/inc/debug.hpp"
+#include <cstddef>
 #include <cstdint>
 
 namespace strat_os::kernel::policy::builtin
@@ -55,12 +58,20 @@ template <typename KernelConfigPolicy,
           typename PlatformContextPolicy,
           typename UserTcbDataPolicy,
           typename SystemTickPolicy,
-          typename ContextSwitchPolicy>
+          typename ContextSwitchPolicy,
+          strat_os::config::MemoryLayoutType LayoutType,
+          std::uint32_t MaxTasks,
+          std::uint32_t IdleTaskStackSize,
+          std::size_t TimeSliceTicks>
 struct RoundRobinPolicy {
     // ------------------------- 类型别名 -------------------------
     /// 任务列表数据结构（包含就绪队列、空闲任务等）
-    using task_lists = strat_os::kernel::policy::builtin::details::
-        TaskLists<KernelConfigPolicy, PlatformContextPolicy, UserTcbDataPolicy>;
+    using task_lists              = strat_os::kernel::policy::builtin::details::TaskLists<KernelConfigPolicy,
+                                                                                          PlatformContextPolicy,
+                                                                                          UserTcbDataPolicy,
+                                                                                          LayoutType,
+                                                                                          MaxTasks,
+                                                                                          IdleTaskStackSize>;
 
     using kernel_types_policy     = KernelConfigPolicy;
     using platform_context_policy = PlatformContextPolicy;
@@ -85,7 +96,7 @@ struct RoundRobinPolicy {
     /// 当前正在运行的任务指针
     static inline tcb_type* current_task = nullptr;
     /// 默认时间片长度（节拍数）
-    static inline tick_type time_slice_ticks = 10;
+    static inline tick_type time_slice_ticks = TimeSliceTicks;
     /// 每个任务剩余的节拍数（按任务 ID 索引，数组从内核池分配）
     static inline tick_type* time_left = nullptr;
     /// 最大任务数（编译期常量）
@@ -99,9 +110,9 @@ struct RoundRobinPolicy {
      *       因此直接使用 `push_back` 将其指针加入队尾。
      */
     static void requeue_current() noexcept {
-        if (!current_task || current_task == &task_lists::idle_task) return;
-        if (task_lists::ready_list.full()) return;      // 队列满（不应发生）
-        task_lists::ready_list.push_back(current_task); // 存储指针
+        if (!current_task || current_task == task_lists::idle_task) return;
+        if (task_lists::ready_list->full()) return;      // 队列满（不应发生）
+        task_lists::ready_list->push_back(current_task); // 存储指针
     }
 
   public:
@@ -111,11 +122,14 @@ struct RoundRobinPolicy {
      * @note 从内核池分配 `time_left` 数组并清零，重置当前任务指针。
      */
     static void init() noexcept {
+        dprint("init RoundRobin...\n");
+        dxprintf("RoundRobin task_lists ptr: 0x%x, &ptr= 0x%x\n", (uint32_t*)task_lists::ready_list, (uint32_t*)&task_lists::ready_list);
         void* mem = task_lists::kernel_pool::allocate(sizeof(tick_type) * max_tasks);
         time_left = reinterpret_cast<tick_type*>(mem);
         for (std::size_t i = 0; i < max_tasks; ++i)
             time_left[i] = 0;
         current_task = nullptr;
+        dprint("init RoundRobin end\n");
     }
 
     /**
@@ -125,22 +139,26 @@ struct RoundRobinPolicy {
      */
     static void start() noexcept {
         // 确保第一个任务已就绪，并设置 PSP
-        if (!task_lists::ready_list.empty()) {
-            tcb_type* first = task_lists::ready_list.front();
-            task_lists::ready_list.pop_front();
+        dxprintf("ready_list len: %d\n", task_lists::ready_list->size());
+        if (!task_lists::ready_list->empty()) {
+            tcb_type* first = task_lists::ready_list->front();
+            task_lists::ready_list->pop_front();
             current_task = first;
             ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp));
         } else {
             // 没有用户任务，使用空闲任务
-            current_task = &task_lists::idle_task;
+            current_task = task_lists::idle_task;
             ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp));
         }
+        dprint("Scheduler start: setting up SysTick\n");
         // 使能系统节拍定时器（注意：时钟源参数需根据实际策略定义）
         sys_tick::init(time_slice_ticks, sys_tick::clock_source_type::AHBClock);
         sys_tick::enable_irq();
         sys_tick::enable();
+        dprint("Scheduler start: setting up SysTick success\n");
         // 触发第一次 PendSV（此时 PSP 已正确设置）
         ctx_switch::trigger_pendsv();
+        dprint("PendSV triggered\n");
     }
 
     /**
@@ -158,15 +176,36 @@ struct RoundRobinPolicy {
      * @details 如果就绪队列非空，取出队首任务并弹出；否则返回空闲任务。
      */
     [[nodiscard]] static tcb_type* schedule() noexcept {
-        if (!task_lists::ready_list.empty()) {
-            tcb_type* next = task_lists::ready_list.front();
-            task_lists::ready_list.pop_front();
-            current_task = next;
-            return current_task;
+        dprint("schedule: enter\n");
+        dxprintf("schedule: &ready_list = %x, ready_list = %x\n",
+                 (uint32_t)&task_lists::ready_list,
+                 (uint32_t)task_lists::ready_list);
+        dxprintf("schedule: &idle_task = %x, idle_task = %x\n",
+                 (uint32_t)&task_lists::idle_task,
+                 (uint32_t)task_lists::idle_task);
+        if (task_lists::ready_list) {
+            dxprintf("schedule: ready_list size = %d\n", task_lists::ready_list->size());
         }
-        // 就绪队列空，运行空闲任务
-        current_task = &task_lists::idle_task;
-        return current_task;
+        if (!task_lists::ready_list->empty()) {
+            dprint("schedule: queue not empty\n");
+            tcb_type* next = task_lists::ready_list->front();
+            dxprintf("schedule: front() returned %p\n", (void*)next);
+            if (next) {
+                dxprintf("schedule: next->sp = 0x%x\n", next->sp);
+            }
+            task_lists::ready_list->pop_front();
+            current_task = next;
+            dxprintf("schedule: returning current_task %p\n", (void*)current_task);
+            return current_task;
+        } else {
+            dprint("schedule: queue empty\n");
+            tcb_type* ret = (current_task ? current_task : task_lists::idle_task);
+            dxprintf("schedule: returning %p (current_task=%p, idle=%p)\n",
+                     (void*)ret,
+                     (void*)current_task,
+                     (void*)task_lists::idle_task);
+            return ret;
+        }
     }
 
     /**
@@ -177,8 +216,8 @@ struct RoundRobinPolicy {
      */
     [[nodiscard]] static tcb_type* add_task(tcb_type* task) noexcept {
         if (!task) return nullptr;
-        if (task_lists::ready_list.full()) return nullptr;
-        task_lists::ready_list.push_back(task);
+        if (task_lists::ready_list->full()) return nullptr;
+        task_lists::ready_list->push_back(task);
         if (task->id < max_tasks) {
             time_left[task->id] = time_slice_ticks;
         }
@@ -214,8 +253,8 @@ struct RoundRobinPolicy {
     static void unblock_task(tcb_type* task) noexcept {
         if (task->state == kernel_types::task_state_type::Blocked) {
             task->state = kernel_types::task_state_type::Ready;
-            if (!task_lists::ready_list.full()) {
-                task_lists::ready_list.push_back(task);
+            if (!task_lists::ready_list->full()) {
+                task_lists::ready_list->push_back(task);
             }
         }
     }
@@ -245,7 +284,7 @@ struct RoundRobinPolicy {
      */
     static void tick() noexcept {
         if (!current_task) return;
-        if (current_task == &task_lists::idle_task) return; // 空闲任务不消耗时间片
+        if (current_task == task_lists::idle_task) return; // 空闲任务不消耗时间片
 
         if (time_left[current_task->id] > 0) {
             --time_left[current_task->id];
@@ -290,7 +329,7 @@ struct RoundRobinPolicy {
         (void)tcb;
     }
     [[nodiscard]] static tcb_type* get_idle_task() noexcept {
-        return &task_lists::idle_task;
+        return task_lists::idle_task;
     }
 
     // ----- 可选方法（统计信息）-----

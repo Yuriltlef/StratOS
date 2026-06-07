@@ -65,8 +65,6 @@ namespace strat_os::kernel::config
  * - task_id_type：uint16_t（支持最多 65535 个任务）
  * - task_state_size_type：uint8_t（任务状态枚举的底层存储类型）
  * - task_state_type：TaskState 枚举，包含 Ready、Running、Blocked、Suspended、Terminated 五个标准状态
- *
- * 用户可以直接使用此默认策略，或通过自定义策略类覆盖这些类型。
  */
 using DefaultKernelConfigPolicy = strat_os::kernel::policy::builtin::KernelTypesPolicy;
 

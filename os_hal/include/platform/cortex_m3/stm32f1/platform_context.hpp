@@ -42,6 +42,10 @@ struct CortexM3Stm32F1PlatformContextPolicy {
 
     /// 空基类占位符
     struct platform_context_type {};
+
+    static void save(platform_context_type* ctx) noexcept {}
+
+    static void restore(platform_context_type* ctx) noexcept {}
 };
 
 } // namespace strat_os::hal::policy::builtin

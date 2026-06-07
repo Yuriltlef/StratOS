@@ -75,6 +75,7 @@ target_include_directories(OS_INTERNAL_INC INTERFACE
 add_library(OS_INTERNAL_SRC OBJECT 
     ${OS_CMSIS_SRC}
     ${OS_STDPERIPH_DRIVER_SRC}
+    ${OS_PENDSV}
 )
 target_include_directories(OS_INTERNAL_SRC PRIVATE 
     ${OS_INC}

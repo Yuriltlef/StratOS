@@ -52,7 +52,8 @@ PendSV_Handler:
      *    此时 r0 指向保存完所有寄存器后的新栈顶地址。
      */
     stmdb   r0!, {r4-r11}
-
+    @ stmdb   r0!, {lr}
+    push    {lr}
     /**
      *    调用 C 函数保存当前任务状态
      *    参数：r0 = 当前任务栈顶指针（已包含 R4-R11 压栈后的值）
@@ -76,7 +77,9 @@ PendSV_Handler:
      *    然后 r0 自增指向栈顶之后的位置。
      *    随后将 r0 写入 PSP，使异常返回后任务使用正确的栈。
      */
+    pop     {lr}
     ldmia   r0!, {r4-r11}
+    @ ldmia   r0!, {lr}
     msr     psp, r0
 
     /**

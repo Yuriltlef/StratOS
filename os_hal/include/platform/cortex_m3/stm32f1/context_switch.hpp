@@ -30,7 +30,7 @@
 #include "core_cm3.h"  // for __get_IPSR(), __get_MSP, __set_MSP, etc.
 #include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
 #include <cstdint>     // for uint32_t
-
+#include "user/inc/debug.hpp"
 
 namespace
 {
@@ -60,6 +60,8 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      */
     inline static void trigger_pendsv() noexcept {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+        uint32_t icsr = SCB->ICSR;
+        dxprintf("ICSR = 0x%08X, PENDSVSET=%d\n", icsr, (icsr >> 28) & 1);
     }
 
     /**
@@ -79,6 +81,15 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      */
     [[nodiscard]] static word init_stack(void (*entry)(void*), void* arg, word top) noexcept {
         auto* sp = reinterpret_cast<word*>(top);
+        // 压入 R4-R11（8 个字，初始化为 0）
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
+        *(--sp) = 0;
 
         // 向下压入异常帧（顺序不可颠倒）
         *(--sp) = 0x01000000UL;                    // xPSR (Thumb 位)
@@ -90,8 +101,8 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
         *(--sp) = 0;                               // R1
         *(--sp) = reinterpret_cast<word>(arg);     // R0
 
-        // 返回新的栈顶地址（即当前 sp 指向 xPSR 的位置）
-        return reinterpret_cast<word>(sp);
+        // 返回 R4 的地址
+        return reinterpret_cast<word>(sp) - 32;
     }
 
     /**

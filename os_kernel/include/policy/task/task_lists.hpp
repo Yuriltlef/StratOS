@@ -27,7 +27,6 @@
 
 #pragma once
 
-#include <cstddef>
 #ifndef STRATOS_KERNEL_POLICY_TASK_LISTS_HPP
 #define STRATOS_KERNEL_POLICY_TASK_LISTS_HPP
 
@@ -37,6 +36,8 @@
 #include "os_kernel/include/core/memory/memory.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
+#include "user/inc/debug.hpp"
+#include <cstddef>
 
 namespace strat_os::kernel::policy::builtin::details
 {
@@ -61,8 +62,9 @@ namespace strat_os::kernel::policy::builtin::details
 template <typename KernelConfigPolicy,
           typename PlatformContextPolicy,
           typename UserTcbDataPolicy,
-          strat_os::config::MemoryLayoutType LayoutType = strat_os::config::MemoryLayoutType::StaticLayout,
-          std::uint32_t MaxTasks                        = 32>
+          strat_os::config::MemoryLayoutType LayoutType,
+          std::uint32_t MaxTasks,
+          std::uint32_t IdleTaskStackSize>
 struct TaskLists {
     // ========================= 类型别名 =========================
     /// 任务控制块类型（完整 TCB）
@@ -91,7 +93,7 @@ struct TaskLists {
      */
     struct tcb_node {
         using size_type  = task_id_type; ///< 索引类型（用于 prev/next）
-        using value_type = tcb*;          ///< 存储的数据类型
+        using value_type = tcb*;         ///< 存储的数据类型
 
         value_type data{}; ///< 实际的任务控制块指针
         size_type prev{};  ///< 前驱节点索引（`npos` 表示无前驱）
@@ -113,18 +115,6 @@ struct TaskLists {
     using ready_list_type = mu_sstl::IntrusiveList<ready_list_alloc_policy>;
 
     /**
-     * @brief 就绪队列控制块的内存指针（从内核池分配）
-     *
-     * `kernel_pool::allocate` 返回一块未初始化的内存，大小足够容纳一个 `ready_list_type` 对象。
-     * 该内存用于 placement new 构造队列实例。
-     *
-     * @note 此处仅分配队列控制块（元数据：头尾指针、计数等），节点池已由 `ready_list_alloc_policy`
-     *       在编译期静态分配，不占用此内存。
-     */
-    static inline ready_list_type* ready_list_mem =
-        reinterpret_cast<ready_list_type*>(kernel_pool::allocate(sizeof(ready_list_type)));
-
-    /**
      * @brief 全局就绪队列实例（引用）
      *
      * 通过 placement new 在 `ready_list_mem` 指向的内存上构造 `ready_list_type` 对象。
@@ -135,13 +125,39 @@ struct TaskLists {
      *          如果内核池需要显式初始化，请确保在访问 `ready_list` 之前完成初始化，
      *          或推迟队列的构造到 `SchedulerPolicy::init()` 中。
      */
-    inline static ready_list_type& ready_list    = *(new (ready_list_mem) ready_list_type());
+inline static ready_list_type* ready_list    = nullptr;
 
-    static inline tcb* idle_task_mem             = reinterpret_cast<tcb*>(kernel_pool::allocate(sizeof(tcb)));
+    inline static tcb* idle_task                 = nullptr;
 
-    inline static tcb& idle_task                 = *(new (idle_task_mem) tcb());
+    constexpr static std::size_t idle_task_stack = IdleTaskStackSize;
 
-    constexpr static std::size_t idle_task_stack = 128;
+    static void init() {
+        dxprintf("TaskLists::init(): kernel_pool size = %u, base = 0x%x\n",
+                 (unsigned int)kernel_pool::Policy::size,
+                 (unsigned int)kernel_pool::Policy::base);
+
+        // 分配就绪队列控制块
+        void* mem = kernel_pool::allocate(sizeof(ready_list_type));
+        dxprintf("Allocated ready_list control block: 0x%x\n", (unsigned int)mem);
+        if (!mem) {
+            dprint("ERROR: Failed to allocate ready_list\n");
+            while (1) {}
+        }
+        ready_list = reinterpret_cast<ready_list_type*>(mem);
+        new (ready_list) ready_list_type();
+        dprint("ready_list constructed.\n");
+
+        // 分配空闲任务 TCB
+        mem = kernel_pool::allocate(sizeof(tcb));
+        dxprintf("Allocated idle_task TCB: 0x%x\n", (unsigned int)mem);
+        if (!mem) {
+            dprint("ERROR: Failed to allocate idle_task\n");
+            while (1) {}
+        }
+        idle_task = reinterpret_cast<tcb*>(mem);
+        new (idle_task) tcb();
+        dprint("idle_task constructed.\n");
+    }
 };
 
 } // namespace strat_os::kernel::policy::builtin::details
