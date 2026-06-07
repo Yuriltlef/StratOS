@@ -97,8 +97,10 @@ int main() {
     auto ____ = teststs::ready_list.capacity;
     auto ___  = sizeof(teststs::ready_list);
 
-    volatile MyTcb myTcb(nullptr, nullptr, 0x11, 10);
-    myTcb.sp                 = static_cast<MyTcb::sp_type>(0x20000000);
+    MyTcb myTcb(nullptr, nullptr, 0x11, 10);
+    myTcb.sp = static_cast<MyTcb::sp_type>(0x20000000);
+
+    teststs::ready_list.push_back(&myTcb);
 
     myTcb.state              = MyTcb::task_state_type::Blocked;
 

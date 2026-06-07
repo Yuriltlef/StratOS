@@ -27,17 +27,19 @@
 #ifndef STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_CONTEXT_SWITCH_HPP
 #define STRATOS_HAL_POLICY_CORTEX_M3_STM32F1XX_CONTEXT_SWITCH_HPP
 
-#include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
 #include "core_cm3.h"  // for __get_IPSR(), __get_MSP, __set_MSP, etc.
+#include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
 #include <cstdint>     // for uint32_t
+
 
 namespace
 {
 ///@warning 仅用于避免 clangd 对未使用 stm32f10x.h 的警告（实际不使用）
 using IQRN_TYPE_KEEP_FOR_NO_CLANGD_WARNING_AND_CMSIS = ::IRQn_Type;
-};
+}; // namespace
 
-namespace strat_os::hal::policy::builtin {
+namespace strat_os::hal::policy::builtin
+{
 
 /**
  * @brief Cortex-M3 上下文切换内置策略
@@ -58,6 +60,38 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      */
     inline static void trigger_pendsv() noexcept {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
+    }
+
+    /**
+     * @brief 初始化任务栈，构造异常返回所需的栈帧
+     * @param entry 任务入口函数指针
+     * @param arg   传递给入口函数的参数（通常是任务对象指针）
+     * @param top   初始栈顶地址（高地址）
+     * @return      构造完栈帧后的新栈顶地址（仍为高地址）
+     *
+     * @note 构造的异常帧格式（从高地址到低地址）：
+     *       - xPSR (Thumb 位必须为 1)
+     *       - PC (entry)
+     *       - LR (返回地址，设为 nullptr)
+     *       - R12, R3, R2, R1 (清零)
+     *       - R0 (arg)
+     *       栈帧共 8 个字（32 字节），8 字节对齐。
+     */
+    [[nodiscard]] static word init_stack(void (*entry)(void*), void* arg, word top) noexcept {
+        auto* sp = reinterpret_cast<word*>(top);
+
+        // 向下压入异常帧（顺序不可颠倒）
+        *(--sp) = 0x01000000UL;                    // xPSR (Thumb 位)
+        *(--sp) = reinterpret_cast<word>(entry);   // PC
+        *(--sp) = reinterpret_cast<word>(nullptr); // LR (任务正常不会返回)
+        *(--sp) = 0;                               // R12
+        *(--sp) = 0;                               // R3
+        *(--sp) = 0;                               // R2
+        *(--sp) = 0;                               // R1
+        *(--sp) = reinterpret_cast<word>(arg);     // R0
+
+        // 返回新的栈顶地址（即当前 sp 指向 xPSR 的位置）
+        return reinterpret_cast<word>(sp);
     }
 
     /**

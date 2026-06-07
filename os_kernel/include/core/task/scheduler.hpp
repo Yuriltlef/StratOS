@@ -39,7 +39,7 @@
  *   且解锁次数需与锁定次数匹配，以防止调度器意外解锁。
  *
  * @attention
- * - 策略类的 `add_task` 接受 `const tcb_type&` 并返回持久化 TCB 指针（失败返回 nullptr）。
+ * - 策略类的 `add_task` 接受 `tcb_type*` 并返回持久化 TCB 指针（失败返回 nullptr）。
  * - `remove_task` 接受 `tcb_type*` 并从就绪队列中移除。
  * - `schedule()` 返回下一个要运行的任务的 TCB 指针（不可为 nullptr，若无任务则返回空闲任务）。
  * - `block_current` 和 `unblock_task` 必须与同步原语（信号量、事件标志等）协同工作，
@@ -97,13 +97,13 @@ template <typename T>
 static constexpr bool has_schedule_method_v = has_schedule_method<T>::value;
 
 /**
- * @brief 检测静态方法 add_task(const tcb_type&) -> tcb_type*
+ * @brief 检测静态方法 add_task(tcb_type*) -> tcb_type*
  */
 template <typename T, typename = void>
 struct has_add_task_method : std::false_type {};
 template <typename T>
-struct has_add_task_method<T, std::void_t<decltype(T::add_task(std::declval<const typename T::tcb_type&>()))>>
-    : std::is_same<decltype(T::add_task(std::declval<const typename T::tcb_type&>())), typename T::tcb_type*> {};
+struct has_add_task_method<T, std::void_t<decltype(T::add_task(std::declval<typename T::tcb_type*>()))>>
+    : std::is_same<decltype(T::add_task(std::declval<typename T::tcb_type*>())), typename T::tcb_type*> {};
 template <typename T>
 static constexpr bool has_add_task_method_v = has_add_task_method<T>::value;
 
@@ -452,7 +452,7 @@ struct Scheduler {
      * @param task 对 TCB 的常量引用（临时对象）
      * @return 指向就绪队列中持久化 TCB 对象的指针，失败返回 nullptr
      */
-    [[nodiscard]] inline static tcb_type* add_task(const tcb_type& task) noexcept {
+    [[nodiscard]] inline static tcb_type* add_task(tcb_type* task) noexcept {
         return Policy::add_task(task);
     }
 

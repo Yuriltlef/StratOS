@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <cstddef>
 #ifndef STRATOS_KERNEL_POLICY_TASK_LISTS_HPP
 #define STRATOS_KERNEL_POLICY_TASK_LISTS_HPP
 
@@ -90,9 +91,9 @@ struct TaskLists {
      */
     struct tcb_node {
         using size_type  = task_id_type; ///< 索引类型（用于 prev/next）
-        using value_type = tcb;          ///< 存储的数据类型
+        using value_type = tcb*;          ///< 存储的数据类型
 
-        value_type data{}; ///< 实际的任务控制块
+        value_type data{}; ///< 实际的任务控制块指针
         size_type prev{};  ///< 前驱节点索引（`npos` 表示无前驱）
         size_type next{};  ///< 后继节点索引
 
@@ -134,7 +135,13 @@ struct TaskLists {
      *          如果内核池需要显式初始化，请确保在访问 `ready_list` 之前完成初始化，
      *          或推迟队列的构造到 `SchedulerPolicy::init()` 中。
      */
-    inline static ready_list_type& ready_list = *(new (ready_list_mem) ready_list_type());
+    inline static ready_list_type& ready_list    = *(new (ready_list_mem) ready_list_type());
+
+    static inline tcb* idle_task_mem             = reinterpret_cast<tcb*>(kernel_pool::allocate(sizeof(tcb)));
+
+    inline static tcb& idle_task                 = *(new (idle_task_mem) tcb());
+
+    constexpr static std::size_t idle_task_stack = 128;
 };
 
 } // namespace strat_os::kernel::policy::builtin::details

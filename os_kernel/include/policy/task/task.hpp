@@ -28,6 +28,9 @@
 #ifndef STRATOS_POLICY_KERNEL_TASK_HPP
 #define STRATOS_POLICY_KERNEL_TASK_HPP
 
+#include "os_config/include/memory_layout_type.hpp"
+#include "os_hal/include/context_switch.hpp"
+#include "os_hal/include/system_control.hpp"
 #include "os_kernel/include/core/task/scheduler.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
@@ -57,7 +60,11 @@ namespace strat_os::kernel::policy::builtin
 template <typename KernelConfigPolicy,
           typename PlatformContextPolicy,
           typename UserTcbDataPolicy,
-          typename SchedulerPolicy>
+          typename SchedulerPolicy,
+          typename SystemPolicy,
+          typename ContextSwitchPolicy,
+          strat_os::config::MemoryLayoutType LayoutType = strat_os::config::MemoryLayoutType::StaticLayout,
+          std::uint32_t MaxTasks                        = 32>
 struct TaskPolicy {
     // ==================== 类型别名 ====================
     /// 任务列表数据结构（包含就绪队列和栈分配器）
@@ -89,10 +96,37 @@ struct TaskPolicy {
     /// 任务状态枚举类型
     using task_state_type = typename kernel_types::task_state_type;
 
+    using sys_ctrl        = strat_os::hal::SystemControl<SystemPolicy>;
+    using ctx_switch      = strat_os::hal::ContextSwitch<ContextSwitchPolicy>;
+
     /// id计数器
     inline static task_id_type tid{};
 
+    static void idle(void*) {
+        while (true) {
+            sys_ctrl::sleep();
+        }
+    }
+
     // ==================== 必需方法 ====================
+
+    /**
+     * @brief 初始化任务管理器，创建 idle 任务并设置调度器的空闲任务
+     */
+    inline static void init() noexcept {
+        void* stack_mem = task_lists::user_stack::allocate(task_lists::idle_task_stack);
+        if (!stack_mem) {
+            return; /// 错误处理
+        }
+        task_lists::idle_task.task     = nullptr;
+        task_lists::idle_task.entry    = idle;
+        task_lists::idle_task.id       = -1;
+        task_lists::idle_task.priority = 0;
+        task_lists::idle_task.state    = tcb_type::task_state_type::Ready;
+        task_lists::idle_task.sp       = ctx_switch::init_stack(task_lists::idle_task.entry,
+                                                                task_lists::idle_task.task,
+                                                                reinterpret_cast<std::uintptr_t>(stack_mem));
+    }
 
     /**
      * @brief 创建一个新任务并将其加入就绪队列
@@ -124,13 +158,21 @@ struct TaskPolicy {
         }
         std::uintptr_t stack_top = reinterpret_cast<std::uintptr_t>(stack_mem);
 
-        // 构造临时 TCB 对象（使用当前就绪队列长度作为临时 ID）
-        tcb_type new_tcb(entry, task_obj, prio, tid);
-        new_tcb.state = tcb_type::task_state_type::Ready;
-        new_tcb.sp    = stack_top; // 直接赋值栈顶地址
+        // 初始化栈帧
+        stack_top = ctx_switch::init_stack(entry, task_obj, stack_top);
+
+        // 分配tcb空间
+        void* tcb_mem = task_lists::kernel_pool::allocate(sizeof(tcb_type));
+        if (!tcb_mem) {
+            return nullptr;
+        }
+        // 构造 TCB 对象
+        tcb_type* new_tcb = new (tcb_mem) tcb_type(entry, task_obj, prio, tid);
+        new_tcb->state    = tcb_type::task_state_type::Ready;
+        new_tcb->sp       = stack_top;
         tid++;
 
-        // 将 TCB 加入就绪队列，返回链表尾部元素的地址（即持久 TCB 指针）
+        // 将 TCB 加入就绪队列，返回持久 TCB 指针
         return scheduler::add_task(new_tcb);
     }
 
