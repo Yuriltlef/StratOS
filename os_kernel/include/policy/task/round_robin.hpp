@@ -123,7 +123,9 @@ struct RoundRobinPolicy {
      */
     static void init() noexcept {
         dprint("init RoundRobin...\n");
-        dxprintf("RoundRobin task_lists ptr: 0x%x, &ptr= 0x%x\n", (uint32_t*)task_lists::ready_list, (uint32_t*)&task_lists::ready_list);
+        dxprintf("RoundRobin task_lists ptr: 0x%x, &ptr= 0x%x\n",
+                 (uint32_t*)task_lists::ready_list,
+                 (uint32_t*)&task_lists::ready_list);
         void* mem = task_lists::kernel_pool::allocate(sizeof(tick_type) * max_tasks);
         time_left = reinterpret_cast<tick_type*>(mem);
         for (std::size_t i = 0; i < max_tasks; ++i)
@@ -142,23 +144,25 @@ struct RoundRobinPolicy {
         dxprintf("ready_list len: %d\n", task_lists::ready_list->size());
         if (!task_lists::ready_list->empty()) {
             tcb_type* first = task_lists::ready_list->front();
+            dxprintf("start: front TCB=%x, sp=0x%x\n", first, first->sp);
             task_lists::ready_list->pop_front();
             current_task = first;
-            ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp));
+            dxprintf("Before set_psp, current_task->sp=0x%x, psp_value=0x%x\n", 
+                 current_task->sp, current_task->sp + 32);
+            ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp) + 32);
         } else {
             // 没有用户任务，使用空闲任务
             current_task = task_lists::idle_task;
-            ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp));
+            ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp) + 32);
         }
-        dprint("Scheduler start: setting up SysTick\n");
+        dprint("set psp done.\n");
         // 使能系统节拍定时器（注意：时钟源参数需根据实际策略定义）
         sys_tick::init(time_slice_ticks, sys_tick::clock_source_type::AHBClock);
         sys_tick::enable_irq();
         sys_tick::enable();
-        dprint("Scheduler start: setting up SysTick success\n");
         // 触发第一次 PendSV（此时 PSP 已正确设置）
+        dprint("trigger_pendsv...\n");
         ctx_switch::trigger_pendsv();
-        dprint("PendSV triggered\n");
     }
 
     /**
@@ -177,30 +181,24 @@ struct RoundRobinPolicy {
      */
     [[nodiscard]] static tcb_type* schedule() noexcept {
         dprint("schedule: enter\n");
-        dxprintf("schedule: &ready_list = %x, ready_list = %x\n",
-                 (uint32_t)&task_lists::ready_list,
-                 (uint32_t)task_lists::ready_list);
-        dxprintf("schedule: &idle_task = %x, idle_task = %x\n",
-                 (uint32_t)&task_lists::idle_task,
-                 (uint32_t)task_lists::idle_task);
         if (task_lists::ready_list) {
             dxprintf("schedule: ready_list size = %d\n", task_lists::ready_list->size());
         }
         if (!task_lists::ready_list->empty()) {
             dprint("schedule: queue not empty\n");
             tcb_type* next = task_lists::ready_list->front();
-            dxprintf("schedule: front() returned %p\n", (void*)next);
+            dxprintf("schedule front: next=%x, next->sp=0x%x\n", next, next->sp);
             if (next) {
                 dxprintf("schedule: next->sp = 0x%x\n", next->sp);
             }
             task_lists::ready_list->pop_front();
+            dxprintf("after pop_front: next->sp=0x%x\n", next->sp);
             current_task = next;
-            dxprintf("schedule: returning current_task %p\n", (void*)current_task);
             return current_task;
         } else {
             dprint("schedule: queue empty\n");
             tcb_type* ret = (current_task ? current_task : task_lists::idle_task);
-            dxprintf("schedule: returning %p (current_task=%p, idle=%p)\n",
+            dxprintf("schedule: returning %x (current_task=%x, idle=%x)\n",
                      (void*)ret,
                      (void*)current_task,
                      (void*)task_lists::idle_task);
@@ -215,12 +213,14 @@ struct RoundRobinPolicy {
      * @note 同时初始化该任务的剩余时间片为默认值。
      */
     [[nodiscard]] static tcb_type* add_task(tcb_type* task) noexcept {
+        dxprintf("add_task: task=%x, task->sp=0x%x\n", task, task->sp);
         if (!task) return nullptr;
         if (task_lists::ready_list->full()) return nullptr;
         task_lists::ready_list->push_back(task);
         if (task->id < max_tasks) {
             time_left[task->id] = time_slice_ticks;
         }
+        dxprintf("after push_back: task->sp=0x%x\n", task->sp);
         return task;
     }
 

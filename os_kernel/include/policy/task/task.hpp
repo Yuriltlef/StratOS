@@ -182,11 +182,12 @@ struct TaskPolicy {
         if (!stack_mem) {
             return nullptr;
         }
+        dxprintf("alloc stack_mem: 0x%x\n", (uint32_t)stack_mem);
         std::uintptr_t stack_top = reinterpret_cast<std::uintptr_t>(stack_mem);
-
+        dxprintf("before init_stack: stack_top=0x%x\n", stack_top);
         // 初始化栈帧
         stack_top = ctx_switch::init_stack(entry, task_obj, stack_top);
-
+        dxprintf("after init_stack: stack_top=0x%x\n", stack_top);
         // 分配tcb空间
         void* tcb_mem = task_lists::kernel_pool::allocate(sizeof(tcb_type));
         if (!tcb_mem) {
@@ -197,7 +198,12 @@ struct TaskPolicy {
         new_tcb->state    = tcb_type::task_state_type::Ready;
         new_tcb->sp       = stack_top;
         tid++;
-
+        dxprintf("new_tcb->sp=0x%x\n", new_tcb->sp);
+        dxprintf("create_task: entry = %x, task_obj = %x, prio = %x, stack_size = %x\n",
+                 (uint32_t)entry,
+                 (uint32_t)task_obj,
+                 (uint32_t)prio,
+                 (uint32_t)stack_size);
         // 将 TCB 加入就绪队列，返回持久 TCB 指针
         return scheduler::add_task(new_tcb);
     }

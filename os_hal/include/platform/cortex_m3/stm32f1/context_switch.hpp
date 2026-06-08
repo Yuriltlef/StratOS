@@ -29,8 +29,9 @@
 
 #include "core_cm3.h"  // for __get_IPSR(), __get_MSP, __set_MSP, etc.
 #include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
-#include <cstdint>     // for uint32_t
 #include "user/inc/debug.hpp"
+#include <cstdint> // for uint32_t
+
 
 namespace
 {
@@ -60,8 +61,6 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      */
     inline static void trigger_pendsv() noexcept {
         SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
-        uint32_t icsr = SCB->ICSR;
-        dxprintf("ICSR = 0x%08X, PENDSVSET=%d\n", icsr, (icsr >> 28) & 1);
     }
 
     /**
@@ -80,29 +79,29 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      *       栈帧共 8 个字（32 字节），8 字节对齐。
      */
     [[nodiscard]] static word init_stack(void (*entry)(void*), void* arg, word top) noexcept {
-        auto* sp = reinterpret_cast<word*>(top);
-        // 压入 R4-R11（8 个字，初始化为 0）
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-        *(--sp) = 0;
-
-        // 向下压入异常帧（顺序不可颠倒）
-        *(--sp) = 0x01000000UL;                    // xPSR (Thumb 位)
+        word* sp = reinterpret_cast<word*>(top);
+        // 1. 压入异常帧（8 字）
+        *(--sp) = 0x01000000UL;                    // xPSR
         *(--sp) = reinterpret_cast<word>(entry);   // PC
-        *(--sp) = reinterpret_cast<word>(nullptr); // LR (任务正常不会返回)
+        *(--sp) = reinterpret_cast<word>(nullptr); // LR
         *(--sp) = 0;                               // R12
         *(--sp) = 0;                               // R3
         *(--sp) = 0;                               // R2
         *(--sp) = 0;                               // R1
         *(--sp) = reinterpret_cast<word>(arg);     // R0
 
-        // 返回 R4 的地址
-        return reinterpret_cast<word>(sp) - 32;
+        // 2. 压入 R4-R11（8 字）
+        *(--sp) = 0; // R4
+        *(--sp) = 0; // R5
+        *(--sp) = 0; // R6
+        *(--sp) = 0; // R7
+        *(--sp) = 0; // R8
+        *(--sp) = 0; // R9
+        *(--sp) = 0; // R10
+        *(--sp) = 0; // R11
+
+        // 返回 R11 地址
+        return reinterpret_cast<word>(sp);
     }
 
     /**
@@ -142,7 +141,7 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      * @note 设置 CONTROL 寄存器的第 0 位，并执行 ISB 指令同步。
      */
     inline static void switch_to_unprivileged() noexcept {
-        __set_CONTROL(__get_CONTROL() | 0x1);
+        __set_CONTROL(__get_CONTROL() | 0x3);
         __ISB();
     }
 
