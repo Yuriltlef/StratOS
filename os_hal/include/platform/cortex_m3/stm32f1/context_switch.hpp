@@ -32,7 +32,6 @@
 #include "user/inc/debug.hpp"
 #include <cstdint> // for uint32_t
 
-
 namespace
 {
 ///@warning 仅用于避免 clangd 对未使用 stm32f10x.h 的警告（实际不使用）
@@ -89,21 +88,18 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
         *(--sp) = 0;                               // R2
         *(--sp) = 0;                               // R1
         *(--sp) = reinterpret_cast<word>(arg);     // R0
-
-        // 2. 压入 R4-R11（8 字）
-        *(--sp) = 0; // R4
-        *(--sp) = 0; // R5
-        *(--sp) = 0; // R6
-        *(--sp) = 0; // R7
-        *(--sp) = 0; // R8
-        *(--sp) = 0; // R9
-        *(--sp) = 0; // R10
+        // 2. 逆序压入 R4-R11（先 R11，最后 R4）
         *(--sp) = 0; // R11
-
-        // 返回 R11 地址
+        *(--sp) = 0; // R10
+        *(--sp) = 0; // R9
+        *(--sp) = 0; // R8
+        *(--sp) = 0; // R7
+        *(--sp) = 0; // R6
+        *(--sp) = 0; // R5
+        *(--sp) = 0; // R4
+        // 返回 R4 地址（当前 sp 指向 R4）
         return reinterpret_cast<word>(sp);
     }
-
     /**
      * @brief 设置进程栈指针（PSP）
      * @param psp 栈指针值
@@ -141,7 +137,7 @@ struct CortexM3Stm32F1ContextSwitchPolicy {
      * @note 设置 CONTROL 寄存器的第 0 位，并执行 ISB 指令同步。
      */
     inline static void switch_to_unprivileged() noexcept {
-        __set_CONTROL(__get_CONTROL() | 0x3);
+        __set_CONTROL(__get_CONTROL() | 0x1);
         __ISB();
     }
 

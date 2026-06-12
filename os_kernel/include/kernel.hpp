@@ -104,6 +104,7 @@ struct Kernel {
      * @note 必须在创建任何任务之前调用。
      */
     static void init() noexcept {
+        InterruptControllerPolicy::set_priority(InterruptControllerPolicy::IRQn_Type::PendSV_IRQn, 15);
         task::init();      // 初始化任务管理器（创建空闲任务）
         scheduler::init(); // 初始化调度器
     }

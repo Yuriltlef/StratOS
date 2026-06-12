@@ -105,8 +105,9 @@ class LedOffTask {
     void operator()() {
         while (true) {
             GPIO_SetBits(GPIOC, GPIO_Pin_13); // 高电平，LED 灭
-            // 主动让出 CPU，但不使用延时，依赖时间片自动切换
-            // 由于两个任务优先级相同且时间片轮转，调度器会自动切换任务
+                                              // 主动让出 CPU，但不使用延时，依赖时间片自动切换
+                                              // 由于两个任务优先级相同且时间片轮转，调度器会自动切换任务
+            dprint("I am task1!\n");
         }
     }
 };
@@ -117,6 +118,7 @@ class LedOnTask {
     void operator()() {
         while (true) {
             GPIO_ResetBits(GPIOC, GPIO_Pin_13); // 低电平，LED 亮
+            dprint("I am task2!\n");
         }
     }
 };
@@ -150,12 +152,9 @@ int main() {
     kernel::init();
     dprint("init success!\n");
 
-    GPIO_ResetBits(GPIOC, GPIO_Pin_13); // 低电平，LED 亮
-
     // 创建两个任务，优先级相同（例如 1），栈大小各 256 字节
-
     dprint("creat task1...\n");
-    auto tcb1 = kernel::create_task(on_task, 1, 1024);
+    auto* tcb1 = kernel::create_task(on_task, 1, 1024);
     dprint("creat task1 success!\n");
     dxprintf("Task1: TCB=0x%x, sp=0x%x\n", tcb1, tcb1->sp);
 
@@ -167,7 +166,6 @@ int main() {
     // 启动调度器（时间片轮转调度器会根据配置的时间片自动切换任务）
     dprint("start...\n");
     kernel::start();
-
-    // 不会执行到这里
+    dprint("error: main\n");
     while (1) {};
 }

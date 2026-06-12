@@ -77,6 +77,7 @@ PendSV_Handler:
      *    随后将 r0 写入 PSP，使异常返回后任务使用正确的栈。
      */
     pop     {lr}
+    mov     lr , #0xFFFFFFFD
     ldmia   r0!, {r4-r11}
     msr     psp, r0
 
