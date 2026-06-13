@@ -212,7 +212,7 @@ struct PlatformContext {
      * @param ctx 指向平台上下文结构体的指针
      * @note 仅当策略支持平台上下文时可用
      */
-    template <typename P = Policy, typename = std::enable_if_t<P::supports_platform_context>>
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_save_method_v<P>>>
     inline static void save(platform_context_type* ctx) noexcept {
         P::save(ctx);
     }
@@ -222,7 +222,7 @@ struct PlatformContext {
      * @param ctx 指向平台上下文结构体的指针（只读）
      * @note 仅当策略支持平台上下文时可用
      */
-    template <typename P = Policy, typename = std::enable_if_t<P::supports_platform_context>>
+    template <typename P = Policy, typename = std::enable_if_t<traits::has_restore_method_v<P>>>
     inline static void restore(const platform_context_type* ctx) noexcept {
         P::restore(ctx);
     }

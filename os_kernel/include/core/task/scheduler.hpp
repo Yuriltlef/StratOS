@@ -56,6 +56,7 @@
 
 #include "os_kernel/include/core/common_traits.hpp" // for has_init, has_init_v
 #include "os_kernel/include/core/types.hpp"         // for KernelTypes
+#include "os_hal/include/platform_context.hpp"      // for PlatformContext
 #include <type_traits>                              // for false_type, true_type, void_t, is_same
 #include <utility>                                  // for declval
 
@@ -379,6 +380,8 @@ struct Scheduler {
     using kernel_types_policy = typename Policy::kernel_types_policy;
     /// 平台上下文策略别名
     using platform_context_policy = typename Policy::platform_context_policy;
+    /// 平台上下文
+    using platform_context = strat_os::hal::PlatformContext<platform_context_policy>;
     /// 用户 TCB 策略别名
     using user_tcb_policy = typename Policy::user_tcb_policy;
     /// TCB 类型别名
