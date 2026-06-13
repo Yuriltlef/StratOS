@@ -2,8 +2,8 @@
  * @file context_switch.hpp
  * @author StratOS Team
  * @brief 上下文切换策略接口与适配器
- * @version 1.0.0
- * @date 2026-03-28
+ * @version 1.1.0
+ * @date 2026-06-07
  *
  * @copyright Copyright (c) 2026 StratOS
  *
@@ -13,9 +13,6 @@
  * 内存屏障等）封装为策略类，并通过类型萃取在编译期验证策略的完整性，
  * 最终通过适配器模板提供统一的静态接口供 RTOS 内核使用。
  *
- * 该设计使得内核代码与平台完全解耦，同时保持零开销抽象：所有方法均为
- * 内联且 noexcept，在编译期直接展开为底层硬件指令。
- *
  * 主要组件：
  * - traits 命名空间：提供一系列类型萃取，用于检测策略类是否满足接口约定。
  * - ContextSwitch 适配器模板：接收一个策略类，进行编译期验证，并转发所有操作。
@@ -23,8 +20,9 @@
  *   通过 SFINAE 自动提供相应重载，避免代码膨胀。
  *
  * @note 策略类必须提供 word 类型别名（无符号整数，大小等于指针），
- *       以及所有必需静态方法（trigger_pendsv、set_psp、get_psp、set_msp、
- *       get_msp、switch_to_unprivileged、switch_to_privileged、dmb、dsb、isb）。
+ *       以及所有必需静态方法（trigger_pendsv、init_stack、set_psp、get_psp、
+ *       set_msp、get_msp、switch_to_unprivileged、switch_to_privileged、
+ *       dmb、dsb、isb）。
  *       可选方法（get_current_exception、core_id、send_ipi）可根据硬件能力选择性实现。
  *
  * @warning 所有方法均假设在特权模式下调用，且调用前已确保当前上下文合法。
@@ -71,6 +69,37 @@ template <typename T>
 struct has_trigger_pendsv_method<T, std::void_t<decltype(T::trigger_pendsv())>> : std::true_type {};
 template <typename T>
 static constexpr bool has_trigger_pendsv_method_v = has_trigger_pendsv_method<T>::value;
+
+/**
+ * @brief 检测静态方法 init_stack(void (*)(void*), void*, word) -> word
+ */
+template <typename T, typename = void>
+struct has_init_stack_method : std::false_type {};
+template <typename T>
+struct has_init_stack_method<T,
+                             std::void_t<decltype(T::init_stack(std::declval<void (*)(void*)>(),
+                                                                std::declval<void*>(),
+                                                                std::declval<typename T::word>()))>> : std::true_type {
+};
+template <typename T>
+static constexpr bool has_init_stack_method_v = has_init_stack_method<T>::value;
+
+/**
+ * @brief 检测 init_stack 返回类型是否为 word
+ */
+template <typename T, typename = void>
+struct is_correct_init_stack_return_type : std::false_type {};
+template <typename T>
+struct is_correct_init_stack_return_type<T,
+                                         std::void_t<decltype(T::init_stack(std::declval<void (*)(void*)>(),
+                                                                            std::declval<void*>(),
+                                                                            std::declval<typename T::word>()))>>
+    : std::is_same<decltype(T::init_stack(std::declval<void (*)(void*)>(),
+                                          std::declval<void*>(),
+                                          std::declval<typename T::word>())),
+                   typename T::word> {};
+template <typename T>
+static constexpr bool is_correct_init_stack_return_type_v = is_correct_init_stack_return_type<T>::value;
 
 /**
  * @brief 检测静态方法 set_psp(word)
@@ -230,6 +259,8 @@ template <typename T>
 struct is_valid_context_switch_policy : std::conjunction<has_word_type<T>,
                                                          is_valid_word_type<typename T::word>,
                                                          has_trigger_pendsv_method<T>,
+                                                         has_init_stack_method<T>,
+                                                         is_correct_init_stack_return_type<T>,
                                                          has_set_psp_method<T>,
                                                          has_get_psp_method<T>,
                                                          has_set_msp_method<T>,
@@ -299,6 +330,10 @@ struct ContextSwitch {
     static_assert(traits::is_valid_word_type_v<typename Policy::word>,
                   "word must be an unsigned integer of pointer size");
     static_assert(traits::has_trigger_pendsv_method_v<Policy>, "ContextSwitch policy must provide trigger_pendsv()");
+    static_assert(traits::has_init_stack_method_v<Policy>,
+                  "ContextSwitch policy must provide init_stack(entry, arg, top) returning word");
+    static_assert(traits::is_correct_init_stack_return_type_v<Policy>,
+                  "ContextSwitch policy's init_stack() must return word");
     static_assert(traits::has_set_psp_method_v<Policy>, "ContextSwitch policy must provide set_psp(word)");
     static_assert(traits::has_get_psp_method_v<Policy>, "ContextSwitch policy must provide get_psp()");
     static_assert(traits::has_set_msp_method_v<Policy>, "ContextSwitch policy must provide set_msp(word)");
@@ -326,6 +361,20 @@ struct ContextSwitch {
      */
     inline static void trigger_pendsv() noexcept {
         Policy::trigger_pendsv();
+    }
+
+    /**
+     * @brief 初始化任务栈，构造异常帧栈
+     * @param entry 任务入口点
+     * @param arg   传递给入口函数的对象指针，一般是任务对象
+     * @param top   要初始化的栈顶地址（初始栈顶，高地址）
+     * @return      初始化完毕后的栈顶地址（调整后仍为高地址）
+     *
+     * @details 该函数会在给定的栈顶向下填充异常返回所需的寄存器初始值，
+     *          并返回新的栈顶地址（写入异常帧之后的位置），供 TCB 的 sp 字段使用。
+     */
+    [[nodiscard]] inline static word init_stack(void (*entry)(void*), void* arg, word top) noexcept {
+        return Policy::init_stack(entry, arg, top);
     }
 
     /**

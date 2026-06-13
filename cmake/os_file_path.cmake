@@ -21,11 +21,15 @@
 
 # ====================== 链接脚本 ======================
 set(OS_LD_SCRIPT 
-    "${CMAKE_SOURCE_DIR}/os_linker/stm32_f10x/STM32F103md_FLASH.ld"
+    "${CMAKE_SOURCE_DIR}/os_linker/stm32_f10x/STM32F103md_static.ld"
 )
 # ====================== 启动文件 ======================
 set(OS_STARTUP
     "${CMAKE_SOURCE_DIR}/os_boost/stm32_f10x/startup_stm32f10x_md.s"
+)
+# ====================== PendSV 文件 ======================
+set(OS_PENDSV
+    "${CMAKE_SOURCE_DIR}/os_hal/include/platform/cortex_m3/stm32f1/pend_sv_handler.s"
 )
 # ====================== StratOS系统目录 ======================
 set(OS_INC
@@ -33,6 +37,7 @@ set(OS_INC
     "${CMAKE_SOURCE_DIR}/os_hal/include/"
     "${CMAKE_SOURCE_DIR}/os_kernel/include/"
     "${CMAKE_SOURCE_DIR}/os_service/"
+    "${CMAKE_SOURCE_DIR}/os_config/include/"
 )
 # ====================== CMSIS 内核文件 ======================
 file(GLOB_RECURSE OS_CMSIS_SRC

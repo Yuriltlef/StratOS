@@ -1,0 +1,16 @@
+{
+    "name": "StratOS-HAL-Adapter",
+    "version": "1.0.0",
+    "type": "adapter",
+    "description": "Adapter for StratOS HAL",
+    "license": "Apache-2.0",
+    "author": "StratOS Team",
+    "target": {
+        "arch": ["generic"],
+        "vendor": null
+    },
+    "dependencies": {},
+    "provides": ["StratOS-HAL-Layer"],
+    "keywords": ["hal", "adapter"],
+    "repository": "https://github.com/stratos-org/interrupt-adapter"
+}

@@ -1,0 +1,22 @@
+{
+    "name": "StratOS-Cortex-M3-HAL-Policy",
+    "version": "1.0.0",
+    "type": "policy",
+    "description": "Cortex-M3 HAL policy for StratOS by StratOS Team",
+    "license": "MIT",
+    "author": "StratOS Team",
+    "target": {
+        "arch": "cortex-m3",
+        "vendor": "st",
+        "chip": ["stm32f103", "stm32f107"]
+    },
+    "dependencies": {
+        "StratOS-HAL-Adapter": "^1.0.0"
+    },
+    "provides": {
+        "adapter": "StratOS-HAL-Adapter"
+    },
+    "conflicts": [],
+    "keywords": ["hal", "cortex-m3"],
+    "repository": ""
+}
