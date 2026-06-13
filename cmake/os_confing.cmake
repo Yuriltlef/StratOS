@@ -131,7 +131,7 @@ set(OS_CPP_DEBUG_FLAGS
 )
 set(OS_CPP_RELEASE_FLAGS
     -O3
-
+    -flto
     -fomit-frame-pointer
 )
 set(OS_CPP_MINSIZEREL_FLAGS

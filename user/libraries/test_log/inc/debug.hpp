@@ -34,9 +34,9 @@ void Usart_SendString(USART_TypeDef* pUSARTx, const char* str);
 
 void dxprintf(const char* fmt, ...);
 
-void dprint(const char* str);
+void dxprint(const char* str);
 
-uint8_t dscanf();
+uint8_t dxscanf();
 
 #ifdef __cplusplus
 }

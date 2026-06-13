@@ -20,7 +20,7 @@
  */
 
 #include "strat_os.hpp" // 包含 strat_os::os_kernel 定义
-#include "user/libraries/test_log/inc/debug.hpp"
+// #include "user/libraries/test_log/inc/debug.hpp"
 #include <cstdint>
 
 // 类型别名简化代码
@@ -61,7 +61,6 @@ void scheduler_save_current(uint32_t* current_sp) noexcept {
 uint32_t* scheduler_get_next(void) noexcept {
     auto* next = Scheduler::schedule();
     Scheduler::set_current(next);
-    uint32_t pc = *(reinterpret_cast<uint32_t*>(next->sp) + 8 + 6); // R0 + 6 words
     if constexpr (false) {
         PlatformCtx& ctx = static_cast<PlatformCtx&>(*next);
         Scheduler::platform_context_policy::restore(&ctx);
@@ -80,8 +79,8 @@ void HardFault_Handler(void) {
     uint32_t hfsr  = SCB->HFSR;
     uint32_t mmfar = SCB->MMFAR;
     uint32_t bfar  = SCB->BFAR;
-    dxprintf("HardFault: CFSR=0x%X HFSR=0x%X MMFAR=0x%X BFAR=0x%X\n", cfsr, hfsr, mmfar, bfar);
-    while (1) {};
+    // dxprintf("HardFault: CFSR=0x%X HFSR=0x%X MMFAR=0x%X BFAR=0x%X\n", cfsr, hfsr, mmfar, bfar);
+    while (true) {};
 }
 
 } // extern "C"

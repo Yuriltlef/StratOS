@@ -68,12 +68,12 @@ void Usart_SendString( USART_TypeDef * pUSARTx,const char *str)
     }
 }
 
-void dprint(const char *str){
+void dxprint(const char *str){
     USART_Config();
     Usart_SendString(DEBUG_USARTx,str);
 }
 
-uint8_t dscanf(){
+uint8_t dxscanf(){
     USART_Config();
    return USART_ReceiveData( DEBUG_USARTx );
 }
