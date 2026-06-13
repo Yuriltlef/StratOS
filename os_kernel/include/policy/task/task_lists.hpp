@@ -36,7 +36,6 @@
 #include "os_kernel/include/core/memory/memory.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
-#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 
 namespace strat_os::kernel::policy::builtin::details
@@ -132,31 +131,21 @@ struct TaskLists {
     constexpr static std::size_t idle_task_stack = IdleTaskStackSize;
 
     static void init() {
-        dxprintf("TaskLists::init(): kernel_pool size = %u, base = 0x%x\n",
-                 (unsigned int)kernel_pool::Policy::size,
-                 (unsigned int)kernel_pool::Policy::base);
-
         // 分配就绪队列控制块
         void* mem = kernel_pool::allocate(sizeof(ready_list_type));
-        dxprintf("Allocated ready_list control block: 0x%x\n", (unsigned int)mem);
         if (!mem) {
-            dprint("ERROR: Failed to allocate ready_list\n");
-            while (1) {}
+            while (true) {}
         }
         ready_list = reinterpret_cast<ready_list_type*>(mem);
         new (ready_list) ready_list_type();
-        dprint("ready_list constructed.\n");
 
         // 分配空闲任务 TCB
         mem = kernel_pool::allocate(sizeof(tcb));
-        dxprintf("Allocated idle_task TCB: 0x%x\n", (unsigned int)mem);
         if (!mem) {
-            dprint("ERROR: Failed to allocate idle_task\n");
-            while (1) {}
+            while (true) {}
         }
         idle_task = reinterpret_cast<tcb*>(mem);
         new (idle_task) tcb();
-        dprint("idle_task constructed.\n");
     }
 };
 

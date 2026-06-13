@@ -67,8 +67,6 @@ uint32_t* scheduler_get_next(void) noexcept {
         Scheduler::platform_context_policy::restore(&ctx);
     } else {
     }
-    dxprintf("get retuen next->sp = 0x%x, PC = 0x%X\n", next->sp, pc);
-    dxprintf("current sp: 0x%x\n", Scheduler::get_current()->sp);
     return reinterpret_cast<uint32_t*>(next->sp);
 }
 

@@ -38,7 +38,6 @@
 #include "os_hal/include/system_tick.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
-#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
 
@@ -140,7 +139,6 @@ struct RoundRobinPolicy {
         // 确保第一个任务已就绪，并设置 PSP
         if (!task_lists::ready_list->empty()) {
             tcb_type* first = task_lists::ready_list->front();
-            // task_lists::ready_list->pop_front();
             current_task = first;
             ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp) + 32);
         } else {
@@ -148,14 +146,11 @@ struct RoundRobinPolicy {
             current_task = task_lists::idle_task;
             ctx_switch::set_psp(static_cast<typename ctx_switch::word>(current_task->sp) + 32);
         }
-        dprint("set psp done.\n");
         // 使能系统节拍定时器（注意：时钟源参数需根据实际策略定义）
         sys_tick::init(0x1193F, sys_tick::clock_source_type::AHBClock);
         sys_tick::enable_irq();
         sys_tick::enable();
         // 触发第一次 PendSV（此时 PSP 已正确设置）
-        // __asm volatile("msr control, %0" : : "r"(0x2) : "memory");
-        // __asm volatile("isb");
         ctx_switch::trigger_pendsv();
     }
 
@@ -177,15 +172,10 @@ struct RoundRobinPolicy {
         if (!task_lists::ready_list->empty()) {
             tcb_type* next = task_lists::ready_list->front();
             task_lists::ready_list->pop_front();
-            dxprintf("after pop_front: next->sp=0x%x\n", next->sp);
             current_task = next;
             return current_task;
         } else {
             tcb_type* ret = (current_task ? current_task : task_lists::idle_task);
-            dxprintf("schedule: returning %x (current_task=%x, idle=%x)\n",
-                     (void*)ret,
-                     (void*)current_task,
-                     (void*)task_lists::idle_task);
             return ret;
         }
     }

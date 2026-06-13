@@ -34,7 +34,6 @@
 #include "os_kernel/include/core/task/scheduler.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
-#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
 
@@ -110,7 +109,6 @@ struct TaskPolicy {
 
     static void idle(void*) {
         while (true) {
-            dprint("idle running...\n");
             sys_ctrl::sleep();
         }
     }
@@ -122,36 +120,27 @@ struct TaskPolicy {
      */
     inline static void init() noexcept {
         task_lists::init();
-        dprint("init task manager...\n");
-        dxprintf("&idle_task = %x\n", reinterpret_cast<std::uint32_t>(task_lists::idle_task));
         void* stack_mem = task_lists::user_stack::allocate(task_lists::idle_task_stack);
 
-        dxprintf("alloc stack_mem: %x, size=%d\n",
-                 reinterpret_cast<std::uint32_t>(stack_mem),
-                 task_lists::idle_task_stack);
-
         if (!stack_mem) {
-            dprint("FAULT alloc!\n");
             return; /// 错误处理
         }
 
-        task_lists::idle_task->task = nullptr;
-        dprint("init task\n");
-        task_lists::idle_task->entry = &idle;
-        dxprintf("init task entry: %x\n", task_lists::idle_task->entry);
-        task_lists::idle_task->id = 33;
-        dxprintf("init task id : %d\n", 33);
-        task_lists::idle_task->priority = 0;
-        dxprintf("init task priority : %d\n", 0);
-        task_lists::idle_task->state = tcb_type::task_state_type::Ready;
+        task_lists::idle_task->task     = nullptr;
 
-        std::uint32_t new_sp         = ctx_switch::init_stack(task_lists::idle_task->entry,
-                                                              task_lists::idle_task->task,
-                                                              reinterpret_cast<std::uintptr_t>(stack_mem));
-        dxprintf("init_stack returned sp: 0x%x\n", new_sp);
-        task_lists::idle_task->sp = new_sp;
-        dxprintf("init task sp : %x\n", task_lists::idle_task->sp);
-        dprint("alloc end, task init success!\n");
+        task_lists::idle_task->entry    = &idle;
+
+        task_lists::idle_task->id       = 33;
+
+        task_lists::idle_task->priority = 0;
+
+        task_lists::idle_task->state    = tcb_type::task_state_type::Ready;
+
+        std::uint32_t new_sp            = ctx_switch::init_stack(task_lists::idle_task->entry,
+                                                                 task_lists::idle_task->task,
+                                                                 reinterpret_cast<std::uintptr_t>(stack_mem));
+
+        task_lists::idle_task->sp       = new_sp;
     }
 
     /**
@@ -182,12 +171,12 @@ struct TaskPolicy {
         if (!stack_mem) {
             return nullptr;
         }
-        dxprintf("alloc stack_mem: 0x%x\n", (uint32_t)stack_mem);
+
         std::uintptr_t stack_top = reinterpret_cast<std::uintptr_t>(stack_mem);
-        dxprintf("before init_stack: stack_top=0x%x\n", stack_top);
+
         // 初始化栈帧
         stack_top = ctx_switch::init_stack(entry, task_obj, stack_top);
-        dxprintf("after init_stack: stack_top=0x%x\n", stack_top);
+
         // 分配tcb空间
         void* tcb_mem = task_lists::kernel_pool::allocate(sizeof(tcb_type));
         if (!tcb_mem) {
@@ -198,12 +187,6 @@ struct TaskPolicy {
         new_tcb->state    = tcb_type::task_state_type::Ready;
         new_tcb->sp       = stack_top;
         tid++;
-        dxprintf("new_tcb->sp=0x%x\n", new_tcb->sp);
-        dxprintf("create_task: entry = %x, task_obj = %x, prio = %x, stack_size = %x\n",
-                 (uint32_t)entry,
-                 (uint32_t)task_obj,
-                 (uint32_t)prio,
-                 (uint32_t)stack_size);
         // 将 TCB 加入就绪队列，返回持久 TCB 指针
         return scheduler::add_task(new_tcb);
     }

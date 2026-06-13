@@ -29,7 +29,6 @@
 #include "os_config/include/memory_layout_type.hpp"
 #include "os_kernel/include/core/memory/memory_pool.hpp"
 #include "os_kernel/include/core/memory/region.hpp"
-#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
 
@@ -140,13 +139,9 @@ struct PoolLinearAllocatorPolicy {
      * @return 分配的内存起始地址，空间不足返回 nullptr
      */
     [[nodiscard]] static pointer allocate(std::size_t alloc_size) noexcept {
-        dprint("Pool allocate start...\n");
-        dxprintf("base: 0x%x, start from :%x\n", base, free_list);
-        alloc_size = align_up(alloc_size);
-        dxprintf("alloc_size: %d\n", alloc_size);
+        alloc_size              = align_up(alloc_size);
         std::uintptr_t new_free = free_list + static_cast<std::uintptr_t>(alloc_size);
         if (new_free > base + size) {
-            dxprintf("alloc fault: 0x%x\n", base);
             return nullptr;
         }
         free_list = new_free;

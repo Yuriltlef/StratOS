@@ -9,7 +9,6 @@
 #include "strat_os.hpp"
 #include "user/libraries/test_log/inc/debug.hpp"
 
-
 // 任务1：将 PC13 输出高电平（LED 灭）
 class LedOffTask {
   public:
