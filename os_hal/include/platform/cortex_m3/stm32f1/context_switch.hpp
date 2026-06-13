@@ -29,7 +29,6 @@
 
 #include "core_cm3.h"  // for __get_IPSR(), __get_MSP, __set_MSP, etc.
 #include "stm32f10x.h" // for SCB, IRQn_Type (not used directly)
-#include "user/inc/debug.hpp"
 #include <cstdint> // for uint32_t
 
 namespace

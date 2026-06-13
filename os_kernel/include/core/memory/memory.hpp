@@ -29,7 +29,7 @@
 #include "os_config/include/memory_layout_type.hpp"
 #include "os_kernel/include/core/memory/memory_pool.hpp"
 #include "os_kernel/include/core/memory/region.hpp"
-#include "user/inc/debug.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
 

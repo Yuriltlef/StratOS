@@ -34,7 +34,7 @@
 #include "os_kernel/include/core/task/scheduler.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/policy/task/task_lists.hpp"
-#include "user/inc/debug.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 #include <cstdint>
 

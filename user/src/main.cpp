@@ -3,11 +3,12 @@
  * @brief 双任务利用时间片轮转实现 LED 闪烁（PC13）
  */
 
-#include "debug.hpp"
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "strat_os.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
+
 
 // 任务1：将 PC13 输出高电平（LED 灭）
 class LedOffTask {

@@ -1,4 +1,4 @@
-#include "user/inc/debug.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
 #include <stdarg.h>
 #include <stdio.h>
 

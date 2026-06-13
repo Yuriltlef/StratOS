@@ -36,7 +36,7 @@
 #include "os_kernel/include/core/memory/memory.hpp"
 #include "os_kernel/include/core/tcb.hpp"
 #include "os_kernel/include/core/types.hpp"
-#include "user/inc/debug.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstddef>
 
 namespace strat_os::kernel::policy::builtin::details

@@ -20,7 +20,7 @@
  */
 
 #include "strat_os.hpp" // 包含 strat_os::os_kernel 定义
-#include "user/inc/debug.hpp"
+#include "user/libraries/test_log/inc/debug.hpp"
 #include <cstdint>
 
 // 类型别名简化代码
