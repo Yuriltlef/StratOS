@@ -28,6 +28,7 @@
 
 #include "os_config/include/memory_layout.hpp"
 #include "os_config/include/memory_layout_type.hpp"
+#include "os_hal/include/interrupt.hpp"
 #include "os_kernel/include/core/memory/memory.hpp"
 #include "os_kernel/include/core/task/scheduler.hpp"
 #include "os_kernel/include/core/task/task.hpp"
@@ -67,35 +68,41 @@ template <typename AtomicPolicy,
           typename UserTcbDataPolicy,
           typename SchedulerPolicy,
           typename TaskPolicy,
-          config::MemoryLayoutType LayoutType,
+          strat_os::config::MemoryLayoutType LayoutType,
           std::uint32_t MaxTasks = 32>
 struct Kernel {
     // ------------------------- 类型别名 -------------------------
-    using types                              = KernelTypes<KernelConfigPolicy>;
+    using types_policy                       = KernelConfigPolicy;
+    using scheduler_policy                   = SchedulerPolicy;
+    using task_policy                        = TaskPolicy;
+
+    using types                              = KernelTypes<types_policy>;
     using tcb                                = Tcb<KernelConfigPolicy, PlatformContextPolicy, UserTcbDataPolicy>;
     using kernel_pool                        = typename Memory<LayoutType>::kernel_pool;
     using kernel_stack_pool                  = typename Memory<LayoutType>::kernel_stack;
     using user_pool                          = typename Memory<LayoutType>::user_pool;
     using user_stack_pool                    = typename Memory<LayoutType>::user_stack;
-    using scheduler                          = Scheduler<SchedulerPolicy>;
-    using task                               = Task<TaskPolicy>;
+    using scheduler                          = Scheduler<scheduler_policy>;
+    using task                               = Task<task_policy>;
 
     using priority_type                      = typename types::priority_type;
     using tick_type                          = typename types::tick_type;
     using task_id_type                       = typename types::task_id_type;
     using task_state_type                    = typename types::task_state_type;
 
+    using interrupt_ctrl                     = typename strat_os::hal::InterruptController<InterruptControllerPolicy>;
+
     static constexpr std::uint32_t max_tasks = MaxTasks;
 
     // ------------------------- 编译期检查 -------------------------
     // 确保实际分配的内存池大小不小于布局配置中的区域大小
-    static_assert(kernel_pool::Policy::size >= config::MemoryLayoutConfig::KERNEL_POOL_SIZE,
+    static_assert(kernel_pool::Policy::size >= strat_os::config::MemoryLayoutConfig::KERNEL_POOL_SIZE,
                   "KernelPool size must be at least KERNEL_POOL_SIZE");
-    static_assert(kernel_stack_pool::Policy::size >= config::MemoryLayoutConfig::KERNEL_STACK_SIZE,
+    static_assert(kernel_stack_pool::Policy::size >= strat_os::config::MemoryLayoutConfig::KERNEL_STACK_SIZE,
                   "KernelStackPool size must be at least KERNEL_STACK_SIZE");
-    static_assert(user_pool::Policy::size >= config::MemoryLayoutConfig::USER_POOL_SIZE,
+    static_assert(user_pool::Policy::size >= strat_os::config::MemoryLayoutConfig::USER_POOL_SIZE,
                   "UserPool size must be at least USER_POOL_SIZE");
-    static_assert(user_stack_pool::Policy::size >= config::MemoryLayoutConfig::USER_STACK_SIZE,
+    static_assert(user_stack_pool::Policy::size >= strat_os::config::MemoryLayoutConfig::USER_STACK_SIZE,
                   "UserStackPool size must be at least USER_STACK_SIZE");
 
     // ------------------------- 公共接口 -------------------------
@@ -104,7 +111,7 @@ struct Kernel {
      * @note 必须在创建任何任务之前调用。
      */
     static void init() noexcept {
-        InterruptControllerPolicy::set_priority(InterruptControllerPolicy::IRQn_Type::PendSV_IRQn, 15);
+        interrupt_ctrl::set_priority(interrupt_ctrl::IRQn_Type::PendSV_IRQn, 15);
         task::init();      // 初始化任务管理器（创建空闲任务）
         scheduler::init(); // 初始化调度器
     }

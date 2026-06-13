@@ -92,13 +92,15 @@ struct RoundRobinPolicy {
     /// 上下文切换适配器
     using ctx_switch = strat_os::hal::ContextSwitch<ContextSwitchPolicy>;
 
+    static constexpr std::size_t default_slice = TimeSliceTicks;
+
     // ------------------------- 静态成员 -------------------------
     /// 当前正在运行的任务指针
-    static inline tcb_type* current_task = nullptr;
+    static tcb_type* current_task;
     /// 默认时间片长度（节拍数）
-    static inline tick_type time_slice_ticks = TimeSliceTicks;
+    static tick_type time_slice_ticks;
     /// 每个任务剩余的节拍数（按任务 ID 索引，数组从内核池分配）
-    static inline tick_type* time_left = nullptr;
+    static tick_type* time_left;
     /// 最大任务数（编译期常量）
     static constexpr std::size_t max_tasks = task_lists::max_tasks;
 

@@ -26,7 +26,7 @@ struct OsConfig {
 
     static constexpr std::size_t max_tasks            = 16;
 
-    static constexpr std::size_t time_slice_ticks     = 250;
+    static constexpr std::size_t time_slice_ticks     = 500;
 
     static constexpr std::size_t idle_task_stack_size = 128;
 
@@ -59,6 +59,7 @@ struct OsConfig {
                                                                           max_tasks,
                                                                           idle_task_stack_size>;
 };
+
 } // namespace user_config
 
 #endif // USER_OS_CONFIG_HPP

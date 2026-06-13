@@ -125,9 +125,9 @@ struct TaskLists {
      *          如果内核池需要显式初始化，请确保在访问 `ready_list` 之前完成初始化，
      *          或推迟队列的构造到 `SchedulerPolicy::init()` 中。
      */
-inline static ready_list_type* ready_list    = nullptr;
+    static ready_list_type* ready_list;
 
-    inline static tcb* idle_task                 = nullptr;
+    static tcb* idle_task;
 
     constexpr static std::size_t idle_task_stack = IdleTaskStackSize;
 

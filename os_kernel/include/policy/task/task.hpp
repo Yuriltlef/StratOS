@@ -106,7 +106,7 @@ struct TaskPolicy {
     using ctx_switch      = strat_os::hal::ContextSwitch<ContextSwitchPolicy>;
 
     /// id计数器
-    inline static task_id_type tid{};
+    static task_id_type tid;
 
     static void idle(void*) {
         while (true) {

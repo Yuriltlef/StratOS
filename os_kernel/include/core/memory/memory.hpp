@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 
-
 // 链接脚本导出的符号（用于地址一致性验证，保留以备后用）
 extern "C" {
 extern char _suser_stack[];   // 用户栈区起始
@@ -126,7 +125,7 @@ struct PoolLinearAllocatorPolicy {
     using const_pointer                  = const void*;
 
   private:
-    static inline std::uintptr_t free_list = base; ///< 下一个空闲地址
+    static std::uintptr_t free_list; ///< 下一个空闲地址
     static constexpr std::size_t alignment = alignof(std::max_align_t);
 
     /// 将大小向上对齐到 alignment 的倍数
@@ -190,7 +189,7 @@ struct StackLinearAllocatorPolicy {
     using const_pointer                      = const void*;
 
   private:
-    static inline std::uintptr_t next_free = base; ///< 下一个空闲块的起始地址（栈底）
+    static std::uintptr_t next_free; ///< 下一个空闲块的起始地址（栈底）
     static constexpr std::size_t alignment = alignof(std::max_align_t);
 
     /// 向上对齐到 alignment 的倍数
@@ -212,7 +211,7 @@ struct StackLinearAllocatorPolicy {
         std::uintptr_t raw_top     = block_start + total_size;
         // 向上对齐到 8 字节边界（ARM Cortex-M 异常返回要求）
         std::uintptr_t aligned_top = (raw_top + 7) & ~7;
-        
+
         if (aligned_top > base + size) {
             return nullptr; // 空间不足
         }
