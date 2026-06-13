@@ -174,7 +174,7 @@ set(OS_LD_DEBUG_FLAGS
     -Wl,--warn-once
 )
 set(OS_LD_RELEASE_FLAGS
-    -Wl,--strip-debug
+    -Wl,--strip-debug,-fno-lto
 )
 set(OS_LD_MINSIZEREL_FLAGS
     -Wl,--strip-debug

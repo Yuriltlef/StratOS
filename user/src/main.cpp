@@ -1,95 +1,78 @@
 /**
- ******************************************************************************
- * @file    main.cpp
- * @author  Yurilt
- * @version V1.0.0
- * @date    03-November-2025
- * @brief   C++主程序入口
- * @note    包含C++程序的main函数和对象初始化
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2025 Yurilt.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
+ * @file led_time_slice.cpp
+ * @brief 双任务利用时间片轮转实现 LED 闪烁（PC13）
  */
 
-#include "os_hal/include/atomic.hpp"
-#include "os_hal/include/context_switch.hpp"
-#include "os_hal/include/debug.hpp"
-#include "os_hal/include/interrupt.hpp"
-#include "os_hal/include/mpu.hpp"
-#include "os_hal/include/system_control.hpp"
-#include "os_hal/include/system_tick.hpp"
+#include "stm32f10x.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
+#include "strat_os.hpp"
+// #include "user/libraries/test_log/inc/debug.hpp"
 
-#include "platform/cortex_m3/stm32f1/atomic.hpp"
-#include "platform/cortex_m3/stm32f1/context_switch.hpp"
-#include "platform/cortex_m3/stm32f1/debug.hpp"
-#include "platform/cortex_m3/stm32f1/interrupt.hpp"
-#include "platform/cortex_m3/stm32f1/mpu.hpp"
-#include "platform/cortex_m3/stm32f1/system_control.hpp"
-#include "platform/cortex_m3/stm32f1/system_tick.hpp"
+// 任务1：将 PC13 输出高电平（LED 灭）
+class LedOffTask {
+  public:
+    void operator()() {
+        while (true) {
+            GPIO_SetBits(GPIOC, GPIO_Pin_13); // 高电平，LED 灭
+            // dxprint("I am task1!\n");
+        }
+    }
+};
 
-#include "os_kernel\include\core\types.hpp"
+// 任务2：将 PC13 输出低电平（LED 亮）
+class LedOnTask {
+  public:
+    // 初始化硬件资源
+    LedOnTask() {
+        GPIO_InitTypeDef gpio;
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+        gpio.GPIO_Pin   = GPIO_Pin_13;
+        gpio.GPIO_Mode  = GPIO_Mode_Out_PP;
+        gpio.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(GPIOC, &gpio);
+        // 初始设为高电平（LED 灭）
+        GPIO_SetBits(GPIOC, GPIO_Pin_13);
+    }
+    void operator()() {
+        while (true) {
+            GPIO_ResetBits(GPIOC, GPIO_Pin_13); // 低电平，LED 亮
+            // dxprint("I am task2!\n");
+        }
+    }
+};
 
-#include <cstdint>
-
-namespace os_builtins                     = strat_os::hal::policy::builtin;
-namespace os_kernel_hal                   = strat_os::hal;
-
-using MyKernelConfig                      = strat_os::kernel::KernelTypes<>;
-
-using MyCortexM3InterruptControllerPolicy = os_builtins::CortexM3Stm32F1InterruptControllerPolicy;
-using MyInterruptController               = os_kernel_hal::InterruptController<MyCortexM3InterruptControllerPolicy>;
-
-using MyCortexM3AtomicPolicy              = os_builtins::CortexM3Stm32F1AtomicPolicy;
-using MyAtomic                            = os_kernel_hal::Atomic<MyCortexM3AtomicPolicy>;
-
-using MyCortexM3ContextSwitchPolicy       = os_builtins::CortexM3Stm32F1ContextSwitchPolicy;
-using MyContextSwitch                     = os_kernel_hal::ContextSwitch<MyCortexM3ContextSwitchPolicy>;
-
-using MyCortexM3MPUPolicy                 = os_builtins::CortexM3Stm32F1MPUPolicy;
-using MyMPU                               = os_kernel_hal::Mpu<MyCortexM3MPUPolicy>;
-
-using MyCortexM3SystemControlPolicy       = os_builtins::CortexM3Stm32F1SystemControlPolicy;
-using MySystemControl                     = os_kernel_hal::SystemControl<MyCortexM3SystemControlPolicy>;
-
-using MyCortexM3SystickPolicy             = os_builtins::CortexM3Stm32F1SystemTickPolicy;
-using MySystemTick                        = os_kernel_hal::SystemTick<MyCortexM3SystickPolicy>;
-using MySystemTickSource                  = MySystemTick::clock_source_type;
-
-using MyCortexM3DebugPolicy               = os_builtins::CortexM3Stm32F1DebugPolicy;
-using MyDebug                             = os_kernel_hal::Debug<MyCortexM3DebugPolicy>;
+LedOnTask on_task{};
+LedOffTask off_task{};
 
 int main() {
-    MyDebug::enable_cycle_counter();
-    volatile uint32_t i{0};
-    while (true) {
-        MyInterruptController::global_disable();
 
-        auto _ = MyAtomic::add(&i, 1);
-        MyContextSwitch::switch_to_privileged();
-        auto _p = MyContextSwitch::get_msp();
-        MyContextSwitch::switch_to_unprivileged();
+    using kernel = strat_os::os_kernel;
 
-        using xyz = MyMPU::region_index_type;
+    // dxprintf("UserStack base = 0x%x, size = %u\n",
+    //          (unsigned int)strat_os::kernel::details::UserStackStaticLayout::base,
+    //          (unsigned int)strat_os::kernel::details::UserStackStaticLayout::size);
+    // dxprint("init system...\n");
 
-        MySystemControl::set_sleep_on_exit(true);
-        static_assert(os_kernel_hal::traits::is_enhanced_fault_controller_v<MySystemControl>,
-                      "Not an enhanced fault controller policy");
+    // 内核初始化
+    kernel::init();
 
-        MySystemTick::init(0xffffff, MySystemTickSource::AHBClock);
-        MySystemTick::enable_irq();
-        MySystemTick::enable();
+    // dxprint("init success!\n");
 
-        MyDebug::bkpt();
+    // 创建两个任务，优先级相同（例如 1），栈大小各 1024 字节
+    // dprint("creat task1...\n");
+    auto* tcb1 = kernel::create_task(on_task, 1, 1024);
+    // dxprint("creat task1 success!\n");
+    // dxprintf("Task1: TCB=0x%x, sp=0x%x\n", tcb1, tcb1->sp);
 
-        MyInterruptController::global_enable();
-        auto _g = MyInterruptController::get_current_irq();
-    }
+    // dprint("creat task2...\n");
+    auto* tcb2 = kernel::create_task(off_task, 1, 1024);
+    // dxprintf("Task2: TCB=0x%x, sp=0x%x\n", tcb2, tcb2->sp);
+    // dprint("creat task2 success!\n");
+
+    // 启动调度器（时间片轮转调度器会根据配置的时间片自动切换任务）
+    // dxprint("start...\n");
+    kernel::start();
+    // dxprint("error: main\n");
+    while (true) {};
 }

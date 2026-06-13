@@ -1,0 +1,103 @@
+/**
+ * @file memory_layout.hpp.in
+ * @author StratOS Team
+ * @brief 内存布局编译期常量配置（纯静态模式）
+ * @version 1.0.0
+ * @date 2026-06-03
+ *
+ * @copyright Copyright (c) 2026 StratOS
+ *
+ * @details
+ * 本头文件提供了目标平台物理内存布局的 constexpr 常量，所有数值由 CMake 在构建时
+ * 根据板级配置（如 os_config/board/STM32F103/memory_layout.cmake）自动生成。
+ *
+ * 内存布局遵循纯静态模型：
+ * - FLASH：代码、只读数据、初始化函数表
+ * - RAM：  从低地址到高地址划分为四个连续区域：
+ *   1. 用户栈区   (User Stack)   – 连续区域，用于存放所有任务栈
+ *   2. 用户池     (User Pool)    – 包含 .data, .bss 和填充区，大小固定
+ *   3. 内核栈     (Kernel Stack) – 主栈（MSP），用于中断和内核服务
+ *   4. 内核池     (Kernel Pool)  – 内核静态对象（TCB、队列、信号量等）
+ *
+ * 所有常量均为 constexpr，支持编译期断言和优化。
+ *
+ * 占位符（由 CMake 替换）：
+ * - @_START_OF_FLASH_@   : FLASH 起始地址
+ * - @_SIZE_OF_FLASH_@    : FLASH 大小（字节）
+ * - @_START_OF_RAM_@     : RAM 起始地址
+ * - @_SIZE_OF_RAM_@      : RAM 大小（字节）
+ * - @_END_OF_FLASH_@     : FLASH 结束地址
+ * - @_END_OF_RAM_@       : RAM 结束地址
+ * - @_SIZE_OF_USER_STACK_@ : 用户栈总大小（字节）
+ * - @_USER_POOL_SIZE_@   : 用户池大小（字节）
+ * - @_KERNEL_STACK_SIZE_@: 内核栈大小（字节）
+ * - @_KERNEL_POOL_SIZE_@ : 内核池大小（字节）
+ * - @_OS_MEMORY_LAYOUT_TYPE_@ : 内存布局类型（StaticLayout, MixedLayout, DynamicLayout）
+ */
+
+#pragma once
+
+#ifndef STRATOS_CONFIG_MEMORY_LAYOUT_HPP
+#define STRATOS_CONFIG_MEMORY_LAYOUT_HPP
+
+#include "os_config/include/memory_layout_type.hpp"
+#include <cstddef>
+#include <cstdint>
+
+
+namespace strat_os::config
+{
+
+/**
+ * @brief 内存布局配置结构体
+ *
+ * 封装所有内存布局常量，类型安全且便于传递给策略类。
+ * 所有成员均为 static constexpr，零运行时开销。
+ */
+struct MemoryLayoutConfig {
+    // ==================== FLASH 区域 ====================
+    /// FLASH 起始地址（链接时符号）
+    static constexpr std::uintptr_t FLASH_START = @_START_OF_FLASH_@;
+    /// FLASH 结束地址（起始 + 大小 - 1）
+    static constexpr std::uintptr_t FLASH_END = @_END_OF_FLASH_@;
+    /// FLASH 大小（字节）
+    static constexpr std::size_t FLASH_SIZE = FLASH_END - FLASH_START + 1;
+
+    // ==================== RAM 区域 ====================
+    /// RAM 起始地址
+    static constexpr std::uintptr_t RAM_START = @_START_OF_RAM_@;
+    /// RAM 结束地址
+    static constexpr std::uintptr_t RAM_END = @_END_OF_RAM_@;
+    /// RAM 大小（字节）
+    static constexpr std::size_t RAM_SIZE =  RAM_END - RAM_START + 1;
+
+    // ==================== 用户栈区 ====================
+    /// 用户栈总大小（字节）– 所有任务栈的静态总和
+    static constexpr std::size_t USER_STACK_SIZE = @_SIZE_OF_USER_STACK_@;
+
+    // ==================== 用户池 ====================
+    /// 用户池大小（字节）– 包含 .data, .bss 及填充区
+    static constexpr std::size_t USER_POOL_SIZE = @_USER_POOL_SIZE_@;
+
+    // ==================== 内核栈 ====================
+    /// 内核栈大小（字节）– 用于 MSP
+    static constexpr std::size_t KERNEL_STACK_SIZE = @_KERNEL_STACK_SIZE_@;
+
+    // ==================== 内核池 ====================
+    /// 内核池大小（字节）– 静态内核对象（TCB 等）
+    static constexpr std::size_t KERNEL_POOL_SIZE = @_KERNEL_POOL_SIZE_@;
+
+    // ==================== 内存布局类型 ====================
+    /// 当前使用的内存布局类型
+    static constexpr MemoryLayoutType LAYOUT_TYPE = MemoryLayoutType::@_OS_MEMORY_LAYOUT_TYPE_@;
+
+    // ==================== 编译期完整性检查 ====================
+    static_assert(USER_STACK_SIZE + USER_POOL_SIZE + KERNEL_STACK_SIZE + KERNEL_POOL_SIZE <= RAM_SIZE,
+                  "Total RAM sections exceed available RAM size!");
+    static_assert(FLASH_SIZE > 0, "FLASH size must be positive");
+    static_assert(RAM_SIZE > 0, "RAM size must be positive");
+};
+
+} // namespace strat_os::config
+
+#endif // STRATOS_CONFIG_MEMORY_LAYOUT_HPP
