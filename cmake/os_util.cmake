@@ -540,18 +540,24 @@ function(filter_compile_commands)
     # 检查编译数据库是否存在
     set(COMPILE_COMMANDS "${CMAKE_BINARY_DIR}/compile_commands.json")
     if(NOT EXISTS "${COMPILE_COMMANDS}")
-        log_error("filter_compile_commands: ${COMPILE_COMMANDS} not found")
+        # 第一次配置：compile_commands.json 要到 generate 阶段才生成，
+        # 因此这里必然找不到，属于正常现象，给出提示而不是报错
+        log_warning("==========================================================")
+        log_warning(" compile_commands.json not found (first-time configure)")
+        log_warning(" This is EXPECTED on the first configuration.")
+        log_warning(" Please run CMake configure AGAIN to enable clangd.")
+        log_warning(" Otherwise clangd will NOT work correctly.")
+        log_warning("==========================================================")
         return()
     endif()
 
     set(FILTERED_OUTPUT_DIR "${CLANG_FILTER_JSON_PATH}")
-    log_info("filter_compile_commands: filtering assembler entries from ${SOURCE_DB}")
+    log_info("filter_compile_commands: filtering assembler entries from ${COMPILE_COMMANDS}")
     log_info("  - Output directory: ${FILTERED_OUTPUT_DIR}")
 
-    log_info("filter_compile_commands: filtering assembler entries from ${COMPILE_COMMANDS}")
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} 
-                "${FILTER_SCRIPT}" 
+        COMMAND ${Python3_EXECUTABLE}
+                "${FILTER_SCRIPT}"
                 "--output-dir"
                 "${FILTERED_OUTPUT_DIR}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
