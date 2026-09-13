@@ -44,8 +44,8 @@ namespace strat_os::kernel::policy::builtin
  * @brief 内置任务管理器策略类
  *
  * @tparam KernelConfigPolicy     内核类型配置策略（提供 priority_type、task_id_type、task_state_type 等）
- * @tparam PlatformContextPolicy  平台上下文策略（用于 TCB 扩展，此处未使用但保留）
- * @tparam UserTcbDataPolicy      用户 TCB 扩展数据策略（此处未使用但保留）
+ * @tparam PlatformContextPolicy  平台上下文策略
+ * @tparam UserTcbDataPolicy      用户 TCB 扩展数据策略
  *
  * 该策略实现了以下核心操作：
  * - 创建任务：分配栈空间，构造 TCB，加入就绪队列。

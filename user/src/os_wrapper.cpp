@@ -46,13 +46,12 @@ extern "C" {
  * 2. 若平台上下文非空，则调用平台上下文的 `save` 方法保存当前任务的额外状态。
  * 3. 调用调度器的 `schedule()` 选择下一个要运行的任务。
  * 4. 更新当前任务指针为新任务。
- * 5. （可选）恢复新任务的平台上下文（当前已禁用，通过 `if constexpr (false)` 条件编译消除）。
+ * 5. 恢复新任务的平台上下文，通过 `if constexpr ()` 条件编译消除。
  * 6. 返回新任务的栈顶指针（R4 地址），供 PendSV 汇编恢复寄存器。
  *
  * @note 该函数合并了原来的 `scheduler_save_current` 和 `scheduler_get_next`，
  *       减少了函数调用次数，优化了上下文切换性能。
- * @note 平台上下文的恢复代码被暂时禁用（`if constexpr (false)`），因为当前平台
- *       （Cortex-M3）无 FPU 等需要额外恢复的状态。如有需要可修改条件。
+ * @note 平台上下文的恢复代码会按照策略自动启用或裁切
  */
 uint32_t* scheduler_switch(uint32_t* current_sp) noexcept {
     // 获取当前任务 TCB
